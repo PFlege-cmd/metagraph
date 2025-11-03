@@ -86,7 +86,7 @@ else()
 endif()
 
 if(NOT CMAKE_DBG_ALPHABET)
-  set(CMAKE_DBG_ALPHABET "DNA")
+  set(CMAKE_DBG_ALPHABET "DNA5")
 endif()
 
 if(CMAKE_DBG_ALPHABET STREQUAL "DNA")
@@ -215,12 +215,12 @@ endif()
 
 
 # Profile with gprof
-set(CMAKE_CXX_FLAGS_PROFILE "-pg -DNDEBUG -O2 -g")
+set(CMAKE_CXX_FLAGS_PROFILE "-pg -DNDEBUG -O0 -g")
 set(CMAKE_EXE_LINKER_FLAGS_PROFILE "-pg -g")
 set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "-pg -g")
 
 # Profile with gperftools
-set(CMAKE_CXX_FLAGS_GPROFILE "-fno-omit-frame-pointer -DNDEBUG -O2 -g")
+set(CMAKE_CXX_FLAGS_GPROFILE "-fno-omit-frame-pointer -DNDEBUG -O0 -g")
 set(CMAKE_EXE_LINKER_FLAGS_GPROFILE "-g")
 set(CMAKE_SHARED_LINKER_FLAGS_GPROFILE "-g")
 
@@ -241,7 +241,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES GPROFILE)
 endif()
 
 # Debug build type
-set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
 # Link time optimization
 if(LINK_OPT)
@@ -255,7 +255,7 @@ if(LINK_OPT)
 endif()
 
 # Thread sanitizer build type
-set(CMAKE_CXX_FLAGS_THREADS "-O2 -g -fsanitize=thread")
+set(CMAKE_CXX_FLAGS_THREADS "-O0 -g -fsanitize=thread")
 set(CMAKE_EXE_LINKER_FLAGS_THREADS "-g -fsanitize=thread")
 set(CMAKE_SHARED_LINKER_FLAGS_THREADS "-g -fsanitize=thread")
 

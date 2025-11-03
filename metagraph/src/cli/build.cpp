@@ -17,6 +17,8 @@
 #include "parse_sequences.hpp"
 #include "stats.hpp"
 
+#include "graph_glue.hpp"
+
 
 namespace mtg {
 namespace cli {
@@ -56,6 +58,8 @@ int build_graph(Config *config) {
     const auto &files = config->fnames;
 
     std::unique_ptr<DeBruijnGraph> graph;
+    auto stuff = load_dbg();
+
 
     logger->trace("Build De Bruijn Graph with k-mer size k={}", config->k);
 

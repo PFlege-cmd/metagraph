@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "load/load_graph.hpp"
-#include "graph_glue.h"
+#include "graph_glue.hpp"
 
 #include "graph/annotated_dbg.hpp"
 #include "graph/representation/succinct/dbg_succinct.hpp"
