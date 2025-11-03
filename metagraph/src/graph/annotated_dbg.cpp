@@ -10,6 +10,11 @@
 #include "common/vectors/vector_algorithm.hpp"
 #include "common/vector_map.hpp"
 #include "common/logger.hpp"
+#include "spdlog/fmt/bundled/ranges.h"
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 
 namespace mtg {
@@ -346,6 +351,7 @@ AnnotatedDBG::get_kmer_counts(std::string_view sequence,
     return get_kmer_counts(nodes, num_top_labels, discovery_fraction, presence_fraction);
 }
 
+
 Vector<std::pair<Column, size_t>> filter(const Vector<size_t> &col_counts,
                                          size_t min_count,
                                          size_t num_top_labels) {
@@ -354,7 +360,7 @@ Vector<std::pair<Column, size_t>> filter(const Vector<size_t> &col_counts,
 
     for (size_t j = 0; j < col_counts.size(); ++j) {
         if (col_counts[j] >= min_count)
-            code_counts.emplace_back(j, col_counts[j]);
+            code_counts.emplace_back(j, col_counts[j]); // Todo: This gets the counts for each column, and pushes them with a monotonously increasing sequence?
     }
 
     if (code_counts.size() > num_top_labels) {
@@ -367,7 +373,7 @@ Vector<std::pair<Column, size_t>> filter(const Vector<size_t> &col_counts,
         // keep only the first |num_top_labels| top labels
         code_counts.resize(num_top_labels);
     }
-    return code_counts;
+    return code_counts; //TODO: PF: This seems to be a tuple of column (number) and size t? What is t?
 }
 
 std::vector<std::tuple<std::string, size_t, std::vector<size_t>>>
@@ -459,7 +465,7 @@ AnnotatedDBG::get_kmer_coordinates(std::string_view sequence,
 }
 
 std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>>
-AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index> &nodes,
+AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index>& nodes,
                                    size_t num_top_labels,
                                    double discovery_fraction,
                                    double presence_fraction) const {
@@ -471,7 +477,8 @@ AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index> &nodes,
 
     if (!nodes.size())
         return {};
-
+    // TODO: PF: 1. 8. 14.00: SHould nodes, for my test.fasta, not be different for each?
+    // Does it just give three times the same kmer? Test with shorter input!
     std::vector<row_index> rows;
     rows.reserve(nodes.size());
 
@@ -493,47 +500,403 @@ AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index> &nodes,
     if (rows.size() < min_count)
         return {};
 
-    const auto *tuple_matrix = dynamic_cast<const MultiIntMatrix *>(&annotator_->get_matrix());
+    const auto* tuple_matrix = dynamic_cast<const MultiIntMatrix*>(
+            &annotator_->get_matrix()); // TODO: PF: Gets  the tuples for coords
     if (!tuple_matrix) {
         logger->error("k-mer coordinates are not indexed in this annotator");
         exit(1);
     }
-
+    // printGraph();
     auto rows_tuples = tuple_matrix->get_row_tuples(rows);
 
     // FYI: one could use tsl::hopscotch_map for counting but it is slower
     // than std::vector unless the number of columns is ~1M or higher
     Vector<size_t> col_counts(annotator_->num_labels(), 0);
-    for (const auto &row_tuples : rows_tuples) {
-        for (const auto &[j, tuple] : row_tuples) {
-            col_counts[j]++;
+    for (const auto& row_tuples : rows_tuples) {
+        for (const auto& [j, tuple] : row_tuples) {
+            col_counts[j]++; // TODO: PF: I assume that this is how often the column may occur in each row?
+            // Note PF: This counts the columns I guess? for each row?
         }
     }
 
-    Vector<std::pair<Column, size_t>> code_counts = filter(col_counts, min_count, num_top_labels);
+    Vector<std::pair<Column, size_t>> code_counts
+            = filter(col_counts, min_count, num_top_labels);
 
-    std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> result(code_counts.size());
+    std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> result(
+            code_counts.size());
     col_counts.assign(annotator_->num_labels(), 0); // will map columns to indexes in `result`
+    // TODO: PF: Why is this set back?
 
-    for (size_t i = 0; i < code_counts.size(); ++i) {
-        auto &[label, count, coords] = result[i];
+    for (size_t i = 0; i < code_counts.size();
+         ++i) { // TODO: PF: Must be 3 for my pokemon testset
+        auto& [label, count, coords] = result[i];
 
         label = annotator_->get_label_encoder().decode(code_counts[i].first);
         count = code_counts[i].second;
+        // TODO: PF: Code-counts[i].first gets the actual fasta name! NICE!!
+
         coords.resize(nodes.size());
 
-        col_counts[code_counts[i].first] = i + 1;
+        col_counts[code_counts[i].first] = i
+                + 1; // TODO: Gets the column for the associated sample (label, 0 here is Mewtwo.fasta) and updates it, but why?
     }
 
     for (size_t i = 0; i < rows_tuples.size(); ++i) {
         // set the non-empty tuples
-        for (auto &[j, tuple] : rows_tuples[i]) {
+        for (auto& [j, tuple] : rows_tuples[i]) {
             if (col_counts[j])
                 std::get<2>(result[col_counts[j] - 1])[kmer_positions[i]] = std::move(tuple);
+        } // TODO: PFlege: Continue here to get the proper structure for localization!
+    }
+    // std::cout << std::get<2>(result[0])[kmer_positions[0]][0] << std::endl;
+    // std::cout << std::get<2>(result[1])[kmer_positions[0]][0] << std::endl;
+    // std::cout << std::get<2>(result[1])[kmer_positions[0]][1] << std::endl;
+    return result; // TODO: PF: Last note for 1. 8., 2.24: with a sequence that occurs only in one genome- column count gives only 1 to it!
+}
+
+std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths) {
+    //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
+    //TODO: For now, assume that a sequence is a genome.
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    int read_length = read.length();
+    //int sequence_length = 44;
+    std::vector<int> candidate_coords;
+    std::vector<std::array<int, 2>> kmer_positions;
+
+    int k = 7;
+    for (int position = 0; position < (int) read.size(); ++position) {
+        std::string_view current_kmer = read.substr(position, k);
+        if ((int) current_kmer.size() < k)
+            break;
+        std::cout << current_kmer << std::endl;
+        std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
+        std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
+        for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
+            std::string current_genome = std::get<0>(coordinates[coord_idx]);
+            if (current_genome != genome_name) {
+                continue;
+            }
+            auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
+            auto coords_for_genome_size = coords_for_genome[0].size();
+            for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
+                //std::cout << current_genome << std::endl;
+                std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
+                //std::cout << read_length << std::endl;
+                std::array<int,2>  target_and_position = {0, 0};
+                calculate_sequence_location(coords_for_genome[0][current_coord_idx],
+                                            sequence_lengths, target_and_position);
+                int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
+                int pantools_location = target_and_position[0];
+                int loc = pantools_location - position;
+
+                if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
+                    candidate_coords.push_back(loc);
+                    std::cout << target_sequence + 1 << " - " << loc << std::endl;
+                    kmer_positions.push_back({target_sequence + 1, loc});
+                }
+            }
+        }
+    }
+    std::cout << candidate_coords.size() << std::endl;
+    std::vector<std::array<int, 3>> node_results;
+    for (int loc: candidate_coords) {
+        std::array<int, 3> result = {4, 1, loc};
+        node_results.push_back(result);
+        std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
+    }
+
+    return kmer_positions;
+}
+
+void AnnotatedDBG::array_fun(int* pointy, int arr_size_1, int arr_size_2) {
+    for (int i = 0; i < arr_size_1; ++i) {
+        for (int j = 0; j < arr_size_2; ++j) {
+            std::cout << *((pointy + j*arr_size_2) + i) << std::endl;
+        }
+    }
+}
+
+void AnnotatedDBG::calculate_sequence_location(unsigned long coord, const std::vector<int>& sequence_lengths, std::array<int, 2>& position_and_location) {
+    int current_length = 0;
+    int k = 7;
+    int target_sequence = -1;
+    for (int i = 0; i < (int)sequence_lengths.size(); i++) {
+        int seq_length = sequence_lengths[i] - k + 1;
+        if ((int) coord >= current_length && (int) coord < current_length + seq_length) {
+            target_sequence = i;
+            break;
+        }
+        current_length += seq_length;
+    }
+
+    int pantools_location = coord - current_length;
+    position_and_location[0] = pantools_location;
+    position_and_location[1] = target_sequence;
+}
+
+const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end) {
+    //const auto*tuple_matrix = dynamic_cast<const MultiIntMatrix *>(&annotator_->get_matrix());
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    std::cout << "Start search" << std::endl;
+    //unsigned int kmer_size = this->get_graph().get_k();
+
+    unsigned long size_kmer = this->get_graph().get_k();
+
+    // --- Initialize condition for iteration
+    node_index current_kmer = 0;
+    node_index max_number_of_nodes = this->get_graph().num_nodes();
+    bool searching_for_first_kmer = true;
+
+    // -- general variables
+    std::string starting_kmer("");
+    std::vector<node_index> outgoing_nodes;
+    unsigned long long next_coordinate = start;
+
+
+    while (searching_for_first_kmer && current_kmer < max_number_of_nodes) {
+        current_kmer++;
+        std::vector nodes = {current_kmer};
+
+        std::string sequence = this->get_graph().get_node_sequence(current_kmer);
+
+        if (sequence.find('$') <= size_kmer ) {
+            continue;
+        }
+
+        std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> kmer_results = get_kmer_coordinates(nodes, num_top_labels, discovery_fraction, presence_fraction);
+
+
+        for (unsigned long i = 0; i < kmer_results.size(); ++i) {
+            if (std::get<0>(kmer_results[i]) != genome)
+                continue;
+
+            for (unsigned long j = 0; j < std::get<2>(kmer_results[i])[0].size(); ++j) {
+                if (std::get<2>(kmer_results[i])[0][j] == start) {
+                    std::cout << "Found starting kmer: " << std::endl;
+                    std::cout << sequence << std::endl;
+                    std::cout << std::get<2>(kmer_results[i])[0][j] << std::endl;
+                    starting_kmer.append(sequence);
+                    next_coordinate++;
+                    searching_for_first_kmer = false;
+                }
+            }
         }
     }
 
+    while (next_coordinate != end ) {
+        bool found_next_coordinate = false;
+        bool one_outgoing = this->get_graph().has_single_outgoing(current_kmer);
+        bool multi_outgoing = this->get_graph().has_multiple_outgoing(current_kmer);
+        std::string one_outgoing_string = (one_outgoing)?"True":"False";
+        std::string multiple_outgoing_string = (multi_outgoing)?"True":"False";
+        //std::cout << "Has one outgoing? " << one_outgoing_string << std::endl;
+        //std::cout << "Has multiple outgoing? " << multiple_outgoing_string << std::endl;
+        if (!one_outgoing && !multi_outgoing) {
+            std::cout << "Edge stuck!" << std::endl;
+            std::cout << next_coordinate << std::endl;
+            return "BAKA";
+        }
+
+        if (multi_outgoing) {
+            this->get_graph().adjacent_outgoing_nodes(current_kmer, [&](auto i) {outgoing_nodes.push_back(i);});
+            for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
+                //std::cout << outgoing_nodes[i] << std::endl;
+                //std::cout << this-> get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                // create std::vector for this.
+                std::vector<node_index> edge_node = {outgoing_nodes[i]};
+                std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> edge_node_coords = get_kmer_coordinates(edge_node, num_top_labels, discovery_fraction, presence_fraction);
+                for (unsigned long k = 0; k < edge_node_coords.size(); ++k) {
+                    std::string curr_genome = std::get<0>(edge_node_coords[k]);
+                    if (std::get<0>(edge_node_coords[k]) != genome ) {
+                        continue;
+                    }
+                    auto x = std::get<2>(edge_node_coords[k])[0];
+                    bool found  = binary_search(x.begin(), x.end(), next_coordinate);
+                    if (!found)
+                        continue;
+
+                    //std::cout << "Size of range of coordinates: " << std::get<2>(edge_node_coords[k])[0].size()<< std::endl;
+                    auto extracted_coords = std::get<2>(edge_node_coords[k]);
+                    auto coordinate_size = extracted_coords[0].size();
+                    for (unsigned long j =0; j < coordinate_size; ++j) {
+                        auto all_coords = extracted_coords[0];
+                        auto outgoing_edge_coords = extracted_coords[0][j];
+                        //std::cout << outgoing_edge_coords << std::endl;
+                        if (outgoing_edge_coords == next_coordinate) {
+                            std::cout << "Found Next kmer: " << std::endl;
+                            std::cout << this->get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                            std::cout << "Position: " << extracted_coords[0][j] << std::endl;
+                            next_coordinate++;
+                            auto next_char = this->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
+                            found_next_coordinate = true;
+                            current_kmer = outgoing_nodes[i];
+                            outgoing_nodes.clear();
+                            starting_kmer.append( 1, next_char);
+                            break;
+                        }
+                    }
+                    if (found_next_coordinate)
+                        break;
+                }
+                if (found_next_coordinate)
+                    break;
+            }
+        } else if (one_outgoing) {
+            this->get_graph().adjacent_outgoing_nodes(current_kmer, [&](auto i) {outgoing_nodes.push_back(i);});
+            for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
+                //std::cout << outgoing_nodes[i] << std::endl;
+                //std::cout << this-> get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                // create std::vector for this.
+                std::vector<node_index> edge_node = {outgoing_nodes[i]};
+                std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> edge_node_coords = get_kmer_coordinates(edge_node, num_top_labels, discovery_fraction, presence_fraction);
+                for (unsigned long k = 0; k < edge_node_coords.size(); ++k) {
+                    std::string curr_genome = std::get<0>(edge_node_coords[k]);
+                    /*if (std::get<0>(edge_node_coords[k]) != genome ) {
+                        std::cout << "Not correct genome: " << std::endl;
+                        std::cout << curr_genome<< std::endl;
+                        continue;
+                    }*/ //TODO: Fix the degenerate issue here!
+                    auto x = std::get<2>(edge_node_coords[k])[0];
+                    //bool found  = binary_search(x.begin(), x.end(), next_coordinate);
+                    /*
+                    if (!found) {
+                        std::cout << "Did not find next coordinate" << std::endl;
+                        continue;
+                    }*/ // TODO: All not necessary with unitig
+
+
+                    for (unsigned long j =0; j < std::get<2>(edge_node_coords[k])[0].size(); ++j) {
+                        auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
+                        std::cout << next_coor << std::endl;
+
+                        //std::binary_search(std::get<2>(edge_node_coords[k])[0])
+                        //if (std::get<2>(edge_node_coords[k])[0][j] == next_coordinate) {
+                            std::cout << "Found Next kmer: " << std::endl;
+                            std::cout << this->get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                            std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j] << std::endl;
+                            next_coordinate++;
+                            char next_char = this->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
+                            found_next_coordinate = true;
+                            current_kmer = outgoing_nodes[i];
+                            outgoing_nodes.clear();
+                            starting_kmer.append( 1, next_char);
+                            break;
+                        //}
+                    }
+                    if (found_next_coordinate)
+                        break;
+                }
+                if (found_next_coordinate)
+                    break;
+            }
+        }
+    }
+
+    std::cout << starting_kmer << std::endl;
+    char e[] = "g";
+    std::string s(e);
+    const  char * result = starting_kmer.c_str();
+    //std::string ss = new std::basic_string(s);
     return result;
+}
+
+
+std::string AnnotatedDBG::get_kmer_for_coords(std::string genome, unsigned long long start) {
+    //const auto*tuple_matrix = dynamic_cast<const MultiIntMatrix *>(&annotator_->get_matrix());
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    std::cout << "Start search" << std::endl;
+    //unsigned int kmer_size = this->get_graph().get_k();
+
+    unsigned long size_kmer = this->get_graph().get_k();
+
+    // --- Initialize condition for iteration
+    node_index current_kmer = 0;
+    node_index max_number_of_nodes = this->get_graph().num_nodes();
+    bool searching_for_first_kmer = true;
+
+    // -- general variables
+    std::string starting_kmer("");
+    std::vector<node_index> outgoing_nodes;
+    unsigned long long next_coordinate = start;
+
+
+    while (searching_for_first_kmer && current_kmer < max_number_of_nodes) {
+        current_kmer++;
+        std::vector nodes = {current_kmer};
+
+        std::string sequence = this->get_graph().get_node_sequence(current_kmer);
+
+        if (sequence.find('$') <= size_kmer ) {
+            continue;
+        }
+
+        std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> kmer_results = get_kmer_coordinates(nodes, num_top_labels, discovery_fraction, presence_fraction);
+
+
+        for (unsigned long i = 0; i < kmer_results.size(); ++i) {
+            if (std::get<0>(kmer_results[i]) != genome)
+                continue;
+
+            for (unsigned long j = 0; j < std::get<2>(kmer_results[i])[0].size(); ++j) {
+                if (std::get<2>(kmer_results[i])[0][j] == start) {
+                    starting_kmer.append(sequence);
+                    next_coordinate++;
+                    searching_for_first_kmer = false;
+                }
+            }
+        }
+    }
+
+
+
+    std::cout << starting_kmer << std::endl;
+    char e[] = "g";
+    std::string s(e);
+
+    //std::string ss = new std::basic_string(s);
+    return starting_kmer;
+}
+
+void AnnotatedDBG::printGraph() const{
+
+    list<string> sequences;
+    std::string x;
+    x.reserve(1000000);
+    const char * y = "";
+    x = y;
+    int no_of_kmers(this ->get_graph().num_nodes());
+    for (int i = 1; i <= no_of_kmers; i++) {
+        bool k = this->get_graph().has_single_outgoing(i);
+        string seq = get_graph().get_node_sequence(i);
+        string j =  k?seq + " " + std::to_string(i) + ":True\n":seq + " " + std::to_string(i) + ":False\n";
+        sequences.push_back(j);
+        sequences.sort();
+    }
+
+
+    int counter = 0;
+    auto en = sequences.begin();
+    int seq_size = sequences.size();
+    x.append(*en);
+     while (counter < seq_size) {
+        advance(en,1);
+         counter++;
+         x.append(*en);
+    }
+
+
+
+
+    ofstream kmerFile("/Users/patrick_flege/git/metagraph/metagraph/kmers_error_pos_inner_11h_56m_30_07_2025.txt");
+    kmerFile << x;
+    kmerFile.close();
 }
 
 std::vector<std::pair<Label, sdsl::bit_vector>>

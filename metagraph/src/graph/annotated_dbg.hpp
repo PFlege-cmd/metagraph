@@ -1,6 +1,7 @@
 #ifndef __ANNOTATED_DBG_HPP__
 #define __ANNOTATED_DBG_HPP__
 
+
 #include <cassert>
 #include <memory>
 #include <mutex>
@@ -27,7 +28,7 @@ class AnnotatedSequenceGraph {
                            bool force_fast = false);
 
     virtual ~AnnotatedSequenceGraph() {}
-
+    void printGraph();
     virtual std::vector<Label> get_labels(node_index index) const;
 
     // thread-safe, can be called from multiple threads concurrently
@@ -74,6 +75,7 @@ class AnnotatedDBG : public AnnotatedSequenceGraph {
 
     using AnnotatedSequenceGraph::get_labels;
 
+    void printGraph() const;
     const DeBruijnGraph& get_graph() const { return dbg_; }
 
     // add k-mer counts to the annotation, thread-safe for concurrent calls
@@ -108,12 +110,14 @@ class AnnotatedDBG : public AnnotatedSequenceGraph {
     // Return top |num_top_labels| labels with their counts.
     // The returned counts are weighted by the annotated relation counts if
     // |with_kmer_counts| is true.
-    std::vector<std::pair<Label, size_t>>
-    get_top_labels(std::string_view sequence,
-                   size_t num_top_labels,
-                   double discovery_fraction = 0.0,
-                   double presence_fraction = 0.0,
-                   bool with_kmer_counts = false) const;
+    std::vector<std::pair<Label, size_t>> get_top_labels(std::string_view sequence,
+                                                         size_t num_top_labels,
+                                                         double discovery_fraction = 0.0,
+                                                         double presence_fraction = 0.0,
+                                                         bool with_kmer_counts = false) const;
+
+    const char* get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end);
+    std::string get_kmer_for_coords(std::string genome, unsigned long long start);
 
     // The returned counts are weighted by the annotated relation counts if
     // |with_kmer_counts| is true.
@@ -129,6 +133,16 @@ class AnnotatedDBG : public AnnotatedSequenceGraph {
                     size_t num_top_labels,
                     double discovery_fraction,
                     double presence_fraction) const;
+
+
+    //void AnnotatedDBG::calculate_sequence_location(unsigned long coord, std::vector<int>& sequence_lengths, std::array<int, 2>& position_and_location) {
+
+    void calculate_sequence_location(unsigned long coord,
+                                     const std::vector<int>& sequence_lengths,
+                                     std::array<int, 2>& position_and_location);
+    std::vector<std::array<int, 2>> read_mapping_pantools(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths);
+
+    void array_fun(int* pointy, int arr_size_1, int arr_size_2);
 
     // returns tuples (label, num_kmer_matches, kmer_abundances)
     std::vector<std::tuple<Label, size_t, std::vector<size_t>>>
