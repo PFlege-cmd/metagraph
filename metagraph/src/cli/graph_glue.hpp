@@ -12,5 +12,6 @@ shared_ptr<mtg::graph::AnnotatedDBG> load_dbg();
 void do_pantools_work(char* genome_name,
              int* sequence_lengths,
              int no_of_sequences,
-             HitsPerSequence*& results);
+             HitsPerSequence*& results,  char * read
+);
 #endif //GRAPH_GLUE_H

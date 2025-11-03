@@ -637,6 +637,15 @@ target_link_libraries(benchmarks benchmark_main benchmark metagraph-core metagra
 
 target_compile_options(benchmarks PRIVATE)
 
+set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp")
+add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})
+target_link_libraries(libmetagraph-cli PRIVATE metagraph-core metagraph-cli)
+target_compile_features(libmetagraph-cli PRIVATE cxx_std_17)
+set_target_properties(libmetagraph-cli PROPERTIES CXX_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+)
+install(TARGETS libmetagraph-cli LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+
 #-------------------
 # Tests
 #-------------------
@@ -679,3 +688,4 @@ file(INSTALL "${PROJECT_BINARY_DIR}/CMakeFiles/integration_tests"
                    GROUP_READ GROUP_EXECUTE
                    WORLD_READ WORLD_EXECUTE
 )
+

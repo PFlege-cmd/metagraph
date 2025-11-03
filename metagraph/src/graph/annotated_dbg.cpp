@@ -554,6 +554,11 @@ AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index>& nodes,
     return result; // TODO: PF: Last note for 1. 8., 2.24: with a sequence that occurs only in one genome- column count gives only 1 to it!
 }
 
+std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector){
+   std::vector<std::array<int, 2>> kmer_positions = (std::vector<std::array<int, 2>>){};
+   return kmer_positions;
+}
+
 std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths) {
     //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
     //TODO: For now, assume that a sequence is a genome.
@@ -607,7 +612,6 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
         node_results.push_back(result);
         std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
     }
-
     return kmer_positions;
 }
 

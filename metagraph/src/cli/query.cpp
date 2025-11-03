@@ -21,6 +21,7 @@
 #include "load/load_graph.hpp"
 #include "load/load_annotated_graph.hpp"
 #include "cli/align.hpp"
+#include "cli/graph_glue.hpp"
 
 
 namespace mtg {
@@ -1096,6 +1097,7 @@ int query_graph(Config *config) {
     std::shared_ptr<DeBruijnGraph> graph = load_critical_dbg(config->infbase);
     std::unique_ptr<AnnotatedDBG> anno_graph = initialize_annotated_dbg(graph, *config);
 
+    graph_glue
     ThreadPool thread_pool(std::max(1u, get_num_threads()) - 1, 1000);
 
     std::unique_ptr<align::DBGAlignerConfig> aligner_config;
