@@ -613,7 +613,11 @@ link_directories(
   ${CMAKE_BINARY_DIR}
 )
 
-add_executable(unit_tests ${unit_tests_files})
+add_executable(unit_tests ${unit_tests_files}
+        tests/cli/test_graph_glue.cpp
+        tests/cli/test_graph_glue.h
+        tests/cli/mock_annotated_dbg.cpp
+        tests/cli/mock_annotated_dbg.h)
 target_include_directories(unit_tests PRIVATE "${PROJECT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE TEST_DATA_DIR="${PROJECT_SOURCE_DIR}/tests/data")
 target_link_libraries(unit_tests gtest_main gtest gmock metagraph-core metagraph-cli)

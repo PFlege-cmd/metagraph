@@ -45,9 +45,9 @@ extern "C"{
         for (int i = 0; i < no_of_sequences; i++) {
         std::cout << sequence_lengths[i] << std::endl;
     }
-
+    static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
     HitsPerSequence* results = new HitsPerSequence();
-    do_pantools_work(genome_name, sequence_lengths, no_of_sequences, results, read);
+    do_pantools_work(genome_name, sequence_lengths, no_of_sequences, results, read, graph);
 
     return results;
 
@@ -101,8 +101,8 @@ extern "C"{
 void do_pantools_work(char* genome_name,
              int* sequence_lengths,
              int no_of_sequences,
-             HitsPerSequence*& results, char* read_ptr) {
-    static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
+             HitsPerSequence*& results, char* read_ptr, std::shared_ptr< AnnotatedDBG> graph) {
+    //static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
     std::string_view read = read_ptr;
         //"AGTACCAGAGATTCCTAGAGGCATAC";
     // std::string_view genome = "../succinct_data/zapdos.fasta";
