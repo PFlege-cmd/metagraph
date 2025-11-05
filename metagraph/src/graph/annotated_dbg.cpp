@@ -581,8 +581,11 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
     std::vector<int> candidate_coords;
     std::vector<std::array<int, 2>> kmer_positions;
 
+    int step_size = read_length / 15;
+    step_size = (step_size == 0 ? 1 : step_size);
+
     int k = get_graph().get_k();
-    for (int position = 0; position < (int) read.size(); ++position) {
+    for (int position = 0; position < (int) read.size(); position += step_size) {
         std::string_view current_kmer = read.substr(position, k);
         if ((int) current_kmer.size() < k)
             break;
@@ -637,12 +640,18 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
     std::vector<int> candidate_coords;
     std::vector<std::array<int, 2>> kmer_positions;
 
+    int step_size = read_length / 15;
+    step_size = (step_size == 0 ? 1 : step_size);
+
     int k = get_graph().get_k();
-    for (int position = (int) read.size() - 1; position > 0; --position) {
-        std::string_view current_kmer = read.substr(position - k + 1, position);
+    for (int position = (int) read.size() - k; position > 0; --position -= step_size) {
+        std::string_view current_kmer = read.substr(position, k);
         std::cout << current_kmer <<  ": is current kmer!" << std::endl;
-        if ((int) current_kmer.size() < k)
+        if ((int) current_kmer.size() < k) {
+            std::cout << "Break for KMER: " <<  current_kmer << std::endl;
             break;
+        }
+
         std::cout << current_kmer << std::endl;
         std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
         std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
@@ -662,12 +671,14 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
                                             sequence_lengths, target_and_position);
                 int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
                 int pantools_location = target_and_position[0];
-                int loc = pantools_location - position - k; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
+                int loc = pantools_location - position; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
 
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);
                     std::cout << target_sequence + 1 << " - " << loc << std::endl;
-                    kmer_positions.push_back({target_sequence + 1, -loc});
+                    kmer_positions.push_back({target_sequence + 1, -loc + 1});
+                } else {
+                    std::cout << "OUT OF BOUNDS!" << " - " << loc << std::endl;
                 }
             }
         }
