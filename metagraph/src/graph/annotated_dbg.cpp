@@ -560,6 +560,8 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(s
 
     std::string reverse_read = std::string(read);
     reverse_complement(reverse_read);
+
+    std::cout << "REVERSE READ: " << reverse_read << std::endl;
     std::string_view reverse_read_view = reverse_read;
     std::vector<std::array<int, 2>> kmer_positions_reverse = read_mapping_pantools_reverse(reverse_read_view, genome, sequence_lengths_vector);
 
@@ -637,7 +639,8 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
 
     int k = get_graph().get_k();
     for (int position = (int) read.size() - 1; position > 0; --position) {
-        std::string_view current_kmer = read.substr(position, k);
+        std::string_view current_kmer = read.substr(position - k + 1, position);
+        std::cout << current_kmer <<  ": is current kmer!" << std::endl;
         if ((int) current_kmer.size() < k)
             break;
         std::cout << current_kmer << std::endl;
@@ -659,7 +662,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
                                             sequence_lengths, target_and_position);
                 int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
                 int pantools_location = target_and_position[0];
-                int loc = pantools_location - (read_length - position) - k; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
+                int loc = pantools_location - position - k; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
 
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);
