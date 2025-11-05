@@ -29,6 +29,7 @@
 #include "cli/server.hpp"
 #include "cli/transform_graph.hpp"
 #include "cli/transform_annotation.hpp"
+#include <chrono>
 using namespace mtg::graph;
 namespace fs = std::filesystem;
 
@@ -100,13 +101,41 @@ extern "C"{
 
 extern "C"{
     void construct_graph_from_pantools() {
-        int argc = 9;
+
+        /*
+
+        build
+-v
+-p
+4
+-k
+19
+-o
+graph
+../pecto_dickeya_input/genomes/GCF_000147055.1_ASM14705v1_genomic.fasta
+../pecto_dickeya_input/genomes/GCF_000803215.1_ASM80321v1_genomic.fasta
+../pecto_dickeya_input/genomes/GCF_000808115.1_ASM80811v1_genomic.fasta
+../pecto_dickeya_input/genomes/GCF_000808375.1_ASM80837v1_genomic.fasta
+../pecto_dickeya_input/genomes/GCF_002904195.1_ASM290419v1_genomic.fasta
+../pecto_dickeya_input/genomes/GCF_003595035.1_ASM359503v1_genomic.fasta
+         */
+        int argc = 14;
         char** argv = (char**)malloc(argc * sizeof(const char*));
         argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
-        argv[1] = (char *)"query";
-        argv[2] = (char *)"--query-mode";
-        argv[3] = (char *)"coords";
-        argv[4] = (char *)"-i";
+        argv[1] = (char *)"build";
+        argv[2] = (char *)"-v";
+        argv[3] = (char *)"-p";
+        argv[4] = (char *)"4";
+        argv[5] = (char *) "-k";
+        argv[6] = (char *)"19";
+        argv[7] = (char *)"-o";
+        argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_output/graph_ara";
+        argv[9] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_028009825.2_Col-CC_genomic.fna";
+        argv[10] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_051624255.1_T8_assembly_genomic.fna";
+        argv[11] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_051624265.1_F8_assembly_genomic.fna";
+        argv[12] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_946409825.1_Tanz-1.10024.PacbioHiFiAssembly_genomic.fna";
+        argv[13] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCF_000001735.4_TAIR10.1_genomic.fna";
+
 
         /*
         argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/graph.dbg";
@@ -124,13 +153,17 @@ extern "C"{
         std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
         */
 
-        argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
-        argv[6] = (char *)"-a";
-        argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.brwt_coord.annodbg";
-        argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
+        //argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
+        //argv[6] = (char *)"-a";
+        //argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.brwt_coord.annodbg";
+        //argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
         auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-
+        auto beg = std::chrono::high_resolution_clock::now();
         build_graph(config.get());
+        auto end = std::chrono::high_resolution_clock::now();
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
+        std::cout << "Graph CONSTRUCTION TIME: " << duration.count() << " microseconds" << std::endl;
     }
 }
 
