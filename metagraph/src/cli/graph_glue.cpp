@@ -11,6 +11,24 @@
 
 #include "graph/annotated_dbg.hpp"
 #include "graph/representation/succinct/dbg_succinct.hpp"
+
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+#include "common/logger.hpp"
+#include "common/algorithms.hpp"
+#include "cli/config/config.hpp"
+#include "cli/build.hpp"
+#include "cli/annotate.hpp"
+#include "cli/stats.hpp"
+#include "cli/augment.hpp"
+#include "cli/clean.hpp"
+#include "cli/merge.hpp"
+#include "cli/align.hpp"
+#include "cli/query.hpp"
+#include "cli/assemble.hpp"
+#include "cli/server.hpp"
+#include "cli/transform_graph.hpp"
+#include "cli/transform_annotation.hpp"
 using namespace mtg::graph;
 namespace fs = std::filesystem;
 
@@ -77,6 +95,42 @@ extern "C"{
         char * result = (char*)malloc(seq.length() + 1);
         std::strcpy(result, seq.c_str());
         return result;
+    }
+}
+
+extern "C"{
+    void construct_graph_from_pantools() {
+        int argc = 9;
+        char** argv = (char**)malloc(argc * sizeof(const char*));
+        argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
+        argv[1] = (char *)"query";
+        argv[2] = (char *)"--query-mode";
+        argv[3] = (char *)"coords";
+        argv[4] = (char *)"-i";
+
+        /*
+        argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/graph.dbg";
+        argv[6] = (char *)"-a";
+        argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/anno.column_coord.annodbg";
+        argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/test.fasta";
+        auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+        std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/graph.dbg";
+
+        argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
+        argv[6] = (char *)"-a";
+        argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/anno.column_coord.annodbg";
+        argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/test.fasta";
+        auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+        std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
+        */
+
+        argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
+        argv[6] = (char *)"-a";
+        argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.brwt_coord.annodbg";
+        argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
+        auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+
+        build_graph(config.get());
     }
 }
 
