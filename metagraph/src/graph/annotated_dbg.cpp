@@ -555,7 +555,10 @@ AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index>& nodes,
 }
 
 std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector){
-   std::vector<std::array<int, 2>> kmer_positions = (std::vector<std::array<int, 2>>){};
+   std::vector<std::array<int, 2>> kmer_positions = read_mapping_pantools(read, genome, sequence_lengths_vector);
+    std::vector<std::array<int, 2>> kmer_positions_reverse = read_mapping_pantools_reverse(read, genome, sequence_lengths_vector);
+
+    kmer_positions.insert(kmer_positions.end(), kmer_positions_reverse.begin(), kmer_positions_reverse.end());
    return kmer_positions;
 }
 
@@ -615,6 +618,62 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
     return kmer_positions;
 }
 
+std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths) {
+    //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
+    //TODO: For now, assume that a sequence is a genome.
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    int read_length = read.length();
+    //int sequence_length = 44;
+    std::vector<int> candidate_coords;
+    std::vector<std::array<int, 2>> kmer_positions;
+
+    int k = get_graph().get_k();
+    for (int position = 0; position < (int) read.size(); ++position) {
+        std::string_view current_kmer = read.substr(position, k);
+        if ((int) current_kmer.size() < k)
+            break;
+        std::cout << current_kmer << std::endl;
+        std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
+        std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
+        for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
+            std::string current_genome = std::get<0>(coordinates[coord_idx]);
+            if (current_genome != genome_name) {
+                continue;
+            }
+            auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
+            auto coords_for_genome_size = coords_for_genome[0].size();
+            for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
+                //std::cout << current_genome << std::endl;
+                std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
+                //std::cout << read_length << std::endl;
+                std::array<int,2>  target_and_position = {0, 0};
+                calculate_sequence_location_reverse(coords_for_genome[0][current_coord_idx],
+                                            sequence_lengths, target_and_position);
+                int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
+                int pantools_location = target_and_position[0];
+                int loc = pantools_location + read_length -  position + k - 1; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
+
+                if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
+                    candidate_coords.push_back(loc);
+                    std::cout << target_sequence + 1 << " - " << loc << std::endl;
+                    kmer_positions.push_back({target_sequence + 1, -loc});
+                }
+            }
+        }
+    }
+    std::cout << candidate_coords.size() << std::endl;
+    std::vector<std::array<int, 3>> node_results;
+    for (int loc: candidate_coords) {
+        std::array<int, 3> result = {4, 1, loc};
+        node_results.push_back(result);
+        std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
+    }
+    return kmer_positions;
+}
+
 void AnnotatedDBG::array_fun(int* pointy, int arr_size_1, int arr_size_2) {
     for (int i = 0; i < arr_size_1; ++i) {
         for (int j = 0; j < arr_size_2; ++j) {
@@ -625,7 +684,25 @@ void AnnotatedDBG::array_fun(int* pointy, int arr_size_1, int arr_size_2) {
 
 void AnnotatedDBG::calculate_sequence_location(unsigned long coord, const std::vector<int>& sequence_lengths, std::array<int, 2>& position_and_location) {
     int current_length = 0;
-    int k = 7;
+    int k = get_graph().get_k();
+    int target_sequence = -1;
+    for (int i = 0; i < (int)sequence_lengths.size(); i++) {
+        int seq_length = sequence_lengths[i] - k + 1;
+        if ((int) coord >= current_length && (int) coord < current_length + seq_length) {
+            target_sequence = i;
+            break;
+        }
+        current_length += seq_length;
+    }
+
+    int pantools_location = coord - current_length;
+    position_and_location[0] = pantools_location;
+    position_and_location[1] = target_sequence;
+}
+
+void AnnotatedDBG::calculate_sequence_location_reverse(unsigned long coord, const std::vector<int>& sequence_lengths, std::array<int, 2>& position_and_location) {
+    int current_length = 0;
+    int k = get_graph().get_k();
     int target_sequence = -1;
     for (int i = 0; i < (int)sequence_lengths.size(); i++) {
         int seq_length = sequence_lengths[i] - k + 1;

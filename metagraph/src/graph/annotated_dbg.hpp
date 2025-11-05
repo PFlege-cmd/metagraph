@@ -140,9 +140,19 @@ class AnnotatedDBG : public AnnotatedSequenceGraph {
     void calculate_sequence_location(unsigned long coord,
                                      const std::vector<int>& sequence_lengths,
                                      std::array<int, 2>& position_and_location);
+
+    void calculate_sequence_location_reverse(unsigned long coord,
+                                     const std::vector<int>& sequence_lengths,
+                                     std::array<int, 2>& position_and_location);
+
     std::vector<std::array<int, 2>> read_mapping_pantools(std::string_view& read,
                                                           std::string_view& genome_name,
                                                           std::vector<int>& sequence_lengths);
+
+    std::vector<std::array<int, 2>> read_mapping_pantools_reverse(std::string_view& read,
+                                                          std::string_view& genome_name,
+                                                          std::vector<int>& sequence_lengths);
+
     virtual std::vector<std::array<int, 2>> read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector);
     void array_fun(int* pointy, int arr_size_1, int arr_size_2);
 

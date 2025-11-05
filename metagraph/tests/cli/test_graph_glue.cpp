@@ -10,6 +10,8 @@
 
 TEST(pantools_interaction, call_graph) {
     mock_annotated_dbg mock_graph = mock_annotated_dbg();
-    EXPECT_CALL(mock_graph(), read_mapping_pantools_both_sides)
+    EXPECT_CALL(mock_graph, read_mapping_pantools_both_sides).Times(testing::AtMost(1));
+
+
 
 }
