@@ -10,6 +10,7 @@
 #include "common/vectors/vector_algorithm.hpp"
 #include "common/vector_map.hpp"
 #include "common/logger.hpp"
+#include "common/seq_tools/reverse_complement.hpp"
 #include "spdlog/fmt/bundled/ranges.h"
 
 #include <iostream>
@@ -556,7 +557,11 @@ AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index>& nodes,
 
 std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector){
    std::vector<std::array<int, 2>> kmer_positions = read_mapping_pantools(read, genome, sequence_lengths_vector);
-    std::vector<std::array<int, 2>> kmer_positions_reverse = read_mapping_pantools_reverse(read, genome, sequence_lengths_vector);
+
+    std::string reverse_read = std::string(read);
+    reverse_complement(reverse_read);
+    std::string_view reverse_read_view = reverse_read;
+    std::vector<std::array<int, 2>> kmer_positions_reverse = read_mapping_pantools_reverse(reverse_read_view, genome, sequence_lengths_vector);
 
     kmer_positions.insert(kmer_positions.end(), kmer_positions_reverse.begin(), kmer_positions_reverse.end());
    return kmer_positions;
@@ -574,7 +579,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
     std::vector<int> candidate_coords;
     std::vector<std::array<int, 2>> kmer_positions;
 
-    int k = 7;
+    int k = get_graph().get_k();
     for (int position = 0; position < (int) read.size(); ++position) {
         std::string_view current_kmer = read.substr(position, k);
         if ((int) current_kmer.size() < k)
@@ -631,7 +636,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
     std::vector<std::array<int, 2>> kmer_positions;
 
     int k = get_graph().get_k();
-    for (int position = 0; position < (int) read.size(); ++position) {
+    for (int position = (int) read.size() - 1; position > 0; --position) {
         std::string_view current_kmer = read.substr(position, k);
         if ((int) current_kmer.size() < k)
             break;
@@ -654,7 +659,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
                                             sequence_lengths, target_and_position);
                 int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
                 int pantools_location = target_and_position[0];
-                int loc = pantools_location + read_length -  position + k - 1; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
+                int loc = pantools_location - (read_length - position) - k; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
 
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);
