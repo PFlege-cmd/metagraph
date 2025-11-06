@@ -168,6 +168,31 @@ graph
 }
 
 extern "C"{
+    __attribute__((visibility("default")))
+    void annotate_from_pantools() {
+        int argc = 10;
+
+        char** argv = (char**)malloc(argc * sizeof(const char*));
+        argv[0] = (char *)"/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
+        argv[1] = (char *)"annotate";
+        argv[2] = (char *)"-v";
+        argv[3] = (char *)"-i";
+        argv[4] = (char *) "../a_thaliana_output/graph_ara.dbg";
+        argv[5] = (char *)"--anno-filename";
+        argv[6] = (char *)"--coordinates";
+        argv[7] = (char *)"-o";
+        argv[8] = (char *) "../a_thaliana_output/annotation";
+        argv[9] = (char *) "../a_thaliana_input/*";
+        auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+        auto beg = std::chrono::high_resolution_clock::now();
+        annotate_graph(config.get());
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
+        std::cout << "Graph ANNOTATION TIME FROM PANTOOLS: " << duration.count() << " microseconds" << std::endl;
+    }
+}
+
+extern "C"{
     const char *  retrieve_kmer_for_coordinates(int genome, int start) {
         std::cout << "Checking genome: " << std::endl;
         std::cout << genome << std::endl;
