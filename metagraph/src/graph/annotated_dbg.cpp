@@ -671,7 +671,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
                                             sequence_lengths, target_and_position);
                 int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
                 int pantools_location = target_and_position[0];
-                int loc = pantools_location - position; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
+                int loc = pantools_location - position +1; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
 
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);

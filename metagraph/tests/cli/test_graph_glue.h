@@ -5,7 +5,8 @@
 #ifndef TEST_GRAPH_GLUE_H
 #define TEST_GRAPH_GLUE_H
 
-
+#include <gtest/gtest.h>
+#include "cli/graph_glue.hpp"
 
 class test_graph_glue {
 

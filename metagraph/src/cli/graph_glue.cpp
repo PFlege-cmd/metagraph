@@ -37,7 +37,8 @@ extern "C"{
     __attribute__((visibility("default")))
     __attribute__((used))
     int get_very_special_secret_message() {
-        load_dbg();
+        graph_glue glue = graph_glue(0, NULL);
+        glue.load_dbg();
         return 42;
     }
 }
@@ -50,6 +51,7 @@ extern "C"{
         return y;
     }
 }
+
 struct HitsPerSequence {
     int* hitsPerSequence;
     int* sequenceOffsets;
@@ -62,13 +64,14 @@ struct HitsPerSequence {
 extern "C"{
     HitsPerSequence* retrieve_hits_for_genome(char * genome_name, int* sequence_lengths, int no_of_sequences, char * read) {
         for (int i = 0; i < no_of_sequences; i++) {
-        std::cout << sequence_lengths[i] << std::endl;
-    }
-    static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
-    HitsPerSequence* results = new HitsPerSequence();
-    do_pantools_work(genome_name, sequence_lengths, no_of_sequences, results, read, graph);
+            std::cout << sequence_lengths[i] << std::endl;
+        }
+        graph_glue glue = graph_glue(0, NULL);
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
+        HitsPerSequence* results = new HitsPerSequence();
+        glue.do_pantools_work(genome_name, sequence_lengths, no_of_sequences, results, read, graph);
 
-    return results;
+        return results;
 
     }
 
@@ -88,8 +91,9 @@ extern "C"{
 extern "C"{
     __attribute__((visibility("default")))
     __attribute__((used))
-    const char *  retrieve_sequence_for_coordinates(char * genome_name, int start, int end) {
-        static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
+    const char *  retrieve_sequence_for_coordinates(char * genome_name, long start, long end) {
+        graph_glue glue = graph_glue(0, NULL);
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
         std::string seq = graph->get_sequence_for_coords(genome_name, start, end);
         std::cout << "Checking genome: " << std::endl;
         std::cout << genome_name << std::endl;
@@ -168,21 +172,31 @@ graph
 }
 
 extern "C"{
+    void create_graph_external(char** cmd_args, int cmd_arg_number) {
+
+    }
+}
+
+extern "C"{
     __attribute__((visibility("default")))
     void annotate_from_pantools() {
-        int argc = 10;
+        int argc = 14;
 
         char** argv = (char**)malloc(argc * sizeof(const char*));
         argv[0] = (char *)"/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
         argv[1] = (char *)"annotate";
         argv[2] = (char *)"-v";
         argv[3] = (char *)"-i";
-        argv[4] = (char *) "../a_thaliana_output/graph_ara.dbg";
+        argv[4] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_output/graph_ara.dbg";
         argv[5] = (char *)"--anno-filename";
         argv[6] = (char *)"--coordinates";
         argv[7] = (char *)"-o";
-        argv[8] = (char *) "../a_thaliana_output/annotation";
-        argv[9] = (char *) "../a_thaliana_input/*";
+        argv[8] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_output/annotation";
+        argv[9] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_028009825.2_Col-CC_genomic.fna";
+        argv[10] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_051624255.1_T8_assembly_genomic.fna";
+        argv[11] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_051624265.1_F8_assembly_genomic.fna";
+        argv[12] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCA_946409825.1_Tanz-1.10024.PacbioHiFiAssembly_genomic.fna";
+        argv[13] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_input/GCF_000001735.4_TAIR10.1_genomic.fna";
         auto config = std::make_unique<mtg::cli::Config>(argc, argv);
         auto beg = std::chrono::high_resolution_clock::now();
         annotate_graph(config.get());
@@ -193,11 +207,44 @@ extern "C"{
 }
 
 extern "C"{
+    __attribute__((visibility("default")))
+        void compress_annotation_with_pantools() {
+
+        int argc = 12;
+        char** argv = (char**)malloc(argc * sizeof(const char*));
+
+        argv[0] = (char*) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
+        argv[1] = (char*) "transform_anno";
+        argv[2] = (char*) "-v";
+        argv[3] = (char*) "-p";
+        argv[4] = (char*) "18";
+        argv[5] = (char*) "--anno-type";
+        argv[6] = (char*) "brwt_coord";
+        argv[7] = (char*) "--greedy";
+        argv[8] = (char*) "-o";
+        argv[9] = (char*) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_output/anno";
+        argv[10] = (char*) "--coordinates";
+        argv[11] = (char*) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_output/annotation.column.annodbg";
+
+
+        auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+        auto beg = std::chrono::high_resolution_clock::now();
+        transform_annotation(config.get());
+        //std::vector<string> fname_vec = {"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_output/annotation.column.annodbg"};
+        //config->fnames = fname_vec;
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
+        std::cout << "Annotation COMPRESSION TIME: " << duration.count() << " microseconds" << std::endl;
+    }
+}
+
+extern "C"{
     const char *  retrieve_kmer_for_coordinates(int genome, int start) {
         std::cout << "Checking genome: " << std::endl;
         std::cout << genome << std::endl;
         std::cout << start << std::endl;
-        static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
+        graph_glue glue(0, NULL);
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
         std::string genome_name = graph->get_annotator().get_label_encoder().get_labels()[genome];
         std::string kmer = graph->get_kmer_for_coords(genome_name, start);
         char * result = (char*)malloc(kmer.length() + 1);
@@ -210,10 +257,33 @@ extern "C"{
     }
 }
 
-void do_pantools_work(char* genome_name,
+graph_glue::graph_glue(int argcount, char** argv) {
+    std::cout << "Creating Graph glue!" << std::endl;
+    cmd_arguments = (char**)malloc(argcount * sizeof(const char*));
+    argc = argcount;
+    for (int i = 0; i < argc; i++) {
+        cmd_arguments[i] = argv[i];
+        std::cout << "Arg " << i << " is: " << cmd_arguments[i] << std::endl;
+    }
+    int external_arg_counter = 0;
+    for (int i = 0; argv[i] != nullptr; i++) {
+        external_arg_counter++;
+    }
+    assert(external_arg_counter == argcount);
+}
+
+graph_glue::~graph_glue() {
+    std::cout << "Destroying Graph glue!" << std::endl;
+    for (int i = 0; i < argc; i++) {
+        delete cmd_arguments[i];
+    }
+}
+
+void graph_glue::do_pantools_work(char* genome_name,
              int* sequence_lengths,
              int no_of_sequences,
-             HitsPerSequence*& results, char* read_ptr, std::shared_ptr< AnnotatedDBG> graph) {
+             HitsPerSequence*& results,
+                      const char* read_ptr, const std::shared_ptr<AnnotatedDBG>& graph) {
     //static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
     std::string_view read = read_ptr;
         //"AGTACCAGAGATTCCTAGAGGCATAC";
@@ -264,15 +334,14 @@ void do_pantools_work(char* genome_name,
 
 }
 
-std::shared_ptr<AnnotatedDBG> load_dbg() {
-
+std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     int argc = 9;
     char** argv = (char**)malloc(argc * sizeof(const char*));
     argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
-    argv[1] = (char *)"query";
-    argv[2] = (char *)"--query-mode";
-    argv[3] = (char *)"coords";
-    argv[4] = (char *)"-i";
+    argv[1] = (char*)"query";
+    argv[2] = (char*)"--query-mode";
+    argv[3] = (char*)"coords";
+    argv[4] = (char*)"-i";
 
     /*
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/graph.dbg";
@@ -291,23 +360,42 @@ std::shared_ptr<AnnotatedDBG> load_dbg() {
     */
 
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
-    argv[6] = (char *)"-a";
+    argv[6] = (char*)"-a";
     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.brwt_coord.annodbg";
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-    std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
+    std::string filename
+            = "/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
 
-    std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
+    std::shared_ptr<DBGSuccinct> boss_graph
+            = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename);
-    std::shared_ptr<AnnotatedDBG> anno_graph =  mtg::cli::initialize_annotated_dbg(dbg, *config);
+    std::shared_ptr<AnnotatedDBG> anno_graph
+            = mtg::cli::initialize_annotated_dbg(dbg, *config);
 
-    std::cout << anno_graph->label_exists("pecto_dickeya_input/genomes/GCF_000803215.1_ASM80321v1_genomic.fna") << std::endl;
+    std::cout << anno_graph->label_exists(
+            "pecto_dickeya_input/genomes/GCF_000803215.1_ASM80321v1_genomic.fna")
+              << std::endl;
     std::cout << "Loading annotated graph from " << filename << std::endl;
-    uint numba = anno_graph -> get_graph().num_nodes();
-        //dbg.get->num_nodes();
+    uint numba = anno_graph->get_graph().num_nodes();
+    // dbg.get->num_nodes();
     std::cout << "Number of nodes: " << numba << std::endl;
-    //DBGSuccinct boss = *boss_graph;
-    //return DBGSuccinct(boss_graph.get(), DeBruijnGraph::BASIC);
-    //anno_graph->get_sequence_for_coords("FOOO", 0,2);
+    // DBGSuccinct boss = *boss_graph;
+    // return DBGSuccinct(boss_graph.get(), DeBruijnGraph::BASIC);
+    // anno_graph->get_sequence_for_coords("FOOO", 0,2);
     return anno_graph;
+}
+
+char** graph_glue::get_cmd_arguments() {
+    return cmd_arguments;
+}
+
+void graph_glue::set_cmd_arguments(char *arguments[]) {
+    for (int i = 0; arguments[i] != NULL; i++) {
+        cmd_arguments[i] = arguments[i];
+    }
+}
+
+int graph_glue::get_cmd_arg_count() {
+    return argc;
 }

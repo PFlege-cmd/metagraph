@@ -280,6 +280,11 @@ int transform_annotation(Config *config) {
     assert(config);
 
     const auto &files = config->fnames;
+    std::cout << "FILE NAMES: " << std::endl;
+    for (const auto &file : files) {
+        std::cout << file << std::endl;
+        std::cout << file << std::endl;
+    }
 
     if (config->anno_type == Config::RowDiff && !files.size()) {
         // Only prepare for the row-diff transform:

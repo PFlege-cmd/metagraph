@@ -69,7 +69,15 @@ int main(int argc, char *argv[]) {
             return cli::print_stats(config.get());
 
         case Config::TRANSFORM_ANNOTATION:
-            return cli::transform_annotation(config.get());
+            {
+                for (int i = 0; i < argc; i++) {
+                    std::string arg = argv[i];
+                    std::cout << "Argument is : " << arg << std::endl;
+                    std::cout << arg << std::endl;
+                }
+                return cli::transform_annotation(config.get());
+            }
+
 
         case Config::TRANSFORM:
             return cli::transform_graph(config.get());
