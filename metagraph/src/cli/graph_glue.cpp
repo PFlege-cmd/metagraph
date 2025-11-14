@@ -259,17 +259,17 @@ extern "C"{
 
 graph_glue::graph_glue(int argcount, char** argv) {
     std::cout << "Creating Graph glue!" << std::endl;
-    cmd_arguments = (char**)malloc(argcount * sizeof(const char*));
+    cmd_arguments = (char**)calloc(argcount, sizeof(const char*));
     argc = argcount;
     for (int i = 0; i < argc; i++) {
         cmd_arguments[i] = argv[i];
         std::cout << "Arg " << i << " is: " << cmd_arguments[i] << std::endl;
     }
-    int external_arg_counter = 0;
-    for (int i = 0; argv[i] != nullptr; i++) {
-        external_arg_counter++;
-    }
-    assert(external_arg_counter == argcount);
+    //int external_arg_counter = 0;
+    //for (int i = 0; argv[i] != nullptr; i++) {
+    //    external_arg_counter++;
+    //}
+    //assert(external_arg_counter == argcount);
 }
 
 graph_glue::~graph_glue() {
@@ -278,6 +278,11 @@ graph_glue::~graph_glue() {
         delete cmd_arguments[i];
     }
 }
+
+void graph_glue::set_cli_caller(AbstractCommandLineInterface& cli) {
+    cli_caller = &cli;
+}
+
 
 void graph_glue::do_pantools_work(char* genome_name,
              int* sequence_lengths,
@@ -398,4 +403,12 @@ void graph_glue::set_cmd_arguments(char *arguments[]) {
 
 int graph_glue::get_cmd_arg_count() {
     return argc;
+}
+
+unique_ptr<mtg::cli::Config> graph_glue::create_config() {
+    return cli_caller->get_config(argc, cmd_arguments);
+}
+
+void graph_glue::call_cmdline_flow(const std::unique_ptr<mtg::cli::Config>& config) {
+    cli_caller->call_flow(config);
 }

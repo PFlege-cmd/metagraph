@@ -4,10 +4,13 @@
 
 #ifndef GRAPH_GLUE_H
 #define GRAPH_GLUE_H
+#include "cli_caller.hpp"
 #include "graph/representation/succinct/dbg_succinct.hpp"
 #include "graph/annotated_dbg.hpp"
+#include "cli/config/config.hpp"
 
 using namespace mtg::graph;
+using namespace mtg::cli;
 struct HitsPerSequence;
 class graph_glue {
     public:
@@ -22,11 +25,15 @@ class graph_glue {
     );
     char** get_cmd_arguments();
     int get_cmd_arg_count();
+    unique_ptr<Config> create_config();
+    void call_cmdline_flow(const std::unique_ptr<mtg::cli::Config>& config);
     void set_cmd_arguments(char* arguments[]);
+    void set_cli_caller(AbstractCommandLineInterface& cli);
 
     private:
         char** cmd_arguments;
         int argc;
+        AbstractCommandLineInterface* cli_caller;
 };
 
 struct HitsPerSequence;
