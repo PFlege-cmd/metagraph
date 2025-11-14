@@ -173,7 +173,14 @@ graph
 
 extern "C"{
     void create_graph_external(char** cmd_args, int cmd_arg_number) {
+        graph_glue glue = graph_glue(cmd_arg_number, cmd_args);
 
+        CommandLineInterfaceCaller caller = CommandLineInterfaceCaller();
+        AbstractCommandLineInterface * caller_interface = &caller;
+        glue.set_cli_caller(*caller_interface);
+        std::unique_ptr<Config> config = glue.create_config();
+
+        glue.call_cmdline_flow(config);
     }
 }
 
