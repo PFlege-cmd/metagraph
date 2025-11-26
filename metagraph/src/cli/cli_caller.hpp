@@ -10,5 +10,5 @@
 class CommandLineInterfaceCaller : public AbstractCommandLineInterface{
     public:
         std::unique_ptr<mtg::cli::Config> get_config(int argc, char** cmd_arguments) override;
-        void call_flow(const std::unique_ptr<mtg::cli::Config>& config) override;
+        int call_flow(const std::unique_ptr<mtg::cli::Config>& config) override;
 };

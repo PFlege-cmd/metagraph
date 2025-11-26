@@ -466,10 +466,14 @@ file(GLOB metagraph_cli_files
   "src/cli/*/*.cpp"
   "src/cli/*/*/*.cpp"
 )
-add_library(metagraph-cli STATIC ${metagraph_cli_files})
+add_library(metagraph-cli STATIC ${metagraph_cli_files}
+        src/cli/GraphWrapper.cpp
+        src/cli/GraphWrapper.hpp)
 add_dependencies(metagraph-core HTSLIB)
 
-add_executable(metagraph "src/main.cpp")
+add_executable(metagraph "src/main.cpp"
+        src/cli/SequenceRetriever.cpp
+        src/cli/SequenceRetriever.h)
 set_target_properties(metagraph PROPERTIES OUTPUT_NAME "metagraph_${CMAKE_DBG_ALPHABET}")
 
 set(METALIBS ${METALIBS}
@@ -617,7 +621,8 @@ add_executable(unit_tests ${unit_tests_files}
         tests/cli/test_graph_glue.cpp
         tests/cli/test_graph_glue.h
         tests/cli/mock_annotated_dbg.cpp
-        tests/cli/mock_annotated_dbg.h)
+        tests/cli/mock_annotated_dbg.h
+        tests/cli/test_graph_wrapper.cpp)
 target_include_directories(unit_tests PRIVATE "${PROJECT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE TEST_DATA_DIR="${PROJECT_SOURCE_DIR}/tests/data")
 target_link_libraries(unit_tests gtest_main gtest gmock metagraph-core metagraph-cli)
@@ -644,6 +649,10 @@ target_compile_options(benchmarks PRIVATE)
 set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         src/cli/cli_caller.cpp
         src/cli/cli_caller_interface.hpp
+        src/cli/DeBruijnGraphWrapper.cpp
+        src/cli/DeBruijnGraphWrapper.h
+        src/cli/GraphWrapper.cpp
+        src/cli/GraphWrapper.hpp
 )
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})
 target_link_libraries(libmetagraph-cli PRIVATE metagraph-core metagraph-cli)

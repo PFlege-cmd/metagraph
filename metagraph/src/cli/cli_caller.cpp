@@ -15,17 +15,21 @@ std::unique_ptr<mtg::cli::Config> CommandLineInterfaceCaller::get_config(int arg
     return make_unique<mtg::cli::Config>(argc,cmd_arguments);
 }
 
-void CommandLineInterfaceCaller::call_flow(const std::unique_ptr<mtg::cli::Config>& config) {
-        switch (config->identity) {
-            case mtg::cli::Config::BUILD:
-                mtg::cli::build_graph(config.get());
+int CommandLineInterfaceCaller::call_flow(const std::unique_ptr<mtg::cli::Config>& config) {
+    std::cout << "Identity is: "<< std::endl;
+    std::cout << config->identity << std::endl;
 
-            case mtg::cli::Config::ANNOTATE:
-                mtg::cli::annotate_graph(config.get());
+    switch (config->identity) {
+        case mtg::cli::Config::BUILD:
+            return mtg::cli::build_graph(config.get());
 
-            case mtg::cli::Config::TRANSFORM_ANNOTATION:
-                mtg::cli::transform_annotation(config.get());
-            default:
-                std::cerr << "Unknown config type" << std::endl;
+        case mtg::cli::Config::ANNOTATE:
+            return mtg::cli::annotate_graph(config.get());
+
+        case mtg::cli::Config::TRANSFORM_ANNOTATION:
+            return mtg::cli::transform_annotation(config.get());
+
+        default:
+            return 1;
         }
 }

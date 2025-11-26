@@ -84,6 +84,18 @@ extern "C"{
     }
 }
 
+extern "C"{
+
+    const char * retrieve_sequence_for_coordinates_with_anchor(char * anchor_sequence, long anchor_position, char * genome_name, long start, long end) {
+        graph_glue glue = graph_glue(0, NULL);
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
+
+        return "r";
+
+    }
+
+}
+
 
 
 
@@ -172,15 +184,20 @@ graph
 }
 
 extern "C"{
-    void create_graph_external(char** cmd_args, int cmd_arg_number) {
+    void create_graph_external(int cmd_arg_number, char** cmd_args) {
         graph_glue glue = graph_glue(cmd_arg_number, cmd_args);
 
         CommandLineInterfaceCaller caller = CommandLineInterfaceCaller();
         AbstractCommandLineInterface * caller_interface = &caller;
         glue.set_cli_caller(*caller_interface);
         std::unique_ptr<Config> config = glue.create_config();
-
+        std::cout << "CALL SUCCESSFUL! " << std::endl;
+        auto beg = std::chrono::high_resolution_clock::now();
         glue.call_cmdline_flow(config);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
+        std::cout << "Graph ANNOTATION TIME FROM PANTOOLS: " << duration.count() << " microseconds" << std::endl;
+
     }
 }
 
@@ -373,7 +390,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
 
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
     argv[6] = (char*)"-a";
-    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.brwt_coord.annodbg";
+    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.column_coord.annodbg";
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
     std::string filename

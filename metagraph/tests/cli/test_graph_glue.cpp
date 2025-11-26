@@ -21,7 +21,7 @@ using testing::_;
 class MockCLICaller : public AbstractCommandLineInterface {
     public:
         MOCK_METHOD(unique_ptr<Config>, get_config, (int argc, char** cmd_arguments), ());
-        MOCK_METHOD(void, call_flow, (const unique_ptr<Config>&), ());
+        MOCK_METHOD(int, call_flow, (const unique_ptr<Config>&), ());
 };
 
 
