@@ -1,5 +1,7 @@
 #include "transform_annotation.hpp"
 
+#include "graph_glue.hpp"
+
 #include <progress_bar.hpp>
 
 #include "common/logger.hpp"
@@ -278,6 +280,9 @@ convert_to_IntMultiBRWT(const std::vector<std::string> &files,
 
 int transform_annotation(Config *config) {
     assert(config);
+
+    auto graph_pt = graph_glue(0, NULL).load_dbg();
+
 
     const auto &files = config->fnames;
     std::cout << "FILE NAMES: " << std::endl;

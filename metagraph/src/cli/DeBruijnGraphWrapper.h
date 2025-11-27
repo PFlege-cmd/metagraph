@@ -10,7 +10,7 @@
 class DeBruijnGraphWrapper : public GraphWrapper {
     public:
     typedef std::string Label;
-    typedef uint64_t node_in;
+    typedef uint64_t node_index;
     explicit DeBruijnGraphWrapper(mtg::graph::AnnotatedDBG &graph);
     ~DeBruijnGraphWrapper();
     long retrieveAnchorCoordinates(std::string anchor_sequence,
@@ -18,7 +18,7 @@ class DeBruijnGraphWrapper : public GraphWrapper {
                                    std::string genome_name) override;
     uint64_t retrieveAnchorId(std::string anchor_sequence) override;
     const char * get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end) override;
-    uint64_t get_first_node_of_coord_range(uint64_t anchor_index, long long start) override;
+    uint64_t get_first_node_of_coord_range(uint64_t anchor_index, long long start, std::string genome_name) override;
 
 };
 

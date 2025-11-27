@@ -20,7 +20,7 @@ SequenceRetriever::node_index SequenceRetriever::retrieveAnchorId(std::string an
 
 SequenceRetriever::node_index SequenceRetriever::retrieveStartId(node_index anchor_index) {
     std::cout << "retrieveStartId: " << anchor_index << std::endl;
-    node_index start_node_id = mWrapper.get_first_node_of_coord_range(anchor_index, mSequenceStart);
+    node_index start_node_id = mWrapper.get_first_node_of_coord_range(anchor_index, mSequenceStart, std::string(mGenome));
     return start_node_id;
 }
 

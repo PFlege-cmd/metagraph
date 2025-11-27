@@ -25,7 +25,7 @@ class GraphWrapper {
                                                                      std::string genome_name) = 0;
         virtual node_index retrieveAnchorId(std::string anchor_sequence) = 0;
         virtual const char * get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end) = 0;
-        virtual node_index get_first_node_of_coord_range(node_index anchor_index, long long start) = 0;
+        virtual node_index get_first_node_of_coord_range(node_index anchor_index, long long start, std::string genome_name) = 0;
         mtg::graph::AnnotatedDBG * get_graph() const {
             return graph_;
         }
