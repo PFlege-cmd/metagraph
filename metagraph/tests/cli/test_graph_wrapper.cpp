@@ -23,7 +23,7 @@ class MockGraphWrapper : public GraphWrapper {
         MOCK_METHOD(long,retrieveAnchorCoordinates, (std::string anchor_sequence, long anchor_position, std::string genome_name), (override));
         MOCK_METHOD(uint64_t, retrieveAnchorId, (std::string), (override));
         MOCK_METHOD((const char *), get_sequence_for_coords, (std::string, unsigned long long, unsigned long long), (override));
-        MOCK_METHOD(uint64_t, get_first_node_of_coord_range, (uint64_t, long long start, std::string), (override));
+        MOCK_METHOD(uint64_t, get_first_node_of_coord_range, (uint64_t, long long start_anchor, std::string, long long start_sequence), (override));
         //std::vector<std::tuple<std::string, size_t, std::vector<SmallVector<uint64_t>>>> retrieveAnchorCoordinates(char* anchor_sequence, long anchor_position, char* genome_name) override;
 };
 
@@ -81,7 +81,7 @@ TEST(TestGraphWrapper, testGetFirstNodeOfSearchedSequenceId) {
     uint64_t anchor_node_id = 21;
     uint64_t start_node_id = 42;
 
-    EXPECT_CALL(wrapper, get_first_node_of_coord_range(anchor_node_id, sequenceStart, std::string(genome_name))).WillOnce(Return(start_node_id));
+    EXPECT_CALL(wrapper, get_first_node_of_coord_range(anchor_node_id, anchor_position, std::string(genome_name), sequenceStart)).WillOnce(Return(start_node_id));
 
     uint64_t actual_start_id = retriever.retrieveStartId(anchor_node_id);
 

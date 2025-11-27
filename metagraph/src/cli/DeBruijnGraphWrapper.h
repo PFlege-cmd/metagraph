@@ -18,7 +18,7 @@ class DeBruijnGraphWrapper : public GraphWrapper {
                                    std::string genome_name) override;
     uint64_t retrieveAnchorId(std::string anchor_sequence) override;
     const char * get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end) override;
-    uint64_t get_first_node_of_coord_range(uint64_t anchor_index, long long start, std::string genome_name) override;
+    uint64_t get_first_node_of_coord_range(uint64_t anchor_index, long long start_anchor, std::string genome_name, long long start_sequence) override;
 
 };
 

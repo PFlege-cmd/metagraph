@@ -94,6 +94,10 @@ extern "C"{
         AnnotatedDBG* graph_ptr = graph.get();
         DeBruijnGraphWrapper wrapper(*graph_ptr);// =  new DeBruijnGraphWrapper(*graph_ptr);
         SequenceRetriever retriever(wrapper);
+        retriever.setGenome(genome_name);
+        retriever.setAnchorPosition(anchor_position);
+        retriever.setSequenceStart(start);
+        retriever.setSequenceEnd(end);
 
         uint64_t start_id = retriever.retrieveAnchorId(anchor_sequence);
         uint64_t end_id = retriever.retrieveStartId(start_id);
@@ -101,6 +105,9 @@ extern "C"{
         std::cout << "END_ID: " << end_id << std::endl;
         std::string seq_end_id = graph_ptr->get_graph().get_node_sequence(end_id);
         std::cout << "Sequence end ID: " << seq_end_id << std::endl;
+
+
+
         return "r";
     }
 
@@ -397,14 +404,19 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
     std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
     */
-
+    /*
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
     argv[6] = (char*)"-a";
     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.column_coord.annodbg";
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
+    /*/
+    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
+    argv[6] = (char*)"-a";
+    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/anno.column_coord.annodbg";
+    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/test.fasta";
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
     std::string filename
-            = "/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
+            = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
 
     std::shared_ptr<DBGSuccinct> boss_graph
             = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);

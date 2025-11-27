@@ -12,16 +12,77 @@ DeBruijnGraphWrapper::~DeBruijnGraphWrapper() {
 long DeBruijnGraphWrapper::retrieveAnchorCoordinates(std::string anchor_sequence,
                                                                 long anchor_position,
                                                                 std::string genome_name) {
-    return 0;
+     //TODO: For now,those are hardcoded. get rid of this ugly setup somehow
+     unsigned long long num_top_labels = 4294967295;
+     const double discovery_fraction = 0.699999999999996;
+     const double presence_fraction = 0.0;
+
+     std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> anchor_coords
+                         = this->get_graph()->get_kmer_coordinates(anchor_sequence, num_top_labels,
+                                                                   discovery_fraction,
+                                                                   presence_fraction);
+
+     //node_index anchor_id = get_graph()->get_graph().find(anchor_sequence);
+    std::cout << "anchor coords Size: " << anchor_coords.size() << std::endl;
+     for (unsigned long k = 0; k < anchor_coords.size(); ++k) {
+         std::string curr_genome = std::get<0>(anchor_coords[k]);
+         std::cout << "Current genome of coordinate: " << k << ": " << curr_genome << std::endl;
+         std::cout << "Input genome name: " << genome_name << std::endl;
+         if (std::get<0>(anchor_coords[k]) != genome_name) {
+             //throw std::invalid_argument("Anchor not present in genome!");
+             continue;
+         }
+
+
+         auto x = std::get<2>(anchor_coords[k])[0];
+         //bool found = std::binary_search(x.begin(), x.end(), anchor_position);
+         //if (!found)
+         //    throw std::invalid_argument("Invalid anchor position");
+
+         // std::cout << "Size of range of coordinates: " <<
+         // std::get<2>(edge_node_coords[k])[0].size()<< std::endl;
+         auto extracted_coords = std::get<2>(anchor_coords[k]);
+         auto coordinate_size = extracted_coords[0].size();
+         std::cout << "Coordinate size is:" << " " << coordinate_size << std::endl;
+
+         for (unsigned long j = 0; j < coordinate_size; ++j) {
+             auto all_coords = extracted_coords[0];
+             auto potential_anchor_coord = extracted_coords[0][j];
+             std::cout << "Potential coords: " << potential_anchor_coord << std::endl;
+
+             // std::cout << outgoing_edge_coords << std::endl;
+             if (potential_anchor_coord == (unsigned long long) anchor_position) {
+                 std::cout << "Found anchor: " << std::endl;
+                 /*std::cout << this->get_graph()->get_graph().get_node_sequence(
+                         outgoing_nodes[i])
+                           << std::endl;*/
+                 std::cout << "Position: " << extracted_coords[0][j] << std::endl;
+                 //next_coordinate++;
+                 // auto next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
+                 /*found_next_coordinate = true;
+                 current_kmer = outgoing_nodes[i];
+                 outgoing_nodes.clear();*/
+                 // starting_kmer.append( 1, next_char);
+                 return potential_anchor_coord;
+             }
+         }
+         throw std::invalid_argument("Anchor position not there!");
+     }
+
+     throw std::invalid_argument("Invalid anchor position");
 }
 uint64_t DeBruijnGraphWrapper::retrieveAnchorId(std::string anchor_sequence) {
-    return 0;
+     std::vector<node_index> nodes;
+     nodes.reserve(anchor_sequence.size());
+     get_graph()->get_graph().map_to_nodes(anchor_sequence, [&](node_index i) { nodes.push_back(i); });
+     //node_index anchor_id = get_graph()->map_to_nodes(get_graph()->get_graph(), anchor_sequence);
+     return nodes[0];
 }
 const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end){
     return "o";
 }
 
-uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_index, long long start, std::string genome) {
+uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_index, long long start_anchor, std::string genome, long long start_range) {
 
      //TODO: For now,those are hardcoded. get rid of this ugly setup somehow
      unsigned long long num_top_labels = 4294967295;
@@ -31,9 +92,9 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
      uint64_t current_kmer = anchor_index;
      std::vector<uint64_t> outgoing_nodes;
 
-     unsigned long long next_coordinate = start + 1;
-
-     while (next_coordinate != (unsigned long long) start) {
+     unsigned long long next_coordinate = start_anchor + 1;
+     //TODO: Update this here correctly , instead of just next_coordinate
+     while (next_coordinate != (unsigned long long) start_range) {
          bool found_next_coordinate = false;
          bool one_outgoing
                  = this->get_graph()->get_graph().has_single_outgoing(current_kmer);
@@ -81,6 +142,7 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                      for (unsigned long j = 0; j < coordinate_size; ++j) {
                          auto all_coords = extracted_coords[0];
                          auto outgoing_edge_coords = extracted_coords[0][j];
+                         std::cout << "Outgoing edge coords: " << outgoing_edge_coords << std::endl;
                          // std::cout << outgoing_edge_coords << std::endl;
                          if (outgoing_edge_coords == next_coordinate) {
                              std::cout << "Found Next kmer: " << std::endl;
@@ -120,11 +182,11 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                                                                    presence_fraction);
                  for (unsigned long k = 0; k < edge_node_coords.size(); ++k) {
                      std::string curr_genome = std::get<0>(edge_node_coords[k]);
-                     /*if (std::get<0>(edge_node_coords[k]) != genome ) {
+                     if (std::get<0>(edge_node_coords[k]) != genome ) {
                          std::cout << "Not correct genome: " << std::endl;
                          std::cout << curr_genome<< std::endl;
                          continue;
-                     }*/ //TODO: Fix the degenerate issue here!
+                     } //TODO: Fix the degenerate issue here!
                      auto x = std::get<2>(edge_node_coords[k])[0];
                      // bool found  = binary_search(x.begin(), x.end(), next_coordinate);
                      /*
@@ -137,6 +199,9 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                      for (unsigned long j = 0;
                           j < std::get<2>(edge_node_coords[k])[0].size(); ++j) {
                          auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
+                         std::cout << "Outgoing edge coords: " << next_coor << std::endl;
+
+
                          std::cout << next_coor << std::endl;
 
                          // std::binary_search(std::get<2>(edge_node_coords[k])[0])
@@ -147,13 +212,19 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                                    << std::endl;
                          std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j]
                                    << std::endl;
-                         next_coordinate++;
+                         //next_coordinate++;
                          // char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
-                         found_next_coordinate = true;
-                         current_kmer = outgoing_nodes[i];
-                         outgoing_nodes.clear();
+                            if (std::get<2>(edge_node_coords[k])[0][j] == next_coordinate) {
+                                found_next_coordinate = true;
+                                current_kmer = outgoing_nodes[i];
+                                outgoing_nodes.clear();
+                                next_coordinate++;
+                                break;
+                            }
+                        // current_kmer = outgoing_nodes[i];
+                        // outgoing_nodes.clear();
                          // starting_kmer.append( 1, next_char);
-                         break;
+                         //break;
                          //}
                      }
                      if (found_next_coordinate)
@@ -163,7 +234,7 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                      break;
              }
          }
-         return current_kmer;
+         //return current_kmer;
      }
      return current_kmer;
 }
