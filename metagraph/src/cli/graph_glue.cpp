@@ -9,6 +9,8 @@
 #include "load/load_graph.hpp"
 #include "graph_glue.hpp"
 
+#include "DeBruijnGraphWrapper.h"
+#include "SequenceRetriever.h"
 #include "graph/annotated_dbg.hpp"
 #include "graph/representation/succinct/dbg_succinct.hpp"
 
@@ -89,9 +91,17 @@ extern "C"{
     const char * retrieve_sequence_for_coordinates_with_anchor(char * anchor_sequence, long anchor_position, char * genome_name, long start, long end) {
         graph_glue glue = graph_glue(0, NULL);
         static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
+        AnnotatedDBG* graph_ptr = graph.get();
+        DeBruijnGraphWrapper wrapper(*graph_ptr);// =  new DeBruijnGraphWrapper(*graph_ptr);
+        SequenceRetriever retriever(wrapper);
 
+        uint64_t start_id = retriever.retrieveAnchorId(anchor_sequence);
+        uint64_t end_id = retriever.retrieveStartId(start_id);
+
+        std::cout << "END_ID: " << end_id << std::endl;
+        std::string seq_end_id = graph_ptr->get_graph().get_node_sequence(end_id);
+        std::cout << "Sequence end ID: " << seq_end_id << std::endl;
         return "r";
-
     }
 
 }

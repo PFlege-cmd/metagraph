@@ -163,7 +163,7 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                      break;
              }
          }
-         return 0;
+         return current_kmer;
      }
-     return 0;
+     return current_kmer;
 }
