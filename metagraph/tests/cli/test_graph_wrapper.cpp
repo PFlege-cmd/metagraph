@@ -22,7 +22,7 @@ class MockGraphWrapper : public GraphWrapper {
         explicit MockGraphWrapper(mtg::graph::AnnotatedDBG& graph);
         MOCK_METHOD(long,retrieveAnchorCoordinates, (std::string anchor_sequence, long anchor_position, std::string genome_name), (override));
         MOCK_METHOD(uint64_t, retrieveAnchorId, (std::string), (override));
-        MOCK_METHOD((const char *), get_sequence_for_coords, (std::string, unsigned long long, unsigned long long), (override));
+        MOCK_METHOD((const char *), get_sequence_for_coords, (std::string, unsigned long long, unsigned long long, uint64_t start_index), (override));
         MOCK_METHOD(uint64_t, get_first_node_of_coord_range, (uint64_t, long long start_anchor, std::string, long long start_sequence), (override));
         //std::vector<std::tuple<std::string, size_t, std::vector<SmallVector<uint64_t>>>> retrieveAnchorCoordinates(char* anchor_sequence, long anchor_position, char* genome_name) override;
 };
@@ -86,4 +86,31 @@ TEST(TestGraphWrapper, testGetFirstNodeOfSearchedSequenceId) {
     uint64_t actual_start_id = retriever.retrieveStartId(anchor_node_id);
 
     ASSERT_EQ(start_node_id, actual_start_id);
+}
+
+TEST(TestGraphWrapper, testGetSequenceForRange) {
+    mtg::graph::AnnotatedDBG* graph = nullptr;
+    MockGraphWrapper wrapper(*graph);
+
+    SequenceRetriever retriever(wrapper);
+    const char * testsequence = "abcdefghijklmnopqrst";
+    std::string anchor_sequence = testsequence;
+    const char * genome_name = "gene_the_gene";
+    long long anchor_position = 2;
+    long long sequence_start= 10;
+    long long sequence_end = 20;
+    retriever.setAnchorPosition(anchor_position);
+    retriever.setGenome(genome_name);
+    retriever.setSequenceStart(sequence_start);
+    retriever.setSequenceEnd(sequence_end);
+
+    uint64_t start_node_id = 42;
+
+    std::string result_region = "ACACACACAT";
+
+    EXPECT_CALL(wrapper, get_sequence_for_coords(genome_name, sequence_start, sequence_end, start_node_id)).WillOnce(Return("ACACACACAT"));
+
+    std::string retrieved_region = retriever.retrieveRegionForRange(start_node_id);
+
+    ASSERT_EQ(result_region, retrieved_region);
 }
