@@ -78,7 +78,7 @@ uint64_t DeBruijnGraphWrapper::retrieveAnchorId(std::string anchor_sequence) {
      //node_index anchor_id = get_graph()->map_to_nodes(get_graph()->get_graph(), anchor_sequence);
      return nodes[0];
 }
-const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end){
+const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end, node_index start_index){
     return "o";
 }
 
@@ -93,8 +93,9 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
      std::vector<uint64_t> outgoing_nodes;
 
      unsigned long long next_coordinate = start_anchor + 1;
+     unsigned long long current_coordinate = start_anchor;
      //TODO: Update this here correctly , instead of just next_coordinate
-     while (next_coordinate != (unsigned long long) start_range) {
+     while (current_coordinate != (unsigned long long) start_range) {
          bool found_next_coordinate = false;
          bool one_outgoing
                  = this->get_graph()->get_graph().has_single_outgoing(current_kmer);
@@ -154,6 +155,7 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                              // auto next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                              found_next_coordinate = true;
                              current_kmer = outgoing_nodes[i];
+                             current_coordinate = outgoing_edge_coords;
                              outgoing_nodes.clear();
                              // starting_kmer.append( 1, next_char);
                              break;
@@ -214,10 +216,12 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                                    << std::endl;
                          //next_coordinate++;
                          // char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
-                            if (std::get<2>(edge_node_coords[k])[0][j] == next_coordinate) {
+                         unsigned long long edge_coords = std::get<2>(edge_node_coords[k])[0][j];
+                            if (edge_coords == next_coordinate) {
                                 found_next_coordinate = true;
                                 current_kmer = outgoing_nodes[i];
                                 outgoing_nodes.clear();
+                                current_coordinate = edge_coords;
                                 next_coordinate++;
                                 break;
                             }

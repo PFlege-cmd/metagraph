@@ -13,6 +13,7 @@ class SequenceRetriever {
         SequenceRetriever(GraphWrapper& wrapper);
         node_index retrieveAnchorId(std::string anchor_sequence);
         node_index retrieveStartId(node_index anchor_index);
+        std::string retrieveRegionForRange(node_index start_index);
 
         void setGenome(std::string genome);
         void setAnchorPosition(long long anchor_position);

@@ -26,6 +26,12 @@ SequenceRetriever::node_index SequenceRetriever::retrieveStartId(node_index anch
     return start_node_id;
 }
 
+std::string SequenceRetriever::retrieveRegionForRange(node_index start_index) {
+    std::string retrieved_region = mWrapper.get_sequence_for_coords(mGenome, mSequenceStart, mSequenceEnd, start_index);
+    return retrieved_region;
+}
+
+
 void SequenceRetriever::setGenome(std::string genome) {
     mGenome = genome.data();
 }
