@@ -88,12 +88,12 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
      uint64_t current_kmer = start_index;
      std::vector<uint64_t> outgoing_nodes;
      int size_kmer = this->get_graph()->get_graph().get_k();
-     std::string starting_kmer("");
+     std::string starting_kmer = this->get_graph()->get_graph().get_node_sequence(start_index);
 
      unsigned long long next_coordinate = start + 1;
      unsigned long long current_coordinate = start;
      //TODO: Update this here correctly , instead of just next_coordinate
-     while (current_coordinate != start) {
+     while (current_coordinate != end) {
          bool found_next_coordinate = false;
          bool one_outgoing
                  = this->get_graph()->get_graph().has_single_outgoing(current_kmer);
@@ -110,9 +110,9 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
          }
 
          if (multi_outgoing) {
-             std::cout << "Multiple outgoing in Search for kmer: "
+             /*std::cout << "Multiple outgoing in Search for kmer: "
                        << this->get_graph()->get_graph().get_node_sequence(current_kmer)
-                       << std::endl;
+                       << std::endl;*/
              this->get_graph()->get_graph().adjacent_outgoing_nodes(
                      current_kmer, [&](auto i) { outgoing_nodes.push_back(i); });
              for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
@@ -141,23 +141,25 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
                      for (unsigned long j = 0; j < coordinate_size; ++j) {
                          auto all_coords = extracted_coords[0];
                          auto outgoing_edge_coords = extracted_coords[0][j];
-                         std::cout << "Outgoing edge coords: " << outgoing_edge_coords << std::endl;
+                         //std::cout << "Outgoing edge coords: " << outgoing_edge_coords << std::endl;
                          // std::cout << outgoing_edge_coords << std::endl;
                          if (outgoing_edge_coords == next_coordinate) {
-                             std::cout << "Found Next kmer: " << std::endl;
+                             //std::cout << "Found Next kmer: " << std::endl;
                              std::cout << this->get_graph()->get_graph().get_node_sequence(
                                      outgoing_nodes[i])
                                        << std::endl;
-                             std::cout << "Position: " << extracted_coords[0][j] << std::endl;
+                             //std::cout << "Position: " << extracted_coords[0][j] << std::endl;
                              next_coordinate++;
                              // auto next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                              found_next_coordinate = true;
                              current_kmer = outgoing_nodes[i];
                              current_coordinate = outgoing_edge_coords;
-                             outgoing_nodes.clear();
-                             //auto next_char = this->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                              char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                              starting_kmer.append(1, next_char);
+                             //std::cout << "Current string: " << starting_kmer << std::endl;
+                             outgoing_nodes.clear();
+                             //auto next_char = this->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
+
 
                              // starting_kmer.append( 1, next_char);
                              break;
@@ -170,9 +172,9 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
                      break;
              }
          } else if (one_outgoing) {
-             std::cout << "SINGLE outgoing in Search for kmer: "
+             /*std::cout << "SINGLE outgoing in Search for kmer: "
                        << this->get_graph()->get_graph().get_node_sequence(current_kmer)
-                       << std::endl;
+                       << std::endl;*/
              this->get_graph()->get_graph().adjacent_outgoing_nodes(
                      current_kmer, [&](auto i) { outgoing_nodes.push_back(i); });
              for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
@@ -202,20 +204,20 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
 
                      for (unsigned long j = 0;
                           j < std::get<2>(edge_node_coords[k])[0].size(); ++j) {
-                         auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
-                         std::cout << "Outgoing edge coords: " << next_coor << std::endl;
+                         //auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
+                         //std::cout << "Outgoing edge coords: " << next_coor << std::endl;
 
 
-                         std::cout << next_coor << std::endl;
+                         //std::cout << next_coor << std::endl;
 
                          // std::binary_search(std::get<2>(edge_node_coords[k])[0])
                          // if (std::get<2>(edge_node_coords[k])[0][j] == next_coordinate) {
-                         std::cout << "Found Next kmer: " << std::endl;
-                         std::cout << this->get_graph()->get_graph().get_node_sequence(
-                                 outgoing_nodes[i])
-                                   << std::endl;
-                         std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j]
-                                   << std::endl;
+                         //std::cout << "Found Next kmer: " << std::endl;
+                         //std::cout << this->get_graph()->get_graph().get_node_sequence(
+                         //        outgoing_nodes[i])
+                         //          << std::endl;
+                         //std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j]
+                         //          << std::endl;
                          //next_coordinate++;
                          // char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                          unsigned long long edge_coords = std::get<2>(edge_node_coords[k])[0][j];
@@ -227,6 +229,7 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
                                 next_coordinate++;
                                 char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                                 starting_kmer.append(1, next_char);
+                                //std::cout << "Current string: " << starting_kmer << std::endl;
                                 break;
                             }
                         // current_kmer = outgoing_nodes[i];
@@ -244,11 +247,9 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
          }
          //return current_kmer;
      }
-     return starting_kmer.c_str();
 
-
-
-     return "o";
+     const  char * result = starting_kmer.c_str();
+     return result;
 }
 
 uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_index, long long start_anchor, std::string genome, long long start_range) {
@@ -312,14 +313,14 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                      for (unsigned long j = 0; j < coordinate_size; ++j) {
                          auto all_coords = extracted_coords[0];
                          auto outgoing_edge_coords = extracted_coords[0][j];
-                         std::cout << "Outgoing edge coords: " << outgoing_edge_coords << std::endl;
+                         //std::cout << "Outgoing edge coords: " << outgoing_edge_coords << std::endl;
                          // std::cout << outgoing_edge_coords << std::endl;
                          if (outgoing_edge_coords == next_coordinate) {
-                             std::cout << "Found Next kmer: " << std::endl;
-                             std::cout << this->get_graph()->get_graph().get_node_sequence(
+                             //std::cout << "Found Next kmer: " << std::endl;
+                             /*std::cout << this->get_graph()->get_graph().get_node_sequence(
                                      outgoing_nodes[i])
-                                       << std::endl;
-                             std::cout << "Position: " << extracted_coords[0][j] << std::endl;
+                                       << std::endl;*/
+                             //std::cout << "Position: " << extracted_coords[0][j] << std::endl;
                              next_coordinate++;
                              // auto next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                              found_next_coordinate = true;
@@ -337,9 +338,9 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
                      break;
              }
          } else if (one_outgoing) {
-             std::cout << "SINGLE outgoing in Search for kmer: "
+             /*std::cout << "SINGLE outgoing in Search for kmer: "
                        << this->get_graph()->get_graph().get_node_sequence(current_kmer)
-                       << std::endl;
+                       << std::endl;*/
              this->get_graph()->get_graph().adjacent_outgoing_nodes(
                      current_kmer, [&](auto i) { outgoing_nodes.push_back(i); });
              for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
@@ -369,20 +370,20 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
 
                      for (unsigned long j = 0;
                           j < std::get<2>(edge_node_coords[k])[0].size(); ++j) {
-                         auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
-                         std::cout << "Outgoing edge coords: " << next_coor << std::endl;
+                         //auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
+                         //std::cout << "Outgoing edge coords: " << next_coor << std::endl;
 
 
-                         std::cout << next_coor << std::endl;
+                         //std::cout << next_coor << std::endl;
 
                          // std::binary_search(std::get<2>(edge_node_coords[k])[0])
                          // if (std::get<2>(edge_node_coords[k])[0][j] == next_coordinate) {
-                         std::cout << "Found Next kmer: " << std::endl;
-                         std::cout << this->get_graph()->get_graph().get_node_sequence(
+                         //std::cout << "Found Next kmer: " << std::endl;
+                         /*std::cout << this->get_graph()->get_graph().get_node_sequence(
                                  outgoing_nodes[i])
                                    << std::endl;
                          std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j]
-                                   << std::endl;
+                                   << std::endl;*/
                          //next_coordinate++;
                          // char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                          unsigned long long edge_coords = std::get<2>(edge_node_coords[k])[0][j];

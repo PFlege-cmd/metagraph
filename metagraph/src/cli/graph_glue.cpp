@@ -106,8 +106,8 @@ extern "C"{
         std::string seq_end_id = graph_ptr->get_graph().get_node_sequence(end_id);
         std::cout << "Sequence end ID: " << seq_end_id << std::endl;
 
-
-
+        std::string retrieved_sequence = retriever.retrieveRegionForRange(end_id);
+        std::cout << "Retrieved sequence: " << retrieved_sequence << std::endl;
 
         return "r";
     }
