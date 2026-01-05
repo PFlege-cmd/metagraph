@@ -595,6 +595,9 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
         for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
             std::string current_genome = std::get<0>(coordinates[coord_idx]);
             if (current_genome != genome_name) {
+                std::cout << current_genome << std::endl;
+                std::cout << genome_name << std::endl;
+                std::cout << "NOT SAME NAME!! DYMBASS" << std::endl;
                 continue;
             }
             auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
@@ -783,6 +786,7 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
                     starting_kmer.append(sequence);
                     next_coordinate++;
                     searching_for_first_kmer = false;
+                    std::cout << "FOUND STARTING KMER!"  << std::endl;
                 }
             }
         }
@@ -803,6 +807,7 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
         }
 
         if (multi_outgoing) {
+            std::cout << "Multiple outgoing in Search for kmer: " << this->get_graph().get_node_sequence(current_kmer) << std::endl;
             this->get_graph().adjacent_outgoing_nodes(current_kmer, [&](auto i) {outgoing_nodes.push_back(i);});
             for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
                 //std::cout << outgoing_nodes[i] << std::endl;
@@ -847,6 +852,7 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
                     break;
             }
         } else if (one_outgoing) {
+            std::cout << "SINGLE outgoing in Search for kmer: " << this->get_graph().get_node_sequence(current_kmer) << std::endl;
             this->get_graph().adjacent_outgoing_nodes(current_kmer, [&](auto i) {outgoing_nodes.push_back(i);});
             for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
                 //std::cout << outgoing_nodes[i] << std::endl;
@@ -865,7 +871,7 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
                     //bool found  = binary_search(x.begin(), x.end(), next_coordinate);
                     /*
                     if (!found) {
-                        std::cout << "Did not find next coordinate" << std::endl;
+                        std::cout << "Did not  next coordinate" << std::endl;
                         continue;
                     }*/ // TODO: All not necessary with unitig
 

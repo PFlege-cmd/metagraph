@@ -280,8 +280,8 @@ convert_to_IntMultiBRWT(const std::vector<std::string> &files,
 
 int transform_annotation(Config *config) {
     assert(config);
-
-    auto graph_pt = graph_glue(0, NULL).load_dbg();
+    std::cout << "IN TRANSFORM ANNO!" << std::endl;
+    //auto graph_pt = graph_glue(0, NULL).load_dbg();
 
 
     const auto &files = config->fnames;

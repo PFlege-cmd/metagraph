@@ -102,14 +102,16 @@ extern "C"{
         uint64_t start_id = retriever.retrieveAnchorId(anchor_sequence);
         uint64_t end_id = retriever.retrieveStartId(start_id);
 
-        std::cout << "END_ID: " << end_id << std::endl;
+        //std::cout << "END_ID: " << end_id << std::endl;
         std::string seq_end_id = graph_ptr->get_graph().get_node_sequence(end_id);
-        std::cout << "Sequence end ID: " << seq_end_id << std::endl;
+        //std::cout << "Sequence end ID: " << seq_end_id << std::endl;
 
         std::string retrieved_sequence = retriever.retrieveRegionForRange(end_id);
-        std::cout << "Retrieved sequence: " << retrieved_sequence << std::endl;
+        //std::cout << "Retrieved sequence: " << retrieved_sequence << std::endl;
 
-        return "r";
+        char * c_str_retrieved_sequence = (char*)malloc(retrieved_sequence.length() + 1);
+        std::strcpy(c_str_retrieved_sequence, retrieved_sequence.c_str());
+        return c_str_retrieved_sequence;
     }
 
 }
@@ -208,6 +210,13 @@ extern "C"{
         CommandLineInterfaceCaller caller = CommandLineInterfaceCaller();
         AbstractCommandLineInterface * caller_interface = &caller;
         glue.set_cli_caller(*caller_interface);
+
+
+        char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
+        std::cout <<"Testing getting path metagraph:!" << std::endl;
+        std::cout << arg_app << std::endl;
+
+
         std::unique_ptr<Config> config = glue.create_config();
         std::cout << "CALL SUCCESSFUL! " << std::endl;
         auto beg = std::chrono::high_resolution_clock::now();
@@ -215,7 +224,6 @@ extern "C"{
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
         std::cout << "Graph ANNOTATION TIME FROM PANTOOLS: " << duration.count() << " microseconds" << std::endl;
-
     }
 }
 
@@ -300,7 +308,7 @@ extern "C"{
 }
 
 graph_glue::graph_glue(int argcount, char** argv) {
-    std::cout << "Creating Graph glue!" << std::endl;
+    //std::cout << "Creating Graph glue!" << std::endl;
     cmd_arguments = (char**)calloc(argcount, sizeof(const char*));
     argc = argcount;
     for (int i = 0; i < argc; i++) {
@@ -315,7 +323,7 @@ graph_glue::graph_glue(int argcount, char** argv) {
 }
 
 graph_glue::~graph_glue() {
-    std::cout << "Destroying Graph glue!" << std::endl;
+    //std::cout << "Destroying Graph glue!" << std::endl;
     for (int i = 0; i < argc; i++) {
         delete cmd_arguments[i];
     }
@@ -384,7 +392,10 @@ void graph_glue::do_pantools_work(char* genome_name,
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     int argc = 9;
     char** argv = (char**)malloc(argc * sizeof(const char*));
-    argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
+    char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
+    std::cout << arg_app << std::endl;
+    argv[0] = arg_app;
+    //argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
     argv[1] = (char*)"query";
     argv[2] = (char*)"--query-mode";
     argv[3] = (char*)"coords";
@@ -404,20 +415,22 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/test.fasta";
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
     std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
+
     */
-    /*
-    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph.dbg";
+    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph_pecto.dbg";
     argv[6] = (char*)"-a";
     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.column_coord.annodbg";
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
-    /*/
+    /*
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
-    argv[6] = (char*)"-a";
+    argv[6] = (char*) "-a";
     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/anno.column_coord.annodbg";
-    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/test.fasta";
+    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/test.fasta";/*/
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
     std::string filename
-            = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
+            = "/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph_pecto.dbg";
+    //std::string filename
+    //        = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
 
     std::shared_ptr<DBGSuccinct> boss_graph
             = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
@@ -425,9 +438,10 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     std::shared_ptr<AnnotatedDBG> anno_graph
             = mtg::cli::initialize_annotated_dbg(dbg, *config);
 
-    std::cout << anno_graph->label_exists(
-            "pecto_dickeya_input/genomes/GCF_000803215.1_ASM80321v1_genomic.fna")
-              << std::endl;
+
+    //std::cout << anno_graph->label_exists(
+    //        "pecto_dickeya_input/genomes/GCF_000803215.1_ASM80321v1_genomic.fna")
+    //          << std::endl;
     std::cout << "Loading annotated graph from " << filename << std::endl;
     uint numba = anno_graph->get_graph().num_nodes();
     // dbg.get->num_nodes();

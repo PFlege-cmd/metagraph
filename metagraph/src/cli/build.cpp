@@ -56,10 +56,10 @@ int build_graph(Config *config) {
     assert(config);
 
     const auto &files = config->fnames;
-
+    std::cout << "IN BUILD, Building graph..." << std::endl;
     std::unique_ptr<DeBruijnGraph> graph;
-    graph_glue funny_glue = graph_glue(0, NULL);
-    auto stuff = funny_glue.load_dbg();
+    //graph_glue funny_glue = graph_glue(0, NULL);
+    //auto stuff = funny_glue.load_dbg();
 
 
     logger->trace("Build De Bruijn Graph with k-mer size k={}", config->k);

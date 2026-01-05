@@ -5,23 +5,25 @@
 #include "SequenceRetriever.h"
 
 SequenceRetriever::SequenceRetriever(GraphWrapper& wrapper) : mWrapper{wrapper}, mGenome{""}, mAnchor_position{0}, mSequenceStart{0}, mSequenceEnd{0} {
-    std::cout << "Constructor SequenceRetriever" << std::endl;
+    //std::cout << "Constructor SequenceRetriever" << std::endl;
 }
 
 SequenceRetriever::node_index SequenceRetriever::retrieveAnchorId(std::string anchor_sequence) {
-    std::cout << "retrieveanchorId: " << anchor_sequence << std::endl;
-    std::cout << "Address of anchor_sequence: " <<  reinterpret_cast<u_long>(&mWrapper) << std::endl;
+    //std::cout << "retrieveanchorId: " << anchor_sequence << std::endl;
+    //std::cout << "Address of anchor_sequence: " <<  reinterpret_cast<u_long>(&mWrapper) << std::endl;
     long long retrieved_coord = mWrapper.retrieveAnchorCoordinates(anchor_sequence, mAnchor_position, std::string(mGenome));
 
     assert(retrieved_coord == this -> mAnchor_position);
-
-    std::cout << "retrieved_coord: " << retrieved_coord << std::endl;
+    if (retrieved_coord != this -> mAnchor_position) {
+        throw std::invalid_argument("Uneqyal pis");
+    }
+    //std::cout << "retrieved_coord: " << retrieved_coord << std::endl;
 
     return mWrapper.retrieveAnchorId(anchor_sequence);
 }
 
 SequenceRetriever::node_index SequenceRetriever::retrieveStartId(node_index anchor_index) {
-    std::cout << "retrieveStartId: " << anchor_index << std::endl;
+    //std::cout << "retrieveStartId: " << anchor_index << std::endl;
     node_index start_node_id = mWrapper.get_first_node_of_coord_range(anchor_index, mAnchor_position, std::string(mGenome), mSequenceStart);
     return start_node_id;
 }
