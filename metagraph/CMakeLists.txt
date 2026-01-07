@@ -193,7 +193,11 @@ if(NOT DEFINED BUILD_KMC)
 set(BUILD_KMC TRUE)
 endif()
 configure_file(CMakeListsKMC.txt.in KMC/CMakeLists.txt @ONLY)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        -DCMAKE_CXX_FLAGS=-fPIC
+        -DCMAKE_C_FLAGS=-fPIC
+        -DPOSITION_INDEPENDENT_CODE=ON
+        .
   RESULT_VARIABLE result
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/KMC
 )
@@ -205,7 +209,7 @@ ProcessorCount(N)
 if(N EQUAL 0)
   set(N 1)
 endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release -- -j${N} -fPIC
+execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release -- -j${N}
   RESULT_VARIABLE result
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/KMC
 )
