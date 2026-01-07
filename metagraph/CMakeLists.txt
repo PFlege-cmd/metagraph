@@ -436,11 +436,10 @@ set(HTSLIB_INSTALL ${CMAKE_BINARY_DIR}/external-libraries/htslib)
 ExternalProject_Add(HTSLIB
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/htslib
   PREFIX "${CMAKE_BINARY_DIR}/HTSLIB-build"
-        CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env
       "CPPFLAGS=${OSX_ARCH_FLAGS}\ -I${CMAKE_SOURCE_DIR}/external-libraries/zlib"
-      "CFLAGS=${OSX_ARCH_FLAGS}\ -I${CMAKE_SOURCE_DIR}/external-libraries/zlib"
+      "CFLAGS=${OSX_ARCH_FLAGS}\ -fPIC\ -I${CMAKE_SOURCE_DIR}/external-libraries/zlib"
       "LDFLAGS=${OSX_ARCH_FLAGS}\ -L${CMAKE_BINARY_DIR}/external-libraries/zlib"
     /bin/sh -c "autoreconf -i ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/htslib && exec ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/htslib/configure --disable-libcurl --disable-bz2 --disable-lzma"
   BUILD_COMMAND $(MAKE) -j${N} lib-static
