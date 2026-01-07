@@ -205,7 +205,7 @@ ProcessorCount(N)
 if(N EQUAL 0)
   set(N 1)
 endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release -- -j${N}
+execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release -- -j${N} -fPIC
   RESULT_VARIABLE result
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/KMC
 )
