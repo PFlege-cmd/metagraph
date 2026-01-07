@@ -301,7 +301,7 @@ ExternalProject_Add(SDSL
 
 message("POSITION INDEPENDENT CODE ON:")
 if(CMAKE_POSITION_INDEPENDENT_CODE)
-  message("TRUE")
+  message("TRUE!")
 else()
   message("False!")
 endif()
