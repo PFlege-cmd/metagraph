@@ -298,6 +298,14 @@ ExternalProject_Add(SDSL
         -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
         -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
 )
+
+message("POSITION INDEPENDENT CODE ON:")
+if(CMAKE_POSITION_INDEPENDENT_CODE)
+  message("TRUE")
+else()
+  message("False!")
+endif()
+
 # Delete gtest headers after install
 ExternalProject_Add_Step(SDSL remove_gtest
         COMMAND ${CMAKE_COMMAND} -E rm -rf ${SDSL_INSTALL}/include/gtest
