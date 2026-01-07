@@ -288,6 +288,22 @@ include_directories(
   external-libraries/simde-no-tests
 )
 
+include(ExternalProject)
+
+set(SDSL_INSTALL ${PROJECT_BINARY_DIR}/external-libraries/sdsl)
+ExternalProject_Add(SDSL
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/sdsl-lite
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${SDSL_INSTALL}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
+)
+# Delete gtest headers after install
+ExternalProject_Add_Step(SDSL remove_gtest
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${SDSL_INSTALL}/include/gtest
+        DEPENDEES install
+)
+
 add_library(ips4o INTERFACE)
 target_include_directories(ips4o INTERFACE external-libraries/ips4o)
 
