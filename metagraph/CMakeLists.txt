@@ -209,6 +209,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release -- -j${N} -f
   RESULT_VARIABLE result
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/KMC
 )
+
 if(result)
   message(FATAL_ERROR "Build step for KMC failed: ${result}")
 endif()
