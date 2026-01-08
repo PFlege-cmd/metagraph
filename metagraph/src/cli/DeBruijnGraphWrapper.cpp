@@ -68,6 +68,7 @@ long DeBruijnGraphWrapper::retrieveAnchorCoordinates(std::string anchor_sequence
                  current_kmer = outgoing_nodes[i];
                  outgoing_nodes.clear();*/
                  // starting_kmer.append( 1, next_char);
+                 std::cout << "Potential anchor " << potential_anchor_coord << std::endl;
                  return potential_anchor_coord;
              }
          }
