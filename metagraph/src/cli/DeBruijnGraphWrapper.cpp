@@ -4,7 +4,7 @@
 
 #include "DeBruijnGraphWrapper.h"
 
- DeBruijnGraphWrapper::DeBruijnGraphWrapper(mtg::graph::AnnotatedDBG &graph) : GraphWrapper(&graph) {}
+DeBruijnGraphWrapper::DeBruijnGraphWrapper(mtg::graph::AnnotatedDBG &graph) : GraphWrapper(&graph) {}
 
 DeBruijnGraphWrapper::~DeBruijnGraphWrapper() {
  }
@@ -78,13 +78,17 @@ long DeBruijnGraphWrapper::retrieveAnchorCoordinates(std::string anchor_sequence
      throw std::invalid_argument("Invalid anchor position");
 }
 uint64_t DeBruijnGraphWrapper::retrieveAnchorId(std::string anchor_sequence) {
-     std::vector<node_index> nodes;
-     nodes.reserve(anchor_sequence.size());
-     get_graph()->get_graph().map_to_nodes(anchor_sequence, [&](node_index i) { nodes.push_back(i); });
-     //node_index anchor_id = get_graph()->map_to_nodes(get_graph()->get_graph(), anchor_sequence);
-     return nodes[0];
+    std::vector<node_index> nodes;
+    nodes.reserve(anchor_sequence.size());
+    get_graph()->get_graph().map_to_nodes(anchor_sequence,
+                                          [&](node_index i) { nodes.push_back(i); });
+    // node_index anchor_id = get_graph()->map_to_nodes(get_graph()->get_graph(), anchor_sequence);
+    return nodes[0];
 }
-const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, unsigned long long start, unsigned long long end, node_index start_index){
+std::string DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome,
+                                                          unsigned long long start,
+                                                          unsigned long long end,
+                                                          node_index start_index) {
 
 //TODO: For now,those are hardcoded. get rid of this ugly setup somehow
      unsigned long long num_top_labels = 4294967295;
@@ -199,7 +203,7 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
      std::cout << starting_kmer << std::endl;
 
      const  char * result = starting_kmer.c_str();
-     return result;
+     return std::string(result);
 }
 
 uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_index, long long start_anchor, std::string genome, long long start_range) {
