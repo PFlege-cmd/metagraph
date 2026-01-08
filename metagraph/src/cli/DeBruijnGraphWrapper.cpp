@@ -22,6 +22,7 @@ long DeBruijnGraphWrapper::retrieveAnchorCoordinates(std::string anchor_sequence
                                                                    discovery_fraction,
                                                                    presence_fraction);
 
+     std::cout << "Anchor seq: " << anchor_sequence << std::endl;
      //node_index anchor_id = get_graph()->get_graph().find(anchor_sequence);
     //std::cout << "anchor coords Size: " << anchor_coords.size() << std::endl;
      for (unsigned long k = 0; k < anchor_coords.size(); ++k) {
