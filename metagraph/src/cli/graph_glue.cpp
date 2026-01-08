@@ -392,7 +392,9 @@ void graph_glue::do_pantools_work(char* genome_name,
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     int argc = 9;
     char** argv = (char**)malloc(argc * sizeof(const char*));
-    char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
+    //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
+    char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("build").append("metagraph_DNA5").c_str();
+
     std::cout << arg_app << std::endl;
     argv[0] = arg_app;
     //argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
@@ -417,10 +419,17 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
 
     */
+    /*
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph_pecto.dbg";
     argv[6] = (char*)"-a";
     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.column_coord.annodbg";
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
+    */
+
+    argv[5] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
+    argv[6] = (char*)"-a";
+    argv[7] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/anno.column_coord.annodbg";
+    argv[8] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
     /*
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
     argv[6] = (char*) "-a";
@@ -428,7 +437,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/test.fasta";/*/
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
     std::string filename
-            = "/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph_pecto.dbg";
+            = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
     //std::string filename
     //        = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
 
