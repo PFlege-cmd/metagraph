@@ -40,7 +40,7 @@ std::string SequenceRetriever::retrieveRegionForRange(node_index start_index) {
 
 void SequenceRetriever::setGenome(const std::string& genome) {
     std::cout << "setGenome " << genome << std::endl;
-    mGenome = std::move(genome).c_str();
+    mGenome = genome;
     std::cout << "setGenome " << mGenome << std::endl;
 }
 

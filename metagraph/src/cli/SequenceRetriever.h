@@ -23,7 +23,7 @@ class SequenceRetriever {
 
     private:
         GraphWrapper& mWrapper;
-        const char * mGenome;
+        std::string mGenome;
         long long mAnchor_position;
         long long mSequenceStart;
         long long mSequenceEnd;
