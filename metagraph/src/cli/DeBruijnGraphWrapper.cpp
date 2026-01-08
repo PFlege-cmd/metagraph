@@ -196,7 +196,7 @@ const char * DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome, u
      }
 
      std::cout << "RETRIEVED" << std::endl;
-     std::cout << current_kmer << std::endl;
+     std::cout << starting_kmer << std::endl;
 
      const  char * result = starting_kmer.c_str();
      return result;
