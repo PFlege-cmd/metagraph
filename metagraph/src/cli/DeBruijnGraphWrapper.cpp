@@ -36,6 +36,8 @@ long DeBruijnGraphWrapper::retrieveAnchorCoordinates(std::string anchor_sequence
              continue;
          }
 
+         std::cout << "Continuing with: " << anchor_position << std::endl;
+
 
          auto x = std::get<2>(anchor_coords[k])[0];
          //bool found = std::binary_search(x.begin(), x.end(), anchor_position);
