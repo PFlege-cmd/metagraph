@@ -29,6 +29,8 @@ long DeBruijnGraphWrapper::retrieveAnchorCoordinates(std::string anchor_sequence
          std::string curr_genome = std::get<0>(anchor_coords[k]);
          //std::cout << "Current genome of coordinate: " << k << ": " << curr_genome << std::endl;
          //std::cout << "Input genome name: " << genome_name << std::endl;
+         std::cout << "Curr genome" << curr_genome << std::endl;
+         std::cout << "Kmer genome " << std::get<0>(anchor_coords[k]) << std::endl;
          if (std::get<0>(anchor_coords[k]) != genome_name) {
              //throw std::invalid_argument("Anchor not present in genome!");
              continue;
