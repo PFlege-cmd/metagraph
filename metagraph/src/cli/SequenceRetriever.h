@@ -15,7 +15,7 @@ class SequenceRetriever {
         node_index retrieveStartId(node_index anchor_index);
         std::string retrieveRegionForRange(node_index start_index);
 
-        void setGenome(std::string genome);
+        void setGenome(const std::string& genome);
         void setAnchorPosition(long long anchor_position);
         void setSequenceStart(long long start);
         void setSequenceEnd(long long end);
