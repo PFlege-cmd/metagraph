@@ -34,6 +34,7 @@ SequenceRetriever::node_index SequenceRetriever::retrieveStartId(node_index anch
 
 std::string SequenceRetriever::retrieveRegionForRange(node_index start_index) {
     std::string retrieved_region = mWrapper.get_sequence_for_coords(mGenome, mSequenceStart, mSequenceEnd, start_index);
+    std::cout << "retrieveRegionForRange: " << retrieved_region << std::endl;
     return retrieved_region;
 }
 
