@@ -11,7 +11,8 @@ SequenceRetriever::SequenceRetriever(GraphWrapper& wrapper) : mWrapper{wrapper},
 SequenceRetriever::node_index SequenceRetriever::retrieveAnchorId(std::string anchor_sequence) {
     //std::cout << "retrieveanchorId: " << anchor_sequence << std::endl;
     //std::cout << "Address of anchor_sequence: " <<  reinterpret_cast<u_long>(&mWrapper) << std::endl;
-    long long retrieved_coord = mWrapper.retrieveAnchorCoordinates(anchor_sequence, mAnchor_position, mGenome);
+    std::string inputgenome =  mGenome;
+    long long retrieved_coord = mWrapper.retrieveAnchorCoordinates(anchor_sequence, mAnchor_position, inputgenome);
 
     assert(retrieved_coord == this -> mAnchor_position);
     if (retrieved_coord != this -> mAnchor_position) {
