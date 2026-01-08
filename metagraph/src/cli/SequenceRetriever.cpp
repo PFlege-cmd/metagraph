@@ -12,7 +12,9 @@ SequenceRetriever::node_index SequenceRetriever::retrieveAnchorId(std::string an
     //std::cout << "retrieveanchorId: " << anchor_sequence << std::endl;
     //std::cout << "Address of anchor_sequence: " <<  reinterpret_cast<u_long>(&mWrapper) << std::endl;
     std::string inputgenome =  mGenome;
+
     std::cout << "Input genome is:" << inputgenome << std::endl;
+    std::cout << "mGenome is:" << mGenome << std::endl;
     long long retrieved_coord = mWrapper.retrieveAnchorCoordinates(anchor_sequence, mAnchor_position, inputgenome);
 
     assert(retrieved_coord == this -> mAnchor_position);
