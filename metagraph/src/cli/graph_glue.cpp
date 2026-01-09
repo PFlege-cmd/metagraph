@@ -107,7 +107,7 @@ extern "C"{
         //std::cout << "Sequence end ID: " << seq_end_id << std::endl;
 
         std::string retrieved_sequence = retriever.retrieveRegionForRange(end_id);
-        //std::cout << "Retrieved sequence: " << retrieved_sequence << std::endl;
+        std::cout << "Retrieved sequence: " << retrieved_sequence << std::endl;
 
         char * c_str_retrieved_sequence = (char*)malloc(retrieved_sequence.length() + 1);
         std::strcpy(c_str_retrieved_sequence, retrieved_sequence.c_str());
@@ -323,9 +323,9 @@ graph_glue::graph_glue(int argcount, char** argv) {
 }
 
 graph_glue::~graph_glue() {
-    //std::cout << "Destroying Graph glue!" << std::endl;
+    std::cout << "Destroying Graph glue!" << std::endl;
     for (int i = 0; i < argc; i++) {
-        delete cmd_arguments[i];
+        free(cmd_arguments[i]);
     }
 }
 
@@ -419,6 +419,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
 
     */
+
     /*
     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph_pecto.dbg";
     argv[6] = (char*)"-a";
