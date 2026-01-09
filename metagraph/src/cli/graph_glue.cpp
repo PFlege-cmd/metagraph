@@ -326,6 +326,7 @@ graph_glue::~graph_glue() {
     std::cout << "Destroying Graph glue!" << std::endl;
     for (int i = 0; i < argc; i++) {
         free(cmd_arguments[i]);
+        cmd_arguments[i] = nullptr; //to avoid dangling pointer
     }
 }
 
