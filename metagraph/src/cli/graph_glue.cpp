@@ -329,6 +329,8 @@ graph_glue::~graph_glue() {
         free(cmd_arguments[i]);
         cmd_arguments[i] = nullptr; //to avoid dangling pointer
     }
+    free(cmd_arguments);
+    cmd_arguments = nullptr;
 }
 
 void graph_glue::set_cli_caller(AbstractCommandLineInterface& cli) {
