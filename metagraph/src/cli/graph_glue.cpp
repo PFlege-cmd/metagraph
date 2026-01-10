@@ -324,10 +324,11 @@ graph_glue::graph_glue(int argcount, char** argv) {
 
 graph_glue::~graph_glue() {
     std::cout << "Destroying Graph glue!" << std::endl;
+    /*
     for (int i = 0; i < argc; i++) {
         free(cmd_arguments[i]);
         cmd_arguments[i] = nullptr; //to avoid dangling pointer
-    }
+    }*/
 }
 
 void graph_glue::set_cli_caller(AbstractCommandLineInterface& cli) {
