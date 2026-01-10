@@ -312,7 +312,7 @@ graph_glue::graph_glue(int argcount, char** argv) {
     cmd_arguments = (char**)calloc(argcount, sizeof(const char*));
     argc = argcount;
     for (int i = 0; i < argc; i++) {
-        cmd_arguments[i] = argv[i];
+        cmd_arguments[i] = strdup(argv[i]);
         std::cout << "Arg " << i << " is: " << cmd_arguments[i] << std::endl;
     }
     //int external_arg_counter = 0;
@@ -324,11 +324,11 @@ graph_glue::graph_glue(int argcount, char** argv) {
 
 graph_glue::~graph_glue() {
     std::cout << "Destroying Graph glue!" << std::endl;
-    /*
+
     for (int i = 0; i < argc; i++) {
         free(cmd_arguments[i]);
         cmd_arguments[i] = nullptr; //to avoid dangling pointer
-    }*/
+    }
 }
 
 void graph_glue::set_cli_caller(AbstractCommandLineInterface& cli) {
