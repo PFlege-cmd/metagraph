@@ -407,73 +407,40 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     argv[3] = (char*)"coords";
     argv[4] = (char*)"-i";
 
+    // LUSTRE, SERVER
     /*
-    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/graph.dbg";
-    argv[6] = (char *)"-a";
-    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/anno.column_coord.annodbg";
-    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/test.fasta";
-    auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-    std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/chloroplasts_changed_data_17_09_2025/graph.dbg";
-
-    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
-    argv[6] = (char *)"-a";
-    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/anno.column_coord.annodbg";
-    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data/test.fasta";
-    auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-    std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data/graph.dbg";
-
-    */
-
-    /*
-    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/graph_pecto.dbg";
-    argv[6] = (char*)"-a";
-    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/anno.column_coord.annodbg";
-    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/pecto_test_dir/test.fasta";
-    */
-
     argv[5] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
     argv[6] = (char*)"-a";
     argv[7] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/anno.column_coord.annodbg";
     argv[8] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
-    /*
-    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
-    argv[6] = (char*) "-a";
-    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/anno.column_coord.annodbg";
-    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/test.fasta";/*/
-    auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-    std::string filename
-            = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
-    //std::string filename
-    //        = "/Users/patrick_flege/git/patrick-pan-tools/succinct_data_metagraph/graph_succinct.dbg";
+    */
 
-    std::shared_ptr<DBGSuccinct> boss_graph
-            = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
+    // LOCAL, on MAC:
+     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
+     argv[6] = (char*) "-a";
+     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/transformed.row_diff_brwt_coord.annodbg";
+     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/test.fasta";
+     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+     // std::string filename
+     //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
+
+    std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
+
+    std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename);
-    std::shared_ptr<AnnotatedDBG> anno_graph
-            = mtg::cli::initialize_annotated_dbg(dbg, *config);
+    std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
+//
+     return anno_graph;
+ }
 
+ char** graph_glue::get_cmd_arguments() {
+     return cmd_arguments;
+ }
 
-    //std::cout << anno_graph->label_exists(
-    //        "pecto_dickeya_input/genomes/GCF_000803215.1_ASM80321v1_genomic.fna")
-    //          << std::endl;
-    std::cout << "Loading annotated graph from " << filename << std::endl;
-    uint numba = anno_graph->get_graph().num_nodes();
-    // dbg.get->num_nodes();
-    std::cout << "Number of nodes: " << numba << std::endl;
-    // DBGSuccinct boss = *boss_graph;
-    // return DBGSuccinct(boss_graph.get(), DeBruijnGraph::BASIC);
-    // anno_graph->get_sequence_for_coords("FOOO", 0,2);
-    return anno_graph;
-}
-
-char** graph_glue::get_cmd_arguments() {
-    return cmd_arguments;
-}
-
-void graph_glue::set_cmd_arguments(char *arguments[]) {
-    for (int i = 0; arguments[i] != NULL; i++) {
-        cmd_arguments[i] = arguments[i];
-    }
+ void graph_glue::set_cmd_arguments(char *arguments[]) {
+     for (int i = 0; arguments[i] != NULL; i++) {
+         cmd_arguments[i] = arguments[i];
+     }
 }
 
 int graph_glue::get_cmd_arg_count() {
@@ -485,5 +452,5 @@ unique_ptr<mtg::cli::Config> graph_glue::create_config() {
 }
 
 void graph_glue::call_cmdline_flow(const std::unique_ptr<mtg::cli::Config>& config) {
-    cli_caller->call_flow(config);
-}
+     cli_caller->call_flow(config);
+ }
