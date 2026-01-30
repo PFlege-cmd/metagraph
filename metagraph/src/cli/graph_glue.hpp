@@ -18,6 +18,8 @@ class graph_glue {
     ~graph_glue();
     //struct HitsPerSequence;
     shared_ptr<AnnotatedDBG> load_dbg();
+    shared_ptr<AnnotatedDBG> load_dbg(std::string database_path);
+
     void do_pantools_work(char* genome_name,
                  int* sequence_lengths,
                  int no_of_sequences,

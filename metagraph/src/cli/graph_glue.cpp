@@ -32,8 +32,55 @@
 #include "cli/transform_graph.hpp"
 #include "cli/transform_annotation.hpp"
 #include <chrono>
+#include <ranges>
 using namespace mtg::graph;
 namespace fs = std::filesystem;
+using namespace std;
+extern "C"{
+    unsigned long get_maximum_kmer_frequency(char * database_path) {
+        std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
+        std::string data_path = std::string(database_path);
+        graph_glue glue = graph_glue(0, NULL);
+
+        unsigned long long num_top_labels = 4294967295;
+        const double discovery_fraction = 0.699999999999996;
+        const double presence_fraction = 0.0;
+
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
+        uint64 n = graph->get_graph().num_nodes();
+        uint64 current = 1;
+        long max_freq = 0;
+        std::cout <<"Reaches line 53!" << std::endl;
+
+        while (current < n) {
+            if (current % 1000000 == 0) {
+                std::cout << current << std::endl;
+                std::cout <<"Current maximal frequency is: " << max_freq <<std::endl;
+            }
+            //std::cout <<"Reaches line 59!" << std::endl;
+            std::string seq = graph->get_graph().get_node_sequence(current).c_str();
+            //std::cout <<"Reaches line 61!" << std::endl;
+
+            if (std::string_view::npos != seq.find("$")) {
+                current += 1;
+                continue;
+            }
+            long sum_total = 0;
+            auto coord_vector
+                    = graph->get_kmer_coordinates(seq, num_top_labels, discovery_fraction,
+                                                  presence_fraction);
+            for (int i = 0; i < static_cast<int>(coord_vector.size()); i++) {
+                auto stuff = coord_vector.at(i);
+                auto how_many = std::get<2>(stuff);
+                sum_total += how_many[0].size();
+            }
+            max_freq = sum_total > max_freq ? sum_total : max_freq;
+            current += 1;
+
+        }
+        return max_freq;
+    }
+}
 
 extern "C"{
     __attribute__((visibility("default")))
@@ -74,7 +121,6 @@ extern "C"{
         glue.do_pantools_work(genome_name, sequence_lengths, no_of_sequences, results, read, graph);
 
         return results;
-
     }
 
     void free_hits(HitsPerSequence* hits, int size_of_array) {
@@ -428,6 +474,49 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
 
     std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename);
+    std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
+//
+     return anno_graph;
+ }
+
+std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
+    std::cout << "Loading database from " << database_path << std::endl;
+    int argc = 9;
+    char** argv = (char**)malloc(argc * sizeof(const char*));
+    //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
+    char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("build").append("metagraph_DNA5").c_str();
+
+    std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
+
+    std::cout << arg_app << std::endl;
+    argv[0] = arg_app;
+    //argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
+    argv[1] = (char*)"query";
+    argv[2] = (char*)"--query-mode";
+    argv[3] = (char*)"coords";
+    argv[4] = (char*)"-i";
+
+    // LUSTRE, SERVER
+    /*
+    argv[5] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
+    argv[6] = (char*)"-a";
+    argv[7] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/anno.column_coord.annodbg";
+    argv[8] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
+    */
+
+    // LOCAL, on MAC:
+     argv[5] = (char *) filename_local.c_str();
+     argv[6] = (char*) "-a";
+     argv[7] = (char *) fs::current_path().append(database_path).append("anno.column_coord.annodbg").c_str();
+     argv[8] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/test.fasta";
+     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+     // std::string filename
+     //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
+
+    //std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
+
+    std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
+    std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename_local);
     std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
 //
      return anno_graph;
