@@ -53,10 +53,10 @@ extern "C"{
         std::cout <<"Reaches line 53!" << std::endl;
 
         while (current < n) {
-            if (current % 1000000 == 0) {
+            /*if (current % 1000000 == 0) {
                 std::cout << current << std::endl;
                 std::cout <<"Current maximal frequency is: " << max_freq <<std::endl;
-            }
+            }*/
             //std::cout <<"Reaches line 59!" << std::endl;
             std::string seq = graph->get_graph().get_node_sequence(current).c_str();
             //std::cout <<"Reaches line 61!" << std::endl;
@@ -66,13 +66,25 @@ extern "C"{
                 continue;
             }
             long sum_total = 0;
-            auto coord_vector
-                    = graph->get_kmer_coordinates(seq, num_top_labels, discovery_fraction,
+            //auto coord_vector
+            //        = graph->get_kmer_coordinates(seq, num_top_labels, discovery_fraction,
+            //                                      presence_fraction);
+
+            auto count_vector = graph->get_kmer_counts(seq, num_top_labels, discovery_fraction,
                                                   presence_fraction);
-            for (int i = 0; i < static_cast<int>(coord_vector.size()); i++) {
+            /*for (int i = 0; i < static_cast<int>(coord_vector.size()); i++) {
                 auto stuff = coord_vector.at(i);
                 auto how_many = std::get<2>(stuff);
                 sum_total += how_many[0].size();
+            }*/
+
+            for (int i = 0; i < (int) count_vector.size(); i++) {
+                auto stuff = std::get<2>(count_vector[i]);
+                for (int j = 0; j < (int) stuff.size(); j++) {
+                    //std::cout << stuff[j] << std::endl;
+                    sum_total += stuff[j];
+                }
+
             }
             max_freq = sum_total > max_freq ? sum_total : max_freq;
             current += 1;
@@ -507,7 +519,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     // LOCAL, on MAC:
      argv[5] = (char *) filename_local.c_str();
      argv[6] = (char*) "-a";
-     argv[7] = (char *) fs::current_path().append(database_path).append("anno.column_coord.annodbg").c_str();
+     argv[7] = (char *) fs::current_path().append(database_path).append("count_brwt.int_brwt.annodbg").c_str();
      argv[8] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/test.fasta";
      auto config = std::make_unique<mtg::cli::Config>(argc, argv);
      // std::string filename

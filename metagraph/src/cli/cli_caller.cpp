@@ -9,6 +9,7 @@
 
 #include "annotate.hpp"
 #include "build.hpp"
+#include "clean.hpp"
 #include "transform_annotation.hpp"
 
 std::unique_ptr<mtg::cli::Config> CommandLineInterfaceCaller::get_config(int argc,char** cmd_arguments) {
@@ -28,6 +29,9 @@ int CommandLineInterfaceCaller::call_flow(const std::unique_ptr<mtg::cli::Config
 
         case mtg::cli::Config::TRANSFORM_ANNOTATION:
             return mtg::cli::transform_annotation(config.get());
+
+        case mtg::cli::Config::CLEAN:
+            return mtg::cli::clean_graph(config.get());
 
         default:
             return 1;
