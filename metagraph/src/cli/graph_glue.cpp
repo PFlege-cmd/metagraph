@@ -36,6 +36,7 @@
 using namespace mtg::graph;
 namespace fs = std::filesystem;
 using namespace std;
+using node_index = SequenceGraph::node_index;
 extern "C"{
     unsigned long get_maximum_kmer_frequency(char * database_path) {
         std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
@@ -54,7 +55,7 @@ extern "C"{
 
         while (current < n) {
             long sum_total = 0;
-            auto single_node_vec = std::vector<uint64>{current};
+            auto single_node_vec = std::vector<node_index>{current};
             auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
                                                   presence_fraction);
             for (int i = 0; i < (int) count_vector.size(); i++) {
