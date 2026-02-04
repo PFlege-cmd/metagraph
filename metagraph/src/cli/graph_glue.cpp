@@ -478,23 +478,32 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     return anno_graph;
 }
 
-string graph_glue::extract_path() {
+string graph_glue::extract_path(const std::string& endpoint) {
     auto path_string =  std::string(fs::current_path()
             .parent_path()
             .append("metagraph")
             .append("metagraph")
             .append("build")
-            .append("metagraph_DNA5")
+            .append(endpoint)
             .string());
     return path_string;
 }
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     std::cout << "Loading database from " << database_path << std::endl;
     int argc = 9;
+    const std::string app_name("metagraph_DNA5");
+    const std::string graph_name("graph.dbg");
+
     char** argv = (char**)malloc(argc * sizeof(const char*));
     //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
-    auto path_string = extract_path();
-    char* arg_app = (char*) path_string.c_str();
+    auto app_string = extract_path(app_name);
+    char* arg_app = (char*) app_string.c_str();
+
+    auto graph_string = extract_path(graph_name);
+    char* arg_graph = (char*) graph_string.c_str();
+
+    auto annotation_string = extract_path("count_brwt.int_brwt.annodbg");
+    char* arg_annotation = (char*) annotation_string.c_str();
 
     std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
 
@@ -516,10 +525,10 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
 
     // LOCAL, on MAC:
      //auto file_name_cstr = filename_local.c_str();
-     argv[5] = (char *) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
+     argv[5] = arg_graph;
      argv[6] = (char*) "-a";
      //argv[7] = (char *) fs::current_path().append(database_path).append("count_brwt.int_brwt.annodbg").c_str();
-     argv[7] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/count_brwt.int_brwt.annodbg";
+     argv[7] = arg_annotation;
      argv[8] = (char*) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
      auto config = std::make_unique<mtg::cli::Config>(argc, argv);
      // std::string filename
