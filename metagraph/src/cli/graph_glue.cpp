@@ -430,13 +430,20 @@ void graph_glue::do_pantools_work(char* genome_name,
 
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     int argc = 9;
-    char** argv = (char**) malloc(argc * sizeof(const char*));
-    //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
-    char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("build").append("metagraph_DNA5").c_str();
+    char** argv = (char**)malloc(argc * sizeof(const char*));
+    // char* arg_app = (char*)
+    // fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
+    char* arg_app = (char*)fs::current_path()
+                            .parent_path()
+                            .append("metagraph")
+                            .append("metagraph")
+                            .append("build")
+                            .append("metagraph_DNA5")
+                            .c_str();
 
     std::cout << arg_app << std::endl;
     argv[0] = arg_app;
-    //argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
+    // argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
     argv[1] = (char*)"query";
     argv[2] = (char*)"--query-mode";
     argv[3] = (char*)"coords";
@@ -451,29 +458,43 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     */
 
     // LOCAL, on MAC:
-     argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
-     argv[6] = (char*) "-a";
-     argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/transformed.row_diff_brwt_coord.annodbg";
-     argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/test.fasta";
-     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-     // std::string filename
-     //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
+    argv[5] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
+    argv[6] = (char*)"-a";
+    argv[7] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/transformed.row_diff_brwt_coord.annodbg";
+    argv[8] = (char *)"/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/test.fasta";
+    auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+    // std::string filename
+    //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
 
-    std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
+    std::string filename
+            = "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
 
-    std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
+    std::shared_ptr<DBGSuccinct> boss_graph
+            = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename);
-    std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
-//
-     return anno_graph;
- }
+    std::shared_ptr<AnnotatedDBG> anno_graph
+            = mtg::cli::initialize_annotated_dbg(dbg, *config);
+    //
+    return anno_graph;
+}
 
+string graph_glue::extract_path() {
+    auto path_string =  std::string(fs::current_path()
+            .parent_path()
+            .append("metagraph")
+            .append("metagraph")
+            .append("build")
+            .append("metagraph_DNA5")
+            .string());
+    return path_string;
+}
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     std::cout << "Loading database from " << database_path << std::endl;
     int argc = 9;
     char** argv = (char**)malloc(argc * sizeof(const char*));
     //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
-    char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("build").append("metagraph_DNA5").string().c_str();
+    auto path_string = extract_path();
+    char* arg_app = (char*) extract_path().c_str();
 
     std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
 
