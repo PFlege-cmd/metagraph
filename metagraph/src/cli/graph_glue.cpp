@@ -53,18 +53,14 @@ extern "C"{
         std::cout <<"Reaches line 53!" << std::endl;
 
         while (current < n) {
-
             long sum_total = 0;
-
-            auto count_vector = graph->get_kmer_counts(vector<uint64> {current}, num_top_labels, discovery_fraction,
+            auto count_vector = graph->get_kmer_counts(vector{current}, num_top_labels, discovery_fraction,
                                                   presence_fraction);
-
             for (int i = 0; i < (int) count_vector.size(); i++) {
                 auto stuff = std::get<2>(count_vector[i]);
                 for (int j = 0; j < (int) stuff.size(); j++) {
                     sum_total += stuff[j];
                 }
-
             }
             max_freq = sum_total > max_freq ? sum_total : max_freq;
             current += 1;
