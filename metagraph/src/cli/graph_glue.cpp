@@ -504,6 +504,8 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
      //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
 
     //std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
+    std::cout << config->infbase << std::endl;
+    std::cout << "PREVIOUS WAS CONFIG" << std::endl;
 
     std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename_local);
