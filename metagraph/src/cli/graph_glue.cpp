@@ -497,7 +497,8 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
      //auto file_name_cstr = filename_local.c_str();
      argv[5] = (char *) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
      argv[6] = (char*) "-a";
-     argv[7] = (char *) fs::current_path().append(database_path).append("count_brwt.int_brwt.annodbg").c_str();
+     //argv[7] = (char *) fs::current_path().append(database_path).append("count_brwt.int_brwt.annodbg").c_str();
+     argv[7] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/count_brwt.int_brwt.annodbg";
      argv[8] = (char*) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
      auto config = std::make_unique<mtg::cli::Config>(argc, argv);
      // std::string filename
