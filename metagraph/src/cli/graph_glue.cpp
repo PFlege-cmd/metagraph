@@ -477,7 +477,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
 
     std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
 
-    std::cout << arg_app << std::endl;
+    std::cout << arg_app << "Application: "<< std::endl;
     argv[0] = arg_app;
     //argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
     argv[1] = (char*)"query";
