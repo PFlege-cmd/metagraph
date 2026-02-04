@@ -54,7 +54,8 @@ extern "C"{
 
         while (current < n) {
             long sum_total = 0;
-            auto count_vector = graph->get_kmer_counts(vector{current}, num_top_labels, discovery_fraction,
+            auto single_node_vec = vector<uint64>{current};
+            auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
                                                   presence_fraction);
             for (int i = 0; i < (int) count_vector.size(); i++) {
                 auto stuff = std::get<2>(count_vector[i]);
