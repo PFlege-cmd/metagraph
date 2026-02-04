@@ -430,7 +430,7 @@ void graph_glue::do_pantools_work(char* genome_name,
 
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     int argc = 9;
-    char** argv = (char**)malloc(argc * sizeof(const char*));
+    char** argv = (char**) malloc(argc * sizeof(const char*));
     //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
     char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("build").append("metagraph_DNA5").c_str();
 
@@ -494,10 +494,11 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     */
 
     // LOCAL, on MAC:
-     argv[5] = (char *) filename_local.c_str();
+     auto file_name_cstr = filename_local.c_str();
+     argv[5] = (char *) file_name_cstr;
      argv[6] = (char*) "-a";
      argv[7] = (char *) fs::current_path().append(database_path).append("count_brwt.int_brwt.annodbg").c_str();
-     argv[8] = (char *) "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/test.fasta";
+     argv[8] = (char*) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
      auto config = std::make_unique<mtg::cli::Config>(argc, argv);
      // std::string filename
      //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
