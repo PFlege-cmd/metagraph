@@ -478,7 +478,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     return anno_graph;
 }
 
-string graph_glue::extract_path(const std::string& endpoint) {
+string graph_glue::extract_child_from_build_dir(const std::string& endpoint) {
     auto path_string =  std::string(fs::current_path()
             .parent_path()
             .append("metagraph")
@@ -488,6 +488,12 @@ string graph_glue::extract_path(const std::string& endpoint) {
             .string());
     return path_string;
 }
+
+string graph_glue::extract_child_from_current_dir(const std::string& endpoint, const std::string& database_path) {
+    auto path_string = std::string( fs::current_path().append(database_path).append(endpoint));
+    return path_string;
+}
+
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     std::cout << "Loading database from " << database_path << std::endl;
     int argc = 9;
@@ -496,13 +502,13 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
 
     char** argv = (char**)malloc(argc * sizeof(const char*));
     //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
-    auto app_string = extract_path(app_name);
+    auto app_string = extract_child_from_build_dir(app_name);
     char* arg_app = (char*) app_string.c_str();
 
-    auto graph_string = extract_path(graph_name);
+    auto graph_string = extract_child_from_current_dir(graph_name, database_path);
     char* arg_graph = (char*) graph_string.c_str();
 
-    auto annotation_string = extract_path("count_brwt.int_brwt.annodbg");
+    auto annotation_string = extract_child_from_current_dir("count_brwt.int_brwt.annodbg", database_path);
     char* arg_annotation = (char*) annotation_string.c_str();
 
     std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
