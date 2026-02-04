@@ -53,42 +53,21 @@ extern "C"{
         std::cout <<"Reaches line 53!" << std::endl;
 
         while (current < n) {
-            /*if (current % 1000000 == 0) {
-                std::cout << current << std::endl;
-                std::cout <<"Current maximal frequency is: " << max_freq <<std::endl;
-            }*/
-            //std::cout <<"Reaches line 59!" << std::endl;
-            std::string seq = graph->get_graph().get_node_sequence(current).c_str();
-            //std::cout <<"Reaches line 61!" << std::endl;
 
-            if (std::string_view::npos != seq.find("$")) {
-                current += 1;
-                continue;
-            }
             long sum_total = 0;
-            //auto coord_vector
-            //        = graph->get_kmer_coordinates(seq, num_top_labels, discovery_fraction,
-            //                                      presence_fraction);
 
-            auto count_vector = graph->get_kmer_counts(seq, num_top_labels, discovery_fraction,
+            auto count_vector = graph->get_kmer_counts(vector<uint64> {current}, num_top_labels, discovery_fraction,
                                                   presence_fraction);
-            /*for (int i = 0; i < static_cast<int>(coord_vector.size()); i++) {
-                auto stuff = coord_vector.at(i);
-                auto how_many = std::get<2>(stuff);
-                sum_total += how_many[0].size();
-            }*/
 
             for (int i = 0; i < (int) count_vector.size(); i++) {
                 auto stuff = std::get<2>(count_vector[i]);
                 for (int j = 0; j < (int) stuff.size(); j++) {
-                    //std::cout << stuff[j] << std::endl;
                     sum_total += stuff[j];
                 }
 
             }
             max_freq = sum_total > max_freq ? sum_total : max_freq;
             current += 1;
-
         }
         return max_freq;
     }
