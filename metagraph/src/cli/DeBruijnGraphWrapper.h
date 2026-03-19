@@ -23,6 +23,10 @@ class DeBruijnGraphWrapper : public GraphWrapper {
                                         node_index start_index) override;
     uint64_t get_first_node_of_coord_range(uint64_t anchor_index, long long start_anchor, std::string genome_name, long long start_sequence) override;
 
+    unsigned long long get_number_nodes() override;
+
+    kmer_frequencies get_kmer_frequencies(std::vector<node_index> nodes) override;
+    int get_num_genomes() const override;
 };
 
 

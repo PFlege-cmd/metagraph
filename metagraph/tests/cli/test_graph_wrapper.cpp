@@ -2,7 +2,9 @@
 // Created by Patrick Flege on 20/11/2025.
 //
 
-#include "cli/DeBruijnGraphWrapper.h"
+#include "mock_graph_wrapper.h"
+
+
 #include "cli/GraphWrapper.hpp"
 #include "cli/SequenceRetriever.h"
 
@@ -17,22 +19,6 @@
 using testing::internal::MockFunction;
 using testing::Return;
 using testing::_;
-
-class MockGraphWrapper : public GraphWrapper {
-    public:
-        explicit MockGraphWrapper(mtg::graph::AnnotatedDBG& graph);
-        MOCK_METHOD(long,retrieveAnchorCoordinates, (std::string anchor_sequence, long anchor_position, std::string genome_name), (override));
-        MOCK_METHOD(uint64_t, retrieveAnchorId, (std::string), (override));
-        MOCK_METHOD((std::string), get_sequence_for_coords, (std::string, unsigned long long, unsigned long long, uint64_t start_index), (override));
-        MOCK_METHOD(uint64_t, get_first_node_of_coord_range, (uint64_t, long long start_anchor, std::string, long long start_sequence), (override));
-        //std::vector<std::tuple<std::string, size_t, std::vector<SmallVector<uint64_t>>>> retrieveAnchorCoordinates(char* anchor_sequence, long anchor_position, char* genome_name) override;
-};
-
-MockGraphWrapper::MockGraphWrapper(mtg::graph::AnnotatedDBG &graph) : GraphWrapper(&graph) {
-    //I think that &stuff is converted, ie copied, by copying tyhr pointer to it?
-
-    std::cout << "MockGraphWrapper::MockGraphWrapper()" << &graph  << std::endl;
-}
 
 
 TEST(TestGraphWrapper, testGetAnchorId) {

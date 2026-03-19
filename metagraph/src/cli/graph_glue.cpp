@@ -21,29 +21,25 @@
 #include "cli/config/config.hpp"
 #include "cli/build.hpp"
 #include "cli/annotate.hpp"
-#include "cli/stats.hpp"
-#include "cli/augment.hpp"
-#include "cli/clean.hpp"
-#include "cli/merge.hpp"
 #include "cli/align.hpp"
-#include "cli/query.hpp"
-#include "cli/assemble.hpp"
-#include "cli/server.hpp"
-#include "cli/transform_graph.hpp"
 #include "cli/transform_annotation.hpp"
 #include <chrono>
 #include <ranges>
+
 using namespace mtg::graph;
 namespace fs = std::filesystem;
 using namespace std;
 using node_index = SequenceGraph::node_index;
 extern "C"{
     unsigned long get_maximum_kmer_frequency(char * database_path) {
+
+
         std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
         std::string data_path = std::string(database_path);
         graph_glue glue = graph_glue(0, NULL);
 
-        unsigned long long num_top_labels = 4294967295;
+        long maximum_freq  = glue.calculate_maximum_kmer_frequency(database_path);
+        /*unsigned long long num_top_labels = 4294967295;
         const double discovery_fraction = 0.699999999999996;
         const double presence_fraction = 0.0;
 
@@ -51,7 +47,6 @@ extern "C"{
         uint64 n = graph->get_graph().num_nodes();
         uint64 current = 1;
         long max_freq = 0;
-        std::cout <<"Reaches line 53!" << std::endl;
 
         while (current < n) {
             long sum_total = 0;
@@ -66,8 +61,8 @@ extern "C"{
             }
             max_freq = sum_total > max_freq ? sum_total : max_freq;
             current += 1;
-        }
-        return max_freq;
+        }*/
+        return maximum_freq;
     }
 }
 
@@ -428,6 +423,53 @@ void graph_glue::do_pantools_work(char* genome_name,
 
 }
 
+
+unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path) {
+    std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
+    std::string data_path = std::string(database_path);
+    graph_glue glue = graph_glue(0, NULL);
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+
+    static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
+    uint64 n = graph->get_graph().num_nodes();
+    uint64 current = 1;
+    long max_freq = 0;
+
+    while (current < n) {
+        long sum_total = 0;
+        auto single_node_vec = std::vector<node_index>{current};
+        auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
+                                              presence_fraction);
+        for (int i = 0; i < (int) count_vector.size(); i++) {
+            //i =  number of hits for the kmer
+            std::cout << "Count vector size is: " << count_vector.size() << std::endl;
+            //std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
+            auto kmer_counts = std::get<2>(count_vector[i]);
+            for (int j = 0; j < (int) kmer_counts.size(); j++) {
+                //j = stuff that I do not understand. Probably only useful when I query several nodes at the same time.
+
+                //if (stuff[j] > 20) {
+                    std::cout << "Quantity IS: " << kmer_counts[j] << std::endl;
+                    std::cout << "Quantity at ZERO IS: " << kmer_counts[0] << std::endl;
+
+                    std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
+                //}
+
+                sum_total += kmer_counts[j];
+            }
+        }
+        if (sum_total > 127) {
+            std::cout << "Maximum frequency: " << sum_total << std::endl;
+        }
+        max_freq = sum_total > max_freq ? sum_total : max_freq;
+        current += 1;
+    }
+    return max_freq;
+}
+
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg() {
     int argc = 9;
     char** argv = (char**)malloc(argc * sizeof(const char*));
@@ -489,19 +531,35 @@ string graph_glue::extract_child_from_build_dir(const std::string& endpoint) {
     return path_string;
 }
 
-string graph_glue::extract_child_from_current_dir(const std::string& endpoint, const std::string& database_path) {
-    auto path_string = std::string( fs::current_path().append(database_path).append(endpoint));
+string graph_glue::extract_child_from_current_dir(const std::string& endpoint,
+                                                  const std::string& database_path) {
+    auto path_string
+            = std::string(fs::current_path().append(database_path).append(endpoint));
     return path_string;
 }
 
+char** graph_glue::assemble_configuration_args(int argc,
+                                             char* arg_app,
+                                             char* arg_graph,
+                                             char* arg_annotation) {
+    char** argv = (char**)malloc(argc * sizeof(const char*));
+    argv[0] = arg_app;
+    argv[1] = (char*)"query";
+    argv[2] = (char*)"--query-mode";
+    argv[3] = (char*)"coords";
+    argv[4] = (char*)"-i";
+    argv[5] = arg_graph;
+    argv[6] = (char*)"-a";
+    argv[7] = arg_annotation;
+    argv[8] = (char*) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
+    return argv;
+}
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     std::cout << "Loading database from " << database_path << std::endl;
     int argc = 9;
     const std::string app_name("metagraph_DNA5");
     const std::string graph_name("graph.dbg");
 
-    char** argv = (char**)malloc(argc * sizeof(const char*));
-    //char* arg_app = (char*) fs::current_path().parent_path().append("metagraph").append("metagraph").append("cmake-build-debug").append("metagraph_DNA5").c_str();
     auto app_string = extract_child_from_build_dir(app_name);
     char* arg_app = (char*) app_string.c_str();
 
@@ -513,42 +571,15 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
 
     std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
 
-    std::cout << arg_app << "Application: "<< std::endl;
-    argv[0] = arg_app;
-    //argv[0] = (char *) "/Users/patrick_flege/git/metagraph/metagraph/cmake-build-debug/metagraph_DNA5";
-    argv[1] = (char*)"query";
-    argv[2] = (char*)"--query-mode";
-    argv[3] = (char*)"coords";
-    argv[4] = (char*)"-i";
+    char** argv  = assemble_configuration_args(argc, arg_app, arg_graph, arg_annotation);
+    auto config = std::make_unique<mtg::cli::Config>(argc, argv);
 
-    // LUSTRE, SERVER
-    /*
-    argv[5] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
-    argv[6] = (char*)"-a";
-    argv[7] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/anno.column_coord.annodbg";
-    argv[8] = (char *)"/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
-    */
-
-    // LOCAL, on MAC:
-     //auto file_name_cstr = filename_local.c_str();
-     argv[5] = arg_graph;
-     argv[6] = (char*) "-a";
-     //argv[7] = (char *) fs::current_path().append(database_path).append("count_brwt.int_brwt.annodbg").c_str();
-     argv[7] = arg_annotation;
-     argv[8] = (char*) "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/test.fasta";
-     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
-     // std::string filename
-     //        = "/lustre/BIF/nobackup/flege001/patrick-pan-tools/chloroplast_DB/graph.dbg";
-
-    //std::string filename = "/Users/patrick_flege/git/patrick-pan-tools/a_thaliana_20_DB/graph.dbg";
     std::cout << config->infbase << std::endl;
-    std::cout << "PREVIOUS WAS CONFIG" << std::endl;
 
     std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename_local);
     std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
-    std::cout << "AM HERE!" << std::endl;
-//
+
      return anno_graph;
  }
 

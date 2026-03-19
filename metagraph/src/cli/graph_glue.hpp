@@ -20,14 +20,22 @@ class graph_glue {
     shared_ptr<AnnotatedDBG> load_dbg();
     static string extract_child_from_build_dir(const std::string& endpoint);
     static string extract_child_from_current_dir(const std::string& endpoint,
-                                          const std::string& database_path);
+                                                 const std::string& database_path);
+    char** assemble_configuration_args(int argc,
+                                       char* arg_app,
+                                       char* arg_graph,
+                                       char* arg_annotation);
+
+
     shared_ptr<AnnotatedDBG> load_dbg(std::string database_path);
 
     void do_pantools_work(char* genome_name,
-                 int* sequence_lengths,
-                 int no_of_sequences,
-                 HitsPerSequence*& results,  const char * read, const std::shared_ptr<AnnotatedDBG>& graph
-    );
+                          int* sequence_lengths,
+                          int no_of_sequences,
+                          HitsPerSequence*& results,
+                          const char* read,
+                          const std::shared_ptr<AnnotatedDBG>& graph);
+    unsigned long calculate_maximum_kmer_frequency(char* database_path);
     char** get_cmd_arguments();
     int get_cmd_arg_count();
     unique_ptr<Config> create_config();

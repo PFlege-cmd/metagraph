@@ -4,6 +4,8 @@
 
 #include "DeBruijnGraphWrapper.h"
 
+#include "kmer/kmer.hpp"
+
 DeBruijnGraphWrapper::DeBruijnGraphWrapper(mtg::graph::AnnotatedDBG &graph) : GraphWrapper(&graph) {}
 
 DeBruijnGraphWrapper::~DeBruijnGraphWrapper() {
@@ -146,6 +148,8 @@ std::string DeBruijnGraphWrapper::get_sequence_for_coords(std::string genome,
                              found_next_coordinate = true;
                              current_kmer = outgoing_nodes[i];
                              current_coordinate = outgoing_edge_coords;
+                             //auto col = this->get_graph()->get_annotator().get_matrix().get_column(2).at(100);
+                             //this->get_graph()->get
                              char next_char = this->get_graph()->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                              starting_kmer.append(1, next_char);
                              outgoing_nodes.clear();
@@ -321,3 +325,22 @@ uint64_t DeBruijnGraphWrapper::get_first_node_of_coord_range(uint64_t anchor_ind
      //std::cout<< "Found first node of range!" << std::endl;
      return current_kmer;
 }
+
+unsigned long long DeBruijnGraphWrapper::get_number_nodes() {
+    return this->get_graph()->get_graph().num_nodes(); // Calls underlying de Bruijn graph.
+}
+
+GraphWrapper::kmer_frequencies DeBruijnGraphWrapper::get_kmer_frequencies(std::vector<node_index> nodes) {
+    constexpr unsigned long long num_top_labels = 4294967295;
+    constexpr double discovery_fraction = 0.699999999999996;
+    constexpr double presence_fraction = 0.0;
+    return this->get_graph()->get_kmer_counts(nodes, num_top_labels, discovery_fraction,
+                                              presence_fraction);
+}
+
+int DeBruijnGraphWrapper::get_num_genomes() const {
+    return this->get_graph()->get_annotator().num_labels(); // Labels are number of genomes
+}
+
+
+
