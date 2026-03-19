@@ -23,6 +23,8 @@
 #include "cli/annotate.hpp"
 #include "cli/align.hpp"
 #include "cli/transform_annotation.hpp"
+#include "external/KmerClassifier.hpp"
+
 #include <chrono>
 #include <ranges>
 
@@ -437,6 +439,17 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
     uint64 n = graph->get_graph().num_nodes();
     uint64 current = 1;
     long max_freq = 0;
+    auto wrapper = DeBruijnGraphWrapper(*graph);
+    auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
+    int num_genomes = kmerClassifier.get_num_genomes();
+    kmerClassifier.set_num_genomes(num_genomes);
+
+    auto kmer_matrix = kmerClassifier.create_kmer_classification_matrix();
+    for (size_t i = 0; i < kmer_matrix.size(); i++) {
+        for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
+            std::cout << "Kmer entry at :" << i << j << "--" << kmer_matrix[i][j] << std::endl;
+        }
+    }
 
     while (current < n) {
         long sum_total = 0;

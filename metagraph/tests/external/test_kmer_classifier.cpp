@@ -77,7 +77,7 @@ TEST(testKmerClassifier, testCalculateTotalCountMatrixOnce) {
     typedef std::tuple<Label, size_t, std::vector<size_t>> kmer_tuple;
     mtg::graph::AnnotatedDBG*  graph = nullptr;
     MockGraphWrapper wrapper = MockGraphWrapper(*graph);
-    KmerClassifier kmer_classifier(wrapper);
+    KmerClassifier kmer_classifier(wrapper, 3, 1, 4);
 
     Label genome_one_name = std::string("/0_contig/t");
     Label genome_two_name = std::string("/1_contig/t");
@@ -94,15 +94,13 @@ TEST(testKmerClassifier, testCalculateTotalCountMatrixOnce) {
     kmer_frequencies frequencies_1 =  std::vector<kmer_tuple>({first_genome_counts, second_genome_counts, third_genome_counts});
     auto idx = std::vector<node_index_kmer>({1});
 
-    //EXPECT_CALL(wrapper, get_num_genomes).WillOnce(testing::Return(3)); //TODO: Needs to be called in caller
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
 
-    constexpr int size = 3;
-    auto arr = kmer_classifier.count_kmer_per_genome<size>(idx[0]);
+    auto kmer_counts = kmer_classifier.count_kmer_per_genome(idx[0]);
 
-    ASSERT_EQ(arr[0], 3);
-    ASSERT_EQ(arr[1], 4);
-    ASSERT_EQ(arr[2], 5);
+    ASSERT_EQ(kmer_counts[0], 3);
+    ASSERT_EQ(kmer_counts[1], 4);
+    ASSERT_EQ(kmer_counts[2], 5);
 }
 
 TEST(testKmerClassifier, testThrowsExceptionAtInvalidGenomeNumber) {
@@ -256,8 +254,8 @@ TEST(TestKmerClassification, testFillCountMatrix) {
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx4))
     .WillOnce(testing::Return(frequencies_3));
 
-    KmerClassifier kmer_classifier(wrapper, 4, 1);
-    auto matrix = kmer_classifier.create_kmer_classification_matrix<4>();
+    KmerClassifier kmer_classifier(wrapper, 4, 1, 4);
+    auto matrix = kmer_classifier.create_kmer_classification_matrix();
 
     ASSERT_EQ(matrix.size(), 3);
     ASSERT_EQ(matrix[1][3], 10);

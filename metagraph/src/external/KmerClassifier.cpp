@@ -18,6 +18,15 @@ KmerClassifier::KmerClassifier(GraphWrapper& graph_ptr) : graph_ptr(graph_ptr) {
                                int unique_threshold) :graph_ptr(graph_ptr),  core_threshold(core_threshold), unique_threshold(unique_threshold) {
 }
 
+ KmerClassifier::KmerClassifier(GraphWrapper& graph_ptr,
+                                int core_threshold,
+                                int unique_threshold,
+                                int genome_number) : graph_ptr(graph_ptr) , core_threshold(core_threshold), unique_threshold(unique_threshold) , genome_number(genome_number) {
+ }
+
+void KmerClassifier::set_num_genomes(int genome_number) {
+    this->genome_number = genome_number;
+}
 
 unsigned long long KmerClassifier::get_node_number() {
     return graph_ptr.get_number_nodes();
