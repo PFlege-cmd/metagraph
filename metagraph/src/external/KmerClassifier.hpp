@@ -23,6 +23,7 @@ public:
 
     template<size_t genome_number> std::array<int, genome_number> count_kmer_per_genome(node_index_kmer idx) {
         std::array<int, genome_number> kmer_counts({0});
+        //std::vector<int> kmer_counts(genome_number, 0);
         auto nodes = std::vector<node_index_kmer>({idx});
         auto frequencies = this->get_kmer_frequencies(nodes);
         for (size_t i = 0; i < frequencies.size(); i++) {
@@ -38,6 +39,7 @@ public:
     };
 
 
+    //std::vector<int> kmer_counts
     template<size_t genome_number>
     std::tuple<KmerType, genomes_and_frequencies> classify_kmers(std::array<int, genome_number> kmer_counts) {
         KmerType type;
@@ -66,15 +68,56 @@ public:
         return std::tuple<KmerType, genomes_and_frequencies>(type, genome_frequencies);
     };
 
-    template<size_t genome_number>
+    template <size_t genome_number>
+    void fill_kmer_matrix(std::array<std::array<int, genome_number>, 3>& kmer_matrix,
+                          KmerType type,
+                          genomes_and_frequencies genome_frequencies) {
+        switch (type) {
+            case KmerType::CORE: {
+                std::cout << "Core" << std::endl;
+                for_each(genome_frequencies.begin(), genome_frequencies.end(),
+                         [&kmer_matrix](auto gen_idx) {
+                             std::cout << "CORE, at index: " << gen_idx.first << std::endl;
+                             std::cout << "CORE, adding: " << gen_idx.second << std::endl;
+
+                             kmer_matrix[0][gen_idx.first] += gen_idx.second;
+                         });
+                break;
+            }
+            case KmerType::ACCESSORY: {
+                std::cout << "Accessory" << std::endl;
+                std::for_each(genome_frequencies.begin(), genome_frequencies.end(),
+                              [&kmer_matrix](auto gen_idx) {
+                                  std::cout << "Accessory at index: " << gen_idx.first
+                                            << std::endl;
+                                  std::cout << "Accessory, adding: " << gen_idx.second
+                                            << std::endl;
+
+                                  kmer_matrix[1][gen_idx.first] += gen_idx.second;
+                              });
+                break;
+            }
+            case KmerType::UNIQUE: {
+                std::cout << "Unique" << std::endl;
+                std::cout << "Unique, adding: " << genome_frequencies[0].second << std::endl;
+                kmer_matrix[2][genome_frequencies[0].first] += genome_frequencies[0].second;
+                break;
+            }
+            default:
+                std::cout << "Unknown" << std::endl;
+                break;
+        }
+    }
+    template <size_t genome_number>
     std::array<std::array<int, genome_number>, 3> create_kmer_classification_matrix() {
+        // kmer_matrix = std::vector<std::vector<int>>(3, genome_number);
         auto kmer_matrix = std::array<std::array<int, genome_number>, 3>{{{}}};
         auto number_of_kmers = this->get_node_number();
+        std::cout << "Node number:" << number_of_kmers <<  std::endl;
         node_index_kmer current = 1;
         for (size_t i = 0; i < kmer_matrix.size(); i++) {
             for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
                 kmer_matrix[i][j] = 0;
-                std::cout << kmer_matrix[i][j] << std::endl;
             }
         }
 
@@ -87,30 +130,7 @@ public:
             KmerType type = std::get<0>(classified_kmers);
             genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
 
-            switch (type) {
-                case KmerType::CORE: {
-                    std::cout << "Core" << std::endl;
-                    for_each(genome_frequencies.begin(), genome_frequencies.end(), [&kmer_matrix](auto gen_idx) {
-                        std::cout << "CORE, at index: " << gen_idx.first  << std::endl;
-                        kmer_matrix[0][gen_idx.first] += gen_idx.second;
-                    });
-                    break;
-                }
-                case KmerType::ACCESSORY: {
-                    std::cout << "Accessory" << std::endl;
-                    std::for_each(genome_frequencies.begin(), genome_frequencies.end(), [&kmer_matrix](auto gen_idx) {
-                        std::cout << "Currently at index: " << gen_idx.first  << std::endl;
-                        kmer_matrix[1][gen_idx.first] += gen_idx.second;
-                    });
-                    break;
-                }
-                case KmerType::UNIQUE: {
-                    std::cout << "Unique" << std::endl;
-                    kmer_matrix[2][genome_frequencies[0].first] += genome_frequencies[0].second;
-                    break;
-                }
-                default: std::cout << "Unknown" << std::endl; break;
-            }
+            fill_kmer_matrix<genome_number>(kmer_matrix, type, genome_frequencies);
 
             current++;
         }
