@@ -28,6 +28,7 @@ class graph_glue {
 
 
     shared_ptr<AnnotatedDBG> load_dbg(std::string database_path);
+    std::shared_ptr<AnnotatedDBG> load_coord_dbg(std::string database_path);
 
     void do_pantools_work(char* genome_name,
                           int* sequence_lengths,

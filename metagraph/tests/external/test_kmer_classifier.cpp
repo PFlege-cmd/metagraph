@@ -126,23 +126,20 @@ TEST(testKmerClassifier, testThrowsExceptionAtInvalidGenomeNumber) {
 
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
 
-    constexpr int size = 3;
-
-    ASSERT_THROW(kmer_classifier.count_kmer_per_genome<size>(idx[0]), std::invalid_argument);
+    ASSERT_THROW(kmer_classifier.count_kmer_per_genome(idx[0]), std::invalid_argument);
 }
 
-class TestKmerClassificationFixture : public ::testing::TestWithParam<std::tuple<KmerType, KmerClassifier::genomes_and_frequencies, std::array<int, 4>>> {};
+class TestKmerClassificationFixture : public ::testing::TestWithParam<std::tuple<KmerType, KmerClassifier::genomes_and_frequencies, std::vector<int>>> {};
 
 INSTANTIATE_TEST_SUITE_P(
     IndividualKmerClassificationTests,
     TestKmerClassificationFixture,
     testing::Values(
-        std::make_tuple<KmerType, KmerClassifier::genomes_and_frequencies, std::array<int, 4>>(
+        std::make_tuple<KmerType, KmerClassifier::genomes_and_frequencies, std::vector<int>>(
             KmerType::UNIQUE,
             std::vector<std::pair<int, int>>({
-                std::make_pair(2, 5)}
-            ),
-            std::array<int, 4>({0, 0, 5, 0})
+                std::make_pair(2, 5)}),
+            std::vector<int>({0, 0, 5, 0})
             ),
         std::make_tuple(
             KmerType::CORE,
@@ -153,7 +150,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::make_pair(2, 1),
                 std::make_pair(3, 2)
             }),
-            std::array<int, 4>({1, 2, 1, 2})
+            std::vector<int>({1, 2, 1, 2})
         ),
         std::make_tuple(
             KmerType::ACCESSORY,
@@ -162,7 +159,7 @@ INSTANTIATE_TEST_SUITE_P(
                     std::make_pair(2, 1),
                     std::make_pair(3, 2)}
                 ),
-                std::array<int, 4>({1, 0, 1, 2})
+                std::vector<int>({1, 0, 1, 2})
                 )
                 ));
 
@@ -255,10 +252,60 @@ TEST(TestKmerClassification, testFillCountMatrix) {
     .WillOnce(testing::Return(frequencies_3));
 
     KmerClassifier kmer_classifier(wrapper, 4, 1, 4);
-    auto matrix = kmer_classifier.create_kmer_classification_matrix();
+    kmer_classifier.create_kmer_classification_matrix();
+    auto distinct_matrix = kmer_classifier.get_distinct_kmer_matrix();
+    auto total_matrix = kmer_classifier.get_total_kmer_matrix();
 
-    ASSERT_EQ(matrix.size(), 3);
-    ASSERT_EQ(matrix[1][3], 10);
-    ASSERT_EQ(matrix[2][1], 111);
+    auto all_shared = kmer_classifier.get_all_shared_matrix();
+    auto all_total = kmer_classifier.get_all_total_matrix();
+
+    auto distinct_shared = kmer_classifier.get_distinct_shared_matrix();
+    auto distinct_total = kmer_classifier.get_distinct_total_matrix();
+
+    ASSERT_EQ(total_matrix.size(), 3);
+    ASSERT_EQ(total_matrix[1][3], 10);
+    ASSERT_EQ(total_matrix[2][1], 111);
+
+    ASSERT_EQ(distinct_matrix.size(), 3);
+
+    //testing the size of the distinct shared matrices, and whether it is triangular
+    ASSERT_EQ(distinct_shared.size(), 4);
+    for (int i = 0; i < (int) distinct_shared.size(); i++) {
+        for (int j = 0; j < (int) distinct_shared.size(); j++) {
+            ASSERT_EQ(all_shared[i][j], all_shared[j][i]);
+            ASSERT_EQ(all_total[i][j], all_total[j][i]);
+            ASSERT_EQ(distinct_shared[i][j], distinct_shared[j][i]);
+            ASSERT_EQ(distinct_total[i][j], distinct_total[j][i]);
+
+            GTEST_ASSERT_NE(distinct_shared[i][j], all_shared[i][j]);
+        }
+    }
+    auto flat = kmer_classifier.flatten(distinct_shared);
+    for (int i = 0; i < (int) distinct_shared.size(); i++) {
+        for (int j = 0; j < (int) distinct_shared.size(); j++) {
+            ASSERT_EQ(flat[i*4 + j], distinct_shared[i][j]);
+        }
+    }
+
+    flat = kmer_classifier.flatten(distinct_total);
+    for (int i = 0; i < (int) distinct_total.size(); i++) {
+        for (int j = 0; j < (int) distinct_total.size(); j++) {
+            ASSERT_EQ(flat[i*4 + j], distinct_total[i][j]);
+        }
+    }
+
+    flat = kmer_classifier.flatten(all_shared);
+    for (int i = 0; i < (int) all_shared.size(); i++) {
+        for (int j = 0; j < (int) all_shared.size(); j++) {
+            ASSERT_EQ(flat[i*4 + j], all_shared[i][j]);
+        }
+    }
+
+    flat = kmer_classifier.flatten(all_total);
+    for (int i = 0; i < (int) all_total.size(); i++) {
+        for (int j = 0; j < (int) all_total.size(); j++) {
+            ASSERT_EQ(flat[i*4 + j], all_total[i][j]);
+        }
+    }
 }
 

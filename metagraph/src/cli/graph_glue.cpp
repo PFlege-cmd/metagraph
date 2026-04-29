@@ -94,15 +94,13 @@ struct HitsPerSequence {
     explicit HitsPerSequence(int* arr, int* offsets ) { hitsPerSequence = arr; sequenceOffsets = offsets; };
 };
 
-
-
 extern "C"{
-    HitsPerSequence* retrieve_hits_for_genome(char * genome_name, int* sequence_lengths, int no_of_sequences, char * read) {
+    HitsPerSequence* retrieve_hits_for_genome(char * database, char * genome_name, int* sequence_lengths, int no_of_sequences, char * read) {
         for (int i = 0; i < no_of_sequences; i++) {
             std::cout << sequence_lengths[i] << std::endl;
         }
         graph_glue glue = graph_glue(0, NULL);
-        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_coord_dbg(database);
         HitsPerSequence* results = new HitsPerSequence();
         glue.do_pantools_work(genome_name, sequence_lengths, no_of_sequences, results, read, graph);
 
@@ -119,7 +117,6 @@ extern "C"{
 }
 
 extern "C"{
-
     const char * retrieve_sequence_for_coordinates_with_anchor(char * anchor_sequence, long anchor_position, char * genome_name, long start, long end) {
         graph_glue glue = graph_glue(0, NULL);
         static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg();
@@ -435,16 +432,32 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
     const double discovery_fraction = 0.699999999999996;
     const double presence_fraction = 0.0;
 
+    static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
+
+
+    // // --------- Testing acquiring coordinates ------ //
+    //
+    // auto deg_kmer = std::string_view("GGTMTTT");
+    // auto deg_stuff = graph_coord->get_kmer_coordinates(deg_kmer,num_top_labels, discovery_fraction, presence_fraction);
+    // std::cout << "Number of M DEG k-mers: " << deg_stuff.size() << std::endl;
+    // for (int i = 0; i < (int) deg_stuff.size(); i++) {
+    //     std::cout << std::get<0>(deg_stuff[i]) << std::endl;
+    // }
+    //
+    // // --------- Testing acquiring coordinates ------ //
+
+
     static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
     uint64 n = graph->get_graph().num_nodes();
+
     uint64 current = 1;
     long max_freq = 0;
     auto wrapper = DeBruijnGraphWrapper(*graph);
     auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
     int num_genomes = kmerClassifier.get_num_genomes();
     kmerClassifier.set_num_genomes(num_genomes);
-
-    auto kmer_matrix = kmerClassifier.create_kmer_classification_matrix();
+    kmerClassifier.create_kmer_classification_matrix();
+    auto kmer_matrix = kmerClassifier.get_total_kmer_matrix();
     for (size_t i = 0; i < kmer_matrix.size(); i++) {
         for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
             std::cout << "Kmer entry at :" << i << j << "--" << kmer_matrix[i][j] << std::endl;
@@ -595,6 +608,35 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
 
      return anno_graph;
  }
+
+std::shared_ptr<AnnotatedDBG> graph_glue::load_coord_dbg(std::string database_path) {
+    std::cout << "Loading database from " << database_path << std::endl;
+    int argc = 9;
+    const std::string app_name("metagraph_DNA5");
+    const std::string graph_name("graph.dbg");
+
+    auto app_string = extract_child_from_build_dir(app_name);
+    char* arg_app = (char*) app_string.c_str();
+
+    auto graph_string = extract_child_from_current_dir(graph_name, database_path);
+    char* arg_graph = (char*) graph_string.c_str();
+
+    auto annotation_string = extract_child_from_current_dir("anno.brwt_coord.annodbg", database_path);
+    char* arg_annotation = (char*) annotation_string.c_str();
+
+    std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
+
+    char** argv  = assemble_configuration_args(argc, arg_app, arg_graph, arg_annotation);
+    auto config = std::make_unique<mtg::cli::Config>(argc, argv);
+
+    std::cout << config->infbase << std::endl;
+
+    std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
+    std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename_local);
+    std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
+
+    return anno_graph;
+}
 
  char** graph_glue::get_cmd_arguments() {
      return cmd_arguments;
