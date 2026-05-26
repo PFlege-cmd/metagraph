@@ -7,6 +7,7 @@
 #include "external/KmerType.h"
 
 #include <regex>
+#include <utility>
 #include <vector>
 
 using node_index_kmer = GraphWrapper::node_index_kmer;
@@ -54,11 +55,11 @@ public:
         }
 
         if (number_of_occuring_genomes == this->unique_threshold) {
-            std::cout << "Working" << std::endl;
+            //std::cout << "Working" << std::endl;
             type = KmerType::UNIQUE;
         }
         else if (number_of_occuring_genomes == this->core_threshold) {
-            std::cout << "Not unique" << std::endl;
+            //std::cout << "Not unique" << std::endl;
             type = KmerType::CORE;
         }
         else {
@@ -82,13 +83,16 @@ public:
     void fill_kmer_matrix(KmerType type,
                           genomes_and_frequencies genome_frequencies) {
         bool* is_present_in_genome = new bool[genome_number];
+
         switch (type) {
             case KmerType::CORE: {
-                std::cout << "Core" << std::endl;
+                //int counter = 0;
+                //std::cout << "Core" << std::endl;
                 for_each(genome_frequencies.begin(), genome_frequencies.end(),
                          [this, genome_frequencies, is_present_in_genome](auto gen_idx) {
-                             std::cout << "CORE, at index: " << gen_idx.first << std::endl;
-                             std::cout << "CORE, adding: " << gen_idx.second << std::endl;
+                             //std::cout << "CORE, at index: " << gen_idx.first << std::endl;
+                             //std::cout << "CORE, adding: " << gen_idx.second << std::endl;
+                             //counter =+  gen_idx.second;
                              this->total_kmer_matrix[0][gen_idx.first] += gen_idx.second;
                              this->distinct_kmer_matrix[0][gen_idx.first] += 1;
                              this->fill_triangular_matrices(genome_frequencies, gen_idx);
@@ -97,13 +101,14 @@ public:
                 break;
             }
             case KmerType::ACCESSORY: {
-                std::cout << "Accessory" << std::endl;
+                //std::cout << "Accessory" << std::endl;
                 std::for_each(genome_frequencies.begin(), genome_frequencies.end(),
                               [this, genome_frequencies,is_present_in_genome](auto gen_idx) {
-                                  std::cout << "Accessory at index: " << gen_idx.first
+                                  /*std::cout << "Accessory at index: " << gen_idx.first
                                             << std::endl;
                                   std::cout << "Accessory, adding: " << gen_idx.second
                                             << std::endl;
+                                            */
 
                                   this->total_kmer_matrix[1][gen_idx.first] += gen_idx.second;
                                   this->distinct_kmer_matrix[1][gen_idx.first] += 1;
@@ -114,8 +119,8 @@ public:
                 break;
             }
             case KmerType::UNIQUE: {
-                std::cout << "Unique" << std::endl;
-                std::cout << "Unique, adding: " << genome_frequencies[0].second << std::endl;
+                //std::cout << "Unique" << std::endl;
+                //std::cout << "Unique, adding: " << genome_frequencies[0].second << std::endl;
                 this->total_kmer_matrix[2][genome_frequencies[0].first] += genome_frequencies[0].second;
                 this->distinct_kmer_matrix[2][genome_frequencies[0].first] += 1;
 
@@ -128,7 +133,7 @@ public:
                 break;
             }
             default:
-                std::cout << "Unknown" << std::endl;
+                //std::cout << "Unknown" << std::endl;
                 break;
         }
 
@@ -150,7 +155,7 @@ public:
 
         for (int i = 0; i < genome_number; i++) {
             for (int j = 0; j < genome_number; j++) {
-                std::cout << "Frequencies are: " << frequencies[i] << std::endl;
+                //std::cout << "Frequencies are: " << frequencies[i] << std::endl;
                 int highest = frequencies[i] > frequencies[j]? frequencies[i] : frequencies[j];
                 //int lowest = frequencies[i] < frequencies[j]? frequencies[i] : frequencies[j];
                 if (highest == 0)
@@ -195,13 +200,45 @@ public:
 
         while (current < number_of_kmers) {
             auto seq = this->graph_ptr.get_graph()->get_graph().get_node_sequence(current);
-            std::cout << "Node sequence:" << seq << std::endl;
+            //std::cout << "Node sequence:" << seq << std::endl;
 
             auto counts_per_genomes = this->count_kmer_per_genome(current);
             auto classified_kmers = this->classify_kmers(counts_per_genomes);
+            KmerType type = std::get<0>(classified_kmers);
+
+            int counter = 0;
+            for (int i = 0; i < (int) counts_per_genomes.size(); i++) {
+                counter += counts_per_genomes[i];
+            }
+
+
+
+            if ((((this-> get_kmer_map())[seq].size()) > 0) && (this-> get_kmer_map())[seq][0] != counter ) {
+                std::cout << "MISMATCH IN COUNTS:   " << seq << std::endl;
+                std::cout << "KMER MAP: " << (this->get_kmer_map()[seq][0]) << std::endl;
+                std::cout << "THIS: " << counter << std::endl;
+                if (type == KmerType::UNIQUE) {
+                    std::cout << "TYPE : " << "UNIQUE" << std::endl;
+
+                } else if (type == KmerType::ACCESSORY) {
+                    std::cout << "TYPE : " << "ACCESSORY" << std::endl;
+                }
+                else {
+                    std::cout << "TYPE : " << "CORE" << std::endl;
+                }
+                genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
+                for_each(genome_frequencies.begin(), genome_frequencies.end(),
+                         [](auto gen_idx) {
+                             std::cout << "MISMATCH, at genome: " << gen_idx.first << std::endl;
+                             std::cout << "Adding count: " << gen_idx.second << std::endl;
+                             //counter =+  gen_idx.second;
+                         });
+                //std::cout << "TYPE : " << KmerType << std::endl;
+                //throw std::runtime_error("KMER MAP ERROR");
+            }
             //TODO: Continue here.
             //TODO: Row 0 is core, row 1 accessory, row 2 unique
-            KmerType type = std::get<0>(classified_kmers);
+            //KmerType type = std::get<0>(classified_kmers);
             genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
             //TODO: FIll distinct counts as well.
             fill_kmer_matrix(type, genome_frequencies);
@@ -210,9 +247,34 @@ public:
         }
         return total_kmer_matrix;
     }
+    void set_kmer_map(std::map<std::string, std::vector<int>>& kmer_map) {
+        std::string input_kmer;
+        // map<std::string, int> kmer_map;
+        std::ifstream ifs("/Users/patrick_flege/git/patrick-pan-tools/covid/bin/out-kmers.txt");
+
+        while (getline(ifs, input_kmer)) {
+            std::cout << input_kmer << std::endl;
+            std::string kmer_component = input_kmer.substr(0, 13);
+            //std::cout << "Extracted compoennet." << kmer_component << ::endl;
+            //std::cout << "Position: " << input_kmer.find(' ') << std::endl;
+            std::string numba = input_kmer.substr(13, input_kmer.size() - 13);
+            // std::cout << "NUMBA: " << numba << std::endl;
+            auto vec = std::vector{std::stoi(numba)};
+            //std::cout << "Extracted count." << std::endl;
+            //kmer_map[input_kmer] = vec;
+            this->kmer_map.insert(std::pair<std::string, std::vector<int>>(kmer_component, vec));
+
+            std::cout << kmer_component << std::endl;
+            std::cout <<  this->kmer_map[kmer_component][0] << std::endl;
+            //this->kmer_map.insert(std::pair<std::string, int>(input_kmer, count_kmer));
+        }
+    }
+
+    std::map<std::string, std::vector<int>>& get_kmer_map() {
+        return this->kmer_map;
+    }
 
     std::vector<std::vector<int>> get_distinct_kmer_matrix();
-
     std::vector<std::vector<int>> get_total_kmer_matrix();
     std::vector<std::vector<int>> get_all_total_matrix();
     std::vector<std::vector<int>> get_all_shared_matrix();
@@ -233,4 +295,5 @@ public:
     int core_threshold;
     int unique_threshold;
     int genome_number;
+    std::map<std::string, std::vector<int>> kmer_map;
 };

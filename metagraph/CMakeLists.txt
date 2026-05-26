@@ -23,6 +23,7 @@ include(GoogleTest)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_DBG_ALPHABET "DNA5")
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
@@ -647,6 +648,7 @@ link_directories(
 )
 
 add_executable(unit_tests ${unit_tests_files}
+        tests/external/test_kmer_classifier.cpp
         tests/cli/test_graph_glue.cpp
         tests/cli/test_graph_glue.h
         tests/cli/mock_annotated_dbg.cpp
@@ -682,7 +684,12 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         src/cli/DeBruijnGraphWrapper.h
         src/cli/GraphWrapper.cpp
         src/cli/GraphWrapper.hpp
+        "${PROJECT_SOURCE_DIR}/src/external/KmerClassifier.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/KmerClassifier.hpp"
+        "${PROJECT_SOURCE_DIR}/src/external/KmerClassifierAdapter.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/KmerClassifierAdapter.h"
 )
+
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})
 target_link_libraries(libmetagraph-cli PRIVATE metagraph-core metagraph-cli)
 target_compile_features(libmetagraph-cli PRIVATE cxx_std_17)

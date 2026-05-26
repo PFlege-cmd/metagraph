@@ -251,8 +251,25 @@ TEST(TestKmerClassification, testFillCountMatrix) {
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx4))
     .WillOnce(testing::Return(frequencies_3));
 
+    std::map<int, int*> intmap;
+    std::map<int, int> intmap2;
+    for (int i = 0; i < 10; i++) {
+        intmap[i] = new int(i*2);
+        intmap2[i] = i*2;
+    }
+
+    std::cout << *intmap[0] << std::endl;
+    auto intmap3 = intmap2;
     KmerClassifier kmer_classifier(wrapper, 4, 1, 4);
-    kmer_classifier.create_kmer_classification_matrix();
+    std::map<std::string, std::vector<int>> kmer_map;
+    kmer_classifier.set_kmer_map(kmer_map);
+    std::cout << "INTMAP" << std::endl;
+    std::cout << intmap2[2] << std::endl;
+
+    // auto kmer_map_t = kmer_classifier.get_kmer_map();
+    // auto te = kmer_map_t["AAAAAAAAAAAAA"];
+    //
+    // kmer_classifier.create_kmer_classification_matrix();
     auto distinct_matrix = kmer_classifier.get_distinct_kmer_matrix();
     auto total_matrix = kmer_classifier.get_total_kmer_matrix();
 
@@ -267,6 +284,7 @@ TEST(TestKmerClassification, testFillCountMatrix) {
     ASSERT_EQ(total_matrix[2][1], 111);
 
     ASSERT_EQ(distinct_matrix.size(), 3);
+
 
     //testing the size of the distinct shared matrices, and whether it is triangular
     ASSERT_EQ(distinct_shared.size(), 4);

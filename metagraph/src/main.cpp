@@ -12,6 +12,7 @@
 #include "cli/align.hpp"
 #include "cli/query.hpp"
 #include "cli/assemble.hpp"
+#include "cli/graph_glue.hpp"
 #include "cli/server.hpp"
 #include "cli/transform_graph.hpp"
 #include "cli/transform_annotation.hpp"

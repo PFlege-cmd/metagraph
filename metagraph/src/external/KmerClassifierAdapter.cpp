@@ -7,6 +7,8 @@
 #include "KmerClassifier.hpp"
 #include "cli/DeBruijnGraphWrapper.h"
 #include "cli/graph_glue.hpp"
+#include <fstream>
+
 
 // struct TotalKmerMatrix {
 //     int* core;
@@ -85,7 +87,34 @@ struct KmerMatrix {
 // int* all_shared;
 // int* all_total;
 extern "C" {
+
     KmerMatrix* classify_kmers_genome(char * database_path, int genome_number) {
+        map<std::string, std::vector<int>> kmer_map;
+        //
+        // std::string input_kmer;
+        // //map<std::string, int> kmer_map;
+        // ifstream ifs("/Users/patrick_flege/git/patrick-pan-tools/covid/bin/out-kmers.txt");
+        //
+        // while (getline(ifs, input_kmer)) {
+        //     std::cout << input_kmer << std::endl;
+        //     std::string kmer_component = input_kmer.substr(0, 13);
+        //     //std::cout << "Extracted compoennet." << kmer_component << ::endl;
+        //     //std::cout << "Position: " << input_kmer.find(' ') << std::endl;
+        //     std::string numba = input_kmer.substr(13, input_kmer.size() - 13);
+        //     //std::cout << "NUMBA: " << numba << std::endl;
+        //     int count_kmer  = std::stoi(numba);
+        //     //std::cout << "Extracted count." << std::endl;
+        //     kmer_map[input_kmer] = count_kmer;
+        //     std::cout << kmer_component << std::endl;
+        //     std::cout << kmer_map[input_kmer] << std::endl;
+        //     kmer_map.insert(std::pair<std::string, int>(input_kmer, count_kmer));
+        // }
+
+        // int test = kmer_map["AAAAAAAAAAAAA"];
+        // if (test == 0) {
+        //     std::cout << "NULLNULLNULL" << std::endl;
+        //     throw runtime_error("KmerClassifier doesn't exist");
+        // }
         std::string data_path = std::string(database_path);
         graph_glue glue = graph_glue(0, NULL);
 
@@ -97,6 +126,7 @@ extern "C" {
         auto kmerClassifier = KmerClassifier(wrapper, genome_number, 1);
         //int num_genomes = kmerClassifier.get_num_genomes();
         kmerClassifier.set_num_genomes(genome_number);
+        kmerClassifier.set_kmer_map(kmer_map);
         kmerClassifier.create_kmer_classification_matrix();
         auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
         auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();

@@ -247,6 +247,7 @@ extern "C"{
 
 
         std::unique_ptr<Config> config = glue.create_config();
+
         std::cout << "CALL SUCCESSFUL! " << std::endl;
         auto beg = std::chrono::high_resolution_clock::now();
         glue.call_cmdline_flow(config);
@@ -453,16 +454,16 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
     uint64 current = 1;
     long max_freq = 0;
     auto wrapper = DeBruijnGraphWrapper(*graph);
-    auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
-    int num_genomes = kmerClassifier.get_num_genomes();
-    kmerClassifier.set_num_genomes(num_genomes);
-    kmerClassifier.create_kmer_classification_matrix();
-    auto kmer_matrix = kmerClassifier.get_total_kmer_matrix();
-    for (size_t i = 0; i < kmer_matrix.size(); i++) {
-        for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
-            std::cout << "Kmer entry at :" << i << j << "--" << kmer_matrix[i][j] << std::endl;
-        }
-    }
+    // auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
+    // int num_genomes = kmerClassifier.get_num_genomes();
+    // kmerClassifier.set_num_genomes(num_genomes);
+    // kmerClassifier.create_kmer_classification_matrix();
+    // auto kmer_matrix = kmerClassifier.get_total_kmer_matrix();
+    // for (size_t i = 0; i < kmer_matrix.size(); i++) {
+    //     for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
+    //         std::cout << "Kmer entry at :" << i << j << "--" << kmer_matrix[i][j] << std::endl;
+    //     }
+    // }
 
     while (current < n) {
         long sum_total = 0;
@@ -471,17 +472,17 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
                                               presence_fraction);
         for (int i = 0; i < (int) count_vector.size(); i++) {
             //i =  number of hits for the kmer
-            std::cout << "Count vector size is: " << count_vector.size() << std::endl;
+           // std::cout << "Count vector size is: " << count_vector.size() << std::endl;
             //std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
             auto kmer_counts = std::get<2>(count_vector[i]);
             for (int j = 0; j < (int) kmer_counts.size(); j++) {
                 //j = stuff that I do not understand. Probably only useful when I query several nodes at the same time.
 
                 //if (stuff[j] > 20) {
-                    std::cout << "Quantity IS: " << kmer_counts[j] << std::endl;
-                    std::cout << "Quantity at ZERO IS: " << kmer_counts[0] << std::endl;
+                    //std::cout << "Quantity IS: " << kmer_counts[j] << std::endl;
+                    //std::cout << "Quantity at ZERO IS: " << kmer_counts[0] << std::endl;
 
-                    std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
+                    //std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
                 //}
 
                 sum_total += kmer_counts[j];
@@ -622,6 +623,8 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_coord_dbg(std::string database_pa
     char* arg_graph = (char*) graph_string.c_str();
 
     auto annotation_string = extract_child_from_current_dir("anno.brwt_coord.annodbg", database_path);
+    //auto annotation_string = extract_child_from_current_dir("anno.column.annodbg", database_path);
+
     char* arg_annotation = (char*) annotation_string.c_str();
 
     std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");

@@ -44,8 +44,16 @@ void push_sequences(const std::vector<std::string> &files,
             1'000'000 / sizeof(std::pair<std::string, uint64_t>),
             1'000'000
         );
+        std::cout << "FILE NAME IS YELLO: " << files[i] << std::endl;
         parse_sequences_and_log(files[i], config, config.k,
             [&](std::string_view seq, auto count) {
+                if (seq.compare("CTTAAAAGGTAAG") == 0) {
+                    std::cout << "SADISTIC SEQUENCE: " << seq << std::endl;
+                    std::cout << "Number of sequences: " << count << std::endl;
+                }
+                if (count == 0) {
+                    std::cout << "SADISTIC ZERO SEQUENCE: " << seq << std::endl;
+                }
                 batcher.push_and_pay(seq.size(), seq, count);
             }
         );
@@ -125,8 +133,11 @@ int build_graph(Config *config) {
         for (const std::string &suffix : suffixes) {
             if (suffix.size() > 0 || suffixes.size() > 1) {
                 logger->info("k-mer suffix: '{}'", suffix);
+                //std::cout << "k-mer suffix BABE: '" << suffix << "'" << std::endl;
             }
-
+            std::cout << "IN THIS FLOW LOW" << std::endl;
+            std::cout << "k-mer suffix: '" << suffix << "'" << std::endl;
+            std::cout << "BITS PER COUNT: " << config->count_width << std::endl;
             auto constructor = boss::IBOSSChunkConstructor::initialize(
                 boss_graph->get_k(),
                 config->graph_mode == DeBruijnGraph::CANONICAL,
@@ -140,8 +151,8 @@ int build_graph(Config *config) {
                                         : config->tmp_dir,
                 config->disk_cap_bytes
             );
-
-            push_sequences(files, *config, constructor.get());
+            //TODO: IMPORTATN: ENTRY POINT FOR ALL!
+            push_sequences(files, *config, constructor.get()); //TODO: 7 May: Important, continue here.
 
             boss::BOSS::Chunk next_chunk = constructor->build_chunk();
             logger->trace("Graph chunk with {} k-mers was built in {} sec",
@@ -149,10 +160,16 @@ int build_graph(Config *config) {
 
             if (config->suffix.size()) {
                 logger->info("Serialize the graph chunk for suffix '{}'...", suffix);
+                std::cout << "SUFFIX SYPHILIS." << std::endl;
                 next_chunk.serialize(config->outfbase + "." + suffix);
                 logger->info("Serialization done");
                 return 0;
             }
+           // auto c_weights = next_chunk.get_weights();
+            // for_each(c_weights.begin(), c_weights.end(), [&](const auto &weight) {
+            //     std::cout << "CHUNK WEIGHT:" << weight << std::endl;
+            //     std::cout << weight << std::endl;
+            // });
 
             if (graph_data.size()) {
                 graph_data.extend(next_chunk);
@@ -164,6 +181,11 @@ int build_graph(Config *config) {
         assert(graph_data.size());
 
         if (config->count_kmers) {
+            // auto weights = graph_data.get_weights();
+            //  for_each(weights.begin(), weights.end(), [&](const auto &weight) {
+            //
+            //      std::cout <<"GRAPH WEIGHT OF YEAH IS: " << weight << " " << std::endl;
+            //  });
             NodeWeights::serialize(graph_data.get_weights(),
                     utils::make_suffix(config->outfbase, DBGSuccinct::kExtension));
         }

@@ -1,5 +1,9 @@
 #include "clean.hpp"
 
+#include "DeBruijnGraphWrapper.h"
+#include "SequenceRetriever.h"
+#include "graph_glue.hpp"
+
 #include <ips4o.hpp>
 
 #include "common/logger.hpp"
@@ -24,7 +28,7 @@ using mtg::common::logger;
 using mtg::seq_io::FastaWriter;
 using mtg::seq_io::ExtendedFastaWriter;
 
-
+unsigned long long significant_node_id = 0;
 int clean_graph(Config *config) {
     assert(config);
 
@@ -47,7 +51,15 @@ int clean_graph(Config *config) {
     auto graph = load_critical_dbg(files.at(0));
     // try loading k-mer counts
     auto node_weights = graph->load_extension<graph::NodeWeights>(files.at(0));
-
+    std::cout << "Nodez node weights... " << std::endl;
+    int node_number = graph->num_nodes();
+    for (int i = 1; i < node_number; ++i) {
+        std::string seq = graph->get_node_sequence(i);
+        if (seq.compare("CTTAAAAGGTAAG") == 0) {
+            significant_node_id = i;
+            std::cout << (*node_weights)[i] << std::endl;
+        }
+    }
     if (node_weights) {
         if (auto *dbg_succ = dynamic_cast<graph::DBGSuccinct*>(graph.get()))
             dbg_succ->reset_mask();
@@ -124,9 +136,10 @@ int clean_graph(Config *config) {
     }
 
     timer.reset();
-
-    auto call_clean_contigs = [&](auto callback, size_t num_threads) {
+    //std::cout << "NUmber of threads in CLEAN: " << num_std::endl
+    auto call_clean_contigs = [&](auto callback, size_t num_threads) { //TODO: THIS IS ROOT
         if (config->min_unitig_median_kmer_abundance != 1) {
+            std::cout << "IF BRANCH!" << std::endl;
             assert(node_weights);
             if (!node_weights->is_compatible(*graph)) {
                 logger->error("k-mer counts are not compatible with the subgraph");
@@ -144,12 +157,15 @@ int clean_graph(Config *config) {
             }, num_threads, config->min_tip_size, graph->get_mode() == graph::DeBruijnGraph::CANONICAL);
 
         } else if (config->unitigs || config->min_tip_size > 1 || config->smoothing_window > 1) {
+            std::cout << "ELSE IF BRANCH!" << std::endl;
+
             graph->call_unitigs(callback,
                                 num_threads,
                                 config->min_tip_size,
                                 graph->get_mode() == graph::DeBruijnGraph::CANONICAL);
 
         } else {
+            std::cout << "ELSE BRANCH!" << std::endl;
             graph->call_sequences(callback, num_threads,
                                   graph->get_mode() == graph::DeBruijnGraph::CANONICAL);
         }
@@ -160,6 +176,7 @@ int clean_graph(Config *config) {
         uint64_t num_bp = 0;
         uint64_t num_kmers = 0;
         std::string fasta_fname;
+        std::cout << "DUMPING CONTIGS" << std::endl;
 
         if (node_weights) {
             if (!node_weights->is_compatible(*graph)) {
@@ -177,9 +194,20 @@ int clean_graph(Config *config) {
                 std::vector<uint32_t> kmer_counts;
                 kmer_counts.reserve(path.size());
                 for (auto node : path) {
+                    //std::cout << "NEEDY NODE: " << node << std::endl;
+                    if (node == significant_node_id) {
+                        std::cout << "Questionable node information:" << std::endl;
+                        std::cout << contig << std::endl;
+                        //std::cout << path << std::endl;
+                        std::cout << ((*node_weights)[node]) << std::endl;
+                    }
                     kmer_counts.push_back((*node_weights)[node]);
                 }
+
+                std::cout << "CONTIG IS: " << contig << std::endl;
                 // smooth k-mer counts in the unitig
+                std::cout << "SMOOTHING CONTIGS" << std::endl;
+                std::cout << "Smoothing window: " << config->smoothing_window << std::endl;
                 utils::smooth_vector(config->smoothing_window, &kmer_counts);
 
                 std::lock_guard<std::mutex> lock(seq_mutex);
@@ -212,7 +240,7 @@ int clean_graph(Config *config) {
 
     if (config->count_slice_quantiles[0] == 0
             && config->count_slice_quantiles[1] == 1) {
-        dump_contigs_to_fasta(config->outfbase, call_clean_contigs);
+        dump_contigs_to_fasta(config->outfbase, call_clean_contigs); //TODO: CLEANS HE
 
     } else {
         if (!node_weights) {
@@ -230,6 +258,7 @@ int clean_graph(Config *config) {
 
         if (config->min_unitig_median_kmer_abundance != 1 || config->min_tip_size > 1) {
             // cleaning required
+            std::cout << "CLEANED UP NODES BABAY" << std::endl;
             sdsl::bit_vector removed_nodes(weights.size(), 1);
 
             call_clean_contigs([&](const std::string&, const auto &path) {
