@@ -174,7 +174,6 @@ TEST(testKmerClassifierWithExclusivePhenotype, testCountExclusivePhenotypesCorre
     Label genome_one_name = std::string("/0_contig/t");
     Label genome_two_name = std::string("/1_contig/t");
 
-
     size_t genome_one_kmer_count = 3;
     size_t genome_two_kmer_count = 4;
 

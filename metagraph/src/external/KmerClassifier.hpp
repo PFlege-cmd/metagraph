@@ -269,18 +269,27 @@ public:
     total_kmer_matrix, distinct_kmer_matrix
      */
     std::vector<std::vector<int>> create_kmer_classification_matrix() {
+        this->total_kmer_matrix
+                = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
+        // auto total_kmer_matrix = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
+        this->distinct_kmer_matrix
+                = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
 
-        this->total_kmer_matrix = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
-        //auto total_kmer_matrix = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
-        this->distinct_kmer_matrix = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
-
-        this->distinct_shared = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
-        this->distinct_total = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
-        this->all_shared_matrix = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
-        this->all_total_matrix = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
+        this->distinct_shared
+                = std::vector<std::vector<int>>(this->genome_number,
+                                                std::vector<int>(this->genome_number, 0));
+        this->distinct_total
+                = std::vector<std::vector<int>>(this->genome_number,
+                                                std::vector<int>(this->genome_number, 0));
+        this->all_shared_matrix
+                = std::vector<std::vector<int>>(this->genome_number,
+                                                std::vector<int>(this->genome_number, 0));
+        this->all_total_matrix
+                = std::vector<std::vector<int>>(this->genome_number,
+                                                std::vector<int>(this->genome_number, 0));
 
         auto number_of_kmers = this->get_node_number();
-        std::cout << "Node number:" << number_of_kmers <<  std::endl;
+        std::cout << "Node number:" << number_of_kmers << std::endl;
         node_index_kmer current = 1;
         for (size_t i = 0; i < total_kmer_matrix.size(); i++) {
             for (size_t j = 0; j < total_kmer_matrix[i].size(); j++) {
@@ -290,20 +299,19 @@ public:
 
         while (current < number_of_kmers) {
             auto seq = this->graph_ptr.get_graph()->get_graph().get_node_sequence(current);
-            //std::cout << "Node sequence:" << seq << std::endl;
+            // std::cout << "Node sequence:" << seq << std::endl;
 
             auto counts_per_genomes = this->count_kmer_per_genome(current);
             auto classified_kmers = this->classify_kmers(counts_per_genomes);
             KmerType type = std::get<0>(classified_kmers);
 
             int counter = 0;
-            for (int i = 0; i < (int) counts_per_genomes.size(); i++) {
+            for (int i = 0; i < (int)counts_per_genomes.size(); i++) {
                 counter += counts_per_genomes[i];
             }
 
-
-
-            if ((((this-> get_kmer_map())[seq].size()) > 0) && (this-> get_kmer_map())[seq][0] != counter ) {
+            if ((((this->get_kmer_map())[seq].size()) > 0)
+                && (this->get_kmer_map())[seq][0] != counter) {
                 std::cout << "MISMATCH IN COUNTS:   " << seq << std::endl;
                 std::cout << "KMER MAP: " << (this->get_kmer_map()[seq][0]) << std::endl;
                 std::cout << "THIS: " << counter << std::endl;
@@ -312,31 +320,93 @@ public:
 
                 } else if (type == KmerType::ACCESSORY) {
                     std::cout << "TYPE : " << "ACCESSORY" << std::endl;
-                }
-                else {
+                } else {
                     std::cout << "TYPE : " << "CORE" << std::endl;
                 }
                 genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
-                for_each(genome_frequencies.begin(), genome_frequencies.end(),
-                         [](auto gen_idx) {
-                             std::cout << "MISMATCH, at genome: " << gen_idx.first << std::endl;
-                             std::cout << "Adding count: " << gen_idx.second << std::endl;
-                             //counter =+  gen_idx.second;
-                         });
-                //std::cout << "TYPE : " << KmerType << std::endl;
-                //throw std::runtime_error("KMER MAP ERROR");
+                for_each(genome_frequencies.begin(), genome_frequencies.end(), [](auto gen_idx) {
+                    std::cout << "MISMATCH, at genome: " << gen_idx.first << std::endl;
+                    std::cout << "Adding count: " << gen_idx.second << std::endl;
+                    // counter =+  gen_idx.second;
+                });
+                // std::cout << "TYPE : " << KmerType << std::endl;
+                // throw std::runtime_error("KMER MAP ERROR");
             }
-            //TODO: Continue here.
-            //TODO: Row 0 is core, row 1 accessory, row 2 unique
-            //KmerType type = std::get<0>(classified_kmers);
+            // TODO: Continue here.
+            // TODO: Row 0 is core, row 1 accessory, row 2 unique
+            // KmerType type = std::get<0>(classified_kmers);
             genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
-            //TODO: FIll distinct counts as well.
+            // TODO: FIll distinct counts as well.
             fill_kmer_matrix(type, genome_frequencies);
 
             current++;
         }
         return total_kmer_matrix;
     }
+
+
+    void fill_phenotypes_matrix(
+            std::tuple_element<1, std::tuple<std::vector<int>, std::pair<PhenotypeClass, std::vector<int>>>>::type
+                    & phenoclassification_and_allele) {
+        PhenotypeClass pheno_type = std::get<0>(phenoclassification_and_allele);
+        auto alleles = std::get<1>(phenoclassification_and_allele);
+        switch (pheno_type) {
+            case PhenotypeClass::SHARED:
+                for (int allele : alleles) {
+                    phenotypes[0][allele]++;
+                };
+                break;
+            case PhenotypeClass::SPECIFIC:
+                phenotypes[1][alleles[0]]++;
+                break;
+
+            case PhenotypeClass::EXCLUSIVE:
+                phenotypes[2][alleles[0]]++;
+                break;
+
+            default:
+                std::cout << "Unknown PhenotypeClass" << std::endl;
+        }
+    }
+    std::pair<std::vector<std::vector<int>>, std::vector<std::vector<int>>> create_kmer_and_phenotype_classification_matrix(std::vector<int> pangenome_phenotype_frequencies, std::map<int, int> genome_to_phenotype_map) {
+        this->total_kmer_matrix = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
+        this->distinct_kmer_matrix = std::vector<std::vector<int>>(3, std::vector<int>(this->genome_number, 0));
+
+        this->distinct_shared = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
+        this->distinct_total = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
+        this->all_shared_matrix = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
+        this->all_total_matrix = std::vector<std::vector<int>>(this->genome_number, std::vector<int>(this->genome_number, 0));
+
+        this->phenotypes = std::vector(3, std::vector<int>(pangenome_phenotype_frequencies.size(), 0));
+
+        auto number_of_kmers = this->get_node_number();
+        node_index_kmer current = 1;
+        for (size_t i = 0; i < total_kmer_matrix.size(); i++) {
+            for (size_t j = 0; j < total_kmer_matrix[i].size(); j++) {
+                total_kmer_matrix[i][j] = 0;
+            }
+        }
+
+        while (current < number_of_kmers) {
+            auto counts_and_pheno = this->count_kmer_per_genome_and_classify_phenotype(current, pangenome_phenotype_frequencies, genome_to_phenotype_map);
+            auto counts_per_genomes = std::get<0>(counts_and_pheno);
+            auto phenoclassification_and_allele = std::get<1>(counts_and_pheno);
+
+            auto classified_kmers = this->classify_kmers(counts_per_genomes);
+            KmerType type = std::get<0>(classified_kmers);
+            genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
+
+            fill_phenotypes_matrix(phenoclassification_and_allele);
+            fill_kmer_matrix(type, genome_frequencies);
+
+            current++;
+        }
+
+        const auto matrix_pair = std::make_pair<std::vector<std::vector<int>>, std::vector<std::vector<int>>>(
+                        std::move(this->total_kmer_matrix), std::move(this->phenotypes));
+        return matrix_pair;
+    }
+
     void set_kmer_map(std::map<std::string, std::vector<int>>& kmer_map) {
         std::string input_kmer;
         // map<std::string, int> kmer_map;
@@ -381,6 +451,8 @@ public:
 
     std::vector<std::vector<int>> distinct_shared;
     std::vector<std::vector<int>> distinct_total;
+
+    std::vector<std::vector<int>> phenotypes;
 
     int core_threshold;
     int unique_threshold;
