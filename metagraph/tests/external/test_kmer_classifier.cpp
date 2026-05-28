@@ -84,7 +84,7 @@ TEST(testKmerClassifier, testCalculateTotalCountMatrixOnce) {
     Label genome_three_name = std::string("/2_contig");
 
     size_t genome_one_kmer_count = 3;
-    size_t genome_two_kmer_count = 4;
+    size_t genome_two_kmer_count = 0;
     size_t genome_three_kmer_count = 5;
 
     auto first_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_one_kmer_count}));
@@ -99,8 +99,137 @@ TEST(testKmerClassifier, testCalculateTotalCountMatrixOnce) {
     auto kmer_counts = kmer_classifier.count_kmer_per_genome(idx[0]);
 
     ASSERT_EQ(kmer_counts[0], 3);
-    ASSERT_EQ(kmer_counts[1], 4);
+    ASSERT_EQ(kmer_counts[1], 0);
     ASSERT_EQ(kmer_counts[2], 5);
+}
+
+TEST(testKmerClassifierWithPhenotype, testCountSharedPhenotypesCorrectly) {
+    typedef std::tuple<Label, size_t, std::vector<size_t>> kmer_tuple;
+    mtg::graph::AnnotatedDBG*  graph = nullptr;
+    MockGraphWrapper wrapper = MockGraphWrapper(*graph);
+    KmerClassifier kmer_classifier(wrapper,3,1,3);
+
+    Label genome_one_name = std::string("/0_contig/t");
+    Label genome_two_name = std::string("/1_contig/t");
+    Label genome_three_name = std::string("/2_contig");
+
+    size_t genome_one_kmer_count = 3;
+    size_t genome_two_kmer_count = 4;
+    size_t genome_three_kmer_count = 5;
+
+    auto first_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+    auto second_genome_counts = std::make_tuple(genome_two_name, 1, std::vector<size_t>({genome_two_kmer_count}));
+    auto third_genome_counts = std::make_tuple(genome_three_name, 1, std::vector<size_t>({genome_three_kmer_count}));
+
+    kmer_frequencies frequencies_1 =  std::vector<kmer_tuple>({first_genome_counts, second_genome_counts, third_genome_counts});
+    auto idx = std::vector<node_index_kmer>({1});
+
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
+
+    std::vector<int> phenotype_freqs = {1, 2};
+    std::map<int, int> genome_to_phenotype_map = { {0, 0}, {1, 1}, {2, 1}};
+    auto pheno_classification = kmer_classifier.count_kmer_per_genome_and_classify_phenotype(idx[0], phenotype_freqs, genome_to_phenotype_map);
+    PhenotypeClass type = std::get<1>(pheno_classification).first;
+
+    ASSERT_EQ(type, PhenotypeClass::SHARED);
+}
+
+TEST(testKmerClassifierWithSpecPhenotype, testCountSpecificPhenotypesCorrectly) {
+    typedef std::tuple<Label, size_t, std::vector<size_t>> kmer_tuple;
+    mtg::graph::AnnotatedDBG*  graph = nullptr;
+    MockGraphWrapper wrapper = MockGraphWrapper(*graph);
+    KmerClassifier kmer_classifier(wrapper, 4, 1, 4);
+
+    Label genome_one_name = std::string("/0_contig/t");
+    Label genome_two_name = std::string("/1_contig/t");
+    Label genome_three_name = std::string("/2_contig");
+
+    size_t genome_one_kmer_count = 3;
+    size_t genome_two_kmer_count = 4;
+    size_t genome_three_kmer_count = 5;
+
+    auto first_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+    auto second_genome_counts = std::make_tuple(genome_two_name, 1, std::vector<size_t>({genome_two_kmer_count}));
+    auto third_genome_counts = std::make_tuple(genome_three_name, 1, std::vector<size_t>({genome_three_kmer_count}));
+
+    kmer_frequencies frequencies_1 =  std::vector<kmer_tuple>({first_genome_counts, second_genome_counts, third_genome_counts});
+    auto idx = std::vector<node_index_kmer>({1});
+
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
+
+    std::vector<int> phenotype_freqs = {1, 3};
+    std::map<int, int> genome_to_phenotype_map = { {0, 1}, {1, 1}, {2, 1}, {3, 0}};
+
+    auto pheno_classification = kmer_classifier.count_kmer_per_genome_and_classify_phenotype(idx[0], phenotype_freqs, genome_to_phenotype_map);
+    PhenotypeClass type = std::get<1>(pheno_classification).first;
+    ASSERT_EQ(type, PhenotypeClass::SPECIFIC);
+}
+
+TEST(testKmerClassifierWithExclusivePhenotype, testCountExclusivePhenotypesCorrectly) {
+    typedef std::tuple<Label, size_t, std::vector<size_t>> kmer_tuple;
+    mtg::graph::AnnotatedDBG*  graph = nullptr;
+    MockGraphWrapper wrapper = MockGraphWrapper(*graph);
+    KmerClassifier kmer_classifier(wrapper, 4, 1, 4);
+
+    Label genome_one_name = std::string("/0_contig/t");
+    Label genome_two_name = std::string("/1_contig/t");
+
+
+    size_t genome_one_kmer_count = 3;
+    size_t genome_two_kmer_count = 4;
+
+    auto first_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+    auto second_genome_counts = std::make_tuple(genome_two_name, 1, std::vector<size_t>({genome_two_kmer_count}));
+
+    kmer_frequencies frequencies_1 =  std::vector<kmer_tuple>({first_genome_counts, second_genome_counts});
+    auto idx = std::vector<node_index_kmer>({1});
+
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
+
+    std::vector<int> phenotype_freqs = {1, 3};
+    std::map<int, int> genome_to_phenotype_map = { {0, 1}, {1, 1}, {2, 1}, {3, 0}};
+    auto pheno_classification = kmer_classifier.count_kmer_per_genome_and_classify_phenotype(idx[0], phenotype_freqs, genome_to_phenotype_map);
+    PhenotypeClass type = std::get<1>(pheno_classification).first;
+    ASSERT_EQ(type, PhenotypeClass::EXCLUSIVE);
+}
+
+
+TEST(testKmerClassifierWithPhenotype, testCountSharedPhenotypesCorrectly2) {
+    typedef std::tuple<Label, size_t, std::vector<size_t>> kmer_tuple;
+    mtg::graph::AnnotatedDBG*  graph = nullptr;
+    MockGraphWrapper wrapper = MockGraphWrapper(*graph);
+    KmerClassifier kmer_classifier(wrapper, 6, 1, 6);
+
+    Label genome_one_name = std::string("/0_contig/t");
+    Label genome_two_name = std::string("/1_contig/t");
+    Label genome_three_name = std::string("/2_contig");
+    Label genome_four_name = std::string("/3_contig/t");
+    Label genome_five_name = std::string("/4_contig/t");
+    Label genome_six_name = std::string("/5_contig");
+
+    size_t genome_one_kmer_count = 0;
+    size_t genome_two_kmer_count = 4;
+    size_t genome_three_kmer_count = 5;
+    size_t genome_four_kmer_count = 1;
+
+
+    auto first_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+    auto second_genome_counts = std::make_tuple(genome_two_name, 1, std::vector<size_t>({genome_two_kmer_count}));
+    auto third_genome_counts = std::make_tuple(genome_three_name, 1, std::vector<size_t>({genome_three_kmer_count}));
+    auto fourth_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_four_kmer_count}));
+    auto fifth_genome_counts = std::make_tuple(genome_two_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+    auto sixth_genome_counts = std::make_tuple(genome_three_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+
+    kmer_frequencies frequencies_1 =  std::vector<kmer_tuple>({first_genome_counts, second_genome_counts, third_genome_counts, fourth_genome_counts, sixth_genome_counts});
+    auto idx = std::vector<node_index_kmer>({1});
+
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
+
+    std::vector<int> phenotype_freqs = {1, 2, 2, 1};
+    std::map<int, int> genome_to_phenotype_map = { {0, 0}, {1, 1}, {2, 1}, {3, 4}, {4, 3}, {5, 3}};
+    auto pheno_classification = kmer_classifier.count_kmer_per_genome_and_classify_phenotype(idx[0], phenotype_freqs, genome_to_phenotype_map);
+    PhenotypeClass type = std::get<1>(pheno_classification).first;
+    ASSERT_EQ(type, PhenotypeClass::SHARED);
 }
 
 TEST(testKmerClassifier, testThrowsExceptionAtInvalidGenomeNumber) {

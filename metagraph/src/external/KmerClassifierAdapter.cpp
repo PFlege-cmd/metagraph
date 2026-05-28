@@ -87,6 +87,69 @@ struct KmerMatrix {
 // int* all_shared;
 // int* all_total;
 extern "C" {
+    KmerMatrix* classify_kmers_genome_phenotype(char * database_path, int genome_number, char** phenotypes) {
+        map<std::string, std::vector<int>> phenotype_genome_map;
+        map<int, std::string> phenotype_map;
+        std::vector<std::string> phenotype_vector = vector<std::string>(genome_number);
+        for (int i = 0; i < genome_number; i++) {
+            phenotype_vector[i] = phenotypes[i];
+            phenotype_map[i] = phenotypes[i];
+            if (phenotype_genome_map.find(phenotypes[i]) != phenotype_genome_map.end()) {
+                std::cout << "Added phenotype: " << phenotypes[i] << std::endl;
+                std::cout << "At: " << i << std::endl;
+                phenotype_genome_map[phenotypes[i]].push_back(i);
+            } else {
+                std::cout << "New vector: " << i << std::endl;
+                std::cout << "Genome: " << phenotypes[i] << std::endl;
+                phenotype_genome_map[phenotypes[i]] = std::vector<int>({i});
+            }
+
+        }
+
+        map<int, std::vector<int>> num_phenotype_genomes;
+        map<int, int> genome_num_phenotype_map;
+        int counter = 0;
+        for (auto const& [key, value] : phenotype_genome_map) {
+            std::cout << key << " "  << "\n";
+            std::cout << "Enumerating:" << std::endl;
+            for (auto const& genome : value) {
+                std::cout << genome<< " ";
+                genome_num_phenotype_map[genome] = counter;
+            }
+            num_phenotype_genomes[counter] = std::vector<int>(value);
+            std::cout << "Mapped successfully!" << "\n";
+            std::cout << database_path << "\n";
+            counter++;
+        }
+
+        map<int, int> phenotype_frequency_map;
+        std::vector<int> phenotype_frequencies;
+
+        for (auto const& [phenotype, genomes] : num_phenotype_genomes) {
+            std::cout << "Genome: " <<  phenotype << " "  << "\n";
+            std::cout << "Phenotypes:" << std::endl;
+            phenotype_frequency_map[phenotype] = (int) genomes.size();
+            phenotype_frequencies.push_back((int) genomes.size());
+            for (auto const& phenotype: genomes) {
+                std::cout << phenotype<< " " << std::endl;
+            }
+        }
+
+        for (auto const& [key, value] : phenotype_map) {
+            std::cout << key << " " << "\n";
+            std::cout << "Phenotype:" << std::endl;
+            std::cout << value << "\n";
+        }
+
+        //genome_num_phenotype_map
+        //phenotype_frequency_map
+        //phenptype_frequencies
+
+        KmerMatrix *kmerMatrix = new KmerMatrix(new int[5], new int[5], new int[5],new int[5],new int[5],new int[5],new int[5],new int[5],new int[5], new int[5]);
+        return kmerMatrix;
+    }
+}
+extern "C" {
 
     KmerMatrix* classify_kmers_genome(char * database_path, int genome_number) {
         map<std::string, std::vector<int>> kmer_map;
@@ -118,7 +181,7 @@ extern "C" {
         std::string data_path = std::string(database_path);
         graph_glue glue = graph_glue(0, NULL);
 
-        static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
+        //static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
 
         static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
 
@@ -127,7 +190,7 @@ extern "C" {
         //int num_genomes = kmerClassifier.get_num_genomes();
         kmerClassifier.set_num_genomes(genome_number);
         kmerClassifier.set_kmer_map(kmer_map);
-        kmerClassifier.create_kmer_classification_matrix();
+        kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
         auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
         auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
 

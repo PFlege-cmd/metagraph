@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "PhenotypeClass.h"
 #include "cli/GraphWrapper.hpp"
 #include "external/KmerType.h"
 
@@ -41,6 +42,95 @@ public:
         }
         return kmer_counts;
     };
+
+    std::tuple<std::vector<int>, std::pair<PhenotypeClass, std::vector<int>>>
+    classify_phenotype(std::vector<int>& pangenome_phenotype_frequencies,
+                       std::vector<int>& kmer_counts,
+                       int zeros,
+                       std::vector<int>& freq_equal_indices,
+                       std::vector<int>& not_zero_indices) {
+        if (freq_equal_indices.size() == 1
+            && zeros == (int)(pangenome_phenotype_frequencies.size() - 1)) {
+            const auto count_and_phenotype_tuple
+                    = std::make_tuple<std::vector<int>, std::pair<PhenotypeClass, int>>(
+                            std::move(kmer_counts),
+                            std::make_pair(PhenotypeClass::SPECIFIC, freq_equal_indices[0]));
+        }
+        if (freq_equal_indices.size() > 0) { // Shared
+            const auto count_and_phenotype_tuple
+                    = std::make_tuple<std::vector<int>, std::pair<PhenotypeClass, std::vector<int>>>(
+                            std::move(kmer_counts),
+                            std::make_pair<PhenotypeClass, std::vector<int>>(
+                                    PhenotypeClass::SHARED, std::move(freq_equal_indices)));
+            return count_and_phenotype_tuple;
+        }
+        if (zeros == (int)(pangenome_phenotype_frequencies.size() - 1)) { // EXCLUSIVE
+            const auto count_and_phenotype_tuple
+                    = std::make_tuple<std::vector<int>, std::pair<PhenotypeClass, std::vector<int>>>(
+                            std::move(kmer_counts),
+                            std::make_pair(PhenotypeClass::EXCLUSIVE, not_zero_indices));
+            return count_and_phenotype_tuple;
+        }
+
+        return std::make_tuple<std::vector<int>, std::pair<PhenotypeClass, std::vector<int>>>(
+                {}, std::make_pair(PhenotypeClass::NOT_PRESENT, std::vector<int>(0)));
+    }
+    std::tuple<std::vector<int>, std::pair<PhenotypeClass, std::vector<int>>> count_kmer_per_genome_and_classify_phenotype(node_index_kmer idx, std::vector<int> pangenome_phenotype_frequencies, std::map<int, int> genome_to_phenotype_map) {
+        std::vector<int> kmer_counts(this->genome_number, {0});
+        //std::vector<int> kmer_counts(genome_number, 0);
+        auto nodes = std::vector<node_index_kmer>({idx});
+        auto frequencies = this->get_kmer_frequencies(nodes);
+        auto indices = std::vector<int>(pangenome_phenotype_frequencies.size());
+        std::iota(std::begin(indices), std::end(indices), 0);
+
+
+        std::vector<int> kmer_phenotype_occurrences = std::vector<int>(pangenome_phenotype_frequencies.size(), {0});
+        for (size_t i = 0; i < frequencies.size(); i++) {
+            auto genome_name =  std::get<0>(frequencies[i]);
+            auto genome_no = this->extractGenomeNumber(genome_name);
+            if (genome_no == -1)
+                throw std::invalid_argument("Invalid genome number");
+
+            auto genome_count = std::get<2>(frequencies[i])[0];
+            int genome_count_int = (int)genome_count;
+            if (genome_count_int >  0 ) {
+                kmer_phenotype_occurrences[genome_to_phenotype_map[genome_no]]++;
+            }
+            kmer_counts[genome_no] = genome_count_int;
+        }
+
+        int zeros = 0;
+        std::vector<int> freq_equal_indices = std::vector<int>();
+        std::vector<int> not_zero_indices = std::vector<int>();
+        std::for_each(indices.begin(),
+            indices.end(),
+            [
+                kmer_pheno = kmer_phenotype_occurrences,
+                pan_pheno = pangenome_phenotype_frequencies,
+                z = &zeros,
+                &freq_equal_indices,
+                &not_zero_indices
+                ](const auto& idx) {
+                if (kmer_pheno[idx] == 0) {
+                    (*z)++;
+                } else {
+                    if (kmer_pheno[idx] == pan_pheno[idx]) {
+                        freq_equal_indices.push_back(idx);
+                    } else {
+                        not_zero_indices.push_back(idx);
+                    }
+                }
+            });
+
+        std::cout<< zeros <<std::endl;
+
+
+        return classify_phenotype(pangenome_phenotype_frequencies,
+            kmer_counts,
+            zeros,
+            freq_equal_indices,
+            not_zero_indices); // Default: case phenotype exclusive
+    }
 
     std::tuple<KmerType, genomes_and_frequencies> classify_kmers(std::vector<int> kmer_counts) {
         KmerType type;

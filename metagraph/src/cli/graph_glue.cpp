@@ -602,8 +602,10 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);
 
     std::cout << config->infbase << std::endl;
+    std::cout << "FILE LOADING" << std::endl;
 
     std::shared_ptr<DBGSuccinct> boss_graph = mtg::cli::load_critical_graph_from_file<DBGSuccinct>(config->infbase);
+    std::cout << "POINTER LOADING" << std::endl;
     std::shared_ptr<DeBruijnGraph> dbg = mtg::cli::load_critical_dbg(filename_local);
     std::shared_ptr<AnnotatedDBG> anno_graph = mtg::cli::initialize_annotated_dbg(dbg, *config);
 
@@ -612,6 +614,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
 
 std::shared_ptr<AnnotatedDBG> graph_glue::load_coord_dbg(std::string database_path) {
     std::cout << "Loading database from " << database_path << std::endl;
+    std::cout <<"LOADING COORDS" << std::endl;
     int argc = 9;
     const std::string app_name("metagraph_DNA5");
     const std::string graph_name("graph.dbg");
