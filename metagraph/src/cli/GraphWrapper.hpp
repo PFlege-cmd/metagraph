@@ -11,6 +11,9 @@
 
 class GraphWrapper {
     public:
+    typedef std::string Label;
+    typedef std::vector<SmallVector<uint64_t>> genomeCoordinateVector;
+    typedef std::tuple<Label, size_t, genomeCoordinateVector> genomeCoordinateTriple;
     typedef uint64_t node_index_kmer;
     typedef std::vector<std::tuple<mtg::graph::AnnotatedSequenceGraph::Label, size_t, std::vector<size_t>>> kmer_frequencies;
 
@@ -33,7 +36,8 @@ class GraphWrapper {
         virtual unsigned long long get_number_nodes() = 0;
         virtual kmer_frequencies get_kmer_frequencies(std::vector<node_index_kmer> nodes) = 0;
         virtual int get_num_genomes() const = 0;
-
+        virtual std::vector<genomeCoordinateTriple> get_kmer_coordinates(std::string kmer) = 0;
+        virtual size_t get_K() const = 0;
     protected:
         mtg::graph::AnnotatedDBG * graph_;
 };

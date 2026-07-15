@@ -96,9 +96,9 @@ struct HitsPerSequence {
 
 extern "C"{
     HitsPerSequence* retrieve_hits_for_genome(char * database, char * genome_name, int* sequence_lengths, int no_of_sequences, char * read) {
-        for (int i = 0; i < no_of_sequences; i++) {
-            std::cout << sequence_lengths[i] << std::endl;
-        }
+        // for (int i = 0; i < no_of_sequences; i++) {
+        //     //std::cout << sequence_lengths[i] << std::endl;
+        // }
         graph_glue glue = graph_glue(0, NULL);
         static std::shared_ptr<AnnotatedDBG> graph = glue.load_coord_dbg(database);
         HitsPerSequence* results = new HitsPerSequence();
@@ -353,7 +353,7 @@ graph_glue::graph_glue(int argcount, char** argv) {
 }
 
 graph_glue::~graph_glue() {
-    std::cout << "Destroying Graph glue!" << std::endl;
+    //std::cout << "Destroying Graph glue!" << std::endl;
 
     for (int i = 0; i < argc; i++) {
         free(cmd_arguments[i]);
@@ -382,28 +382,28 @@ void graph_glue::do_pantools_work(char* genome_name,
     for (int i = 0; i < no_of_sequences; i++) {
         sequence_lengths_vector.push_back(sequence_lengths[i]);
     }
-    std::cout << "GENOME IS: " << genome << std::endl;
+    //std::cout << "GENOME IS: " << genome << std::endl;
     //std::vector<std::array<int, 2>> foundInGenome
     //        = graph->read_mapping_pantools(read, genome, sequence_lengths_vector);
     std::vector<std::array<int, 2>> foundInGenome = graph->read_mapping_pantools_both_sides(read, genome, sequence_lengths_vector);
     for (int i = 0; i < (int)foundInGenome.size(); i++) {
     }
-    std::cout << "Readmapping DONE!" << std::endl;
+    //std::cout << "Readmapping DONE!" << std::endl;
     //results = new HitsPerSequence[no_of_sequences];
     std::vector<int> tmp_hits;
     std::vector<int> seq_offsets;
     //*results = new HitsPerSequence();
     int* offsets = new int[no_of_sequences];
     for (int i = 0; i < no_of_sequences; i++) {
-        std::cout << sequence_lengths[i] << std::endl;
+        //std::cout << sequence_lengths[i] << std::endl;
         int counter = 0;
         for (int j = 0; j < (int)foundInGenome.size(); j++) {
-            std::cout << "SEQUENCE: " << foundInGenome[j][0] << std::endl;
+            //std::cout << "SEQUENCE: " << foundInGenome[j][0] << std::endl;
             if (foundInGenome[j][0] == i + 1) {
                 tmp_hits.push_back(foundInGenome[j][1]);
                 counter++;
-                std::cout << "Sequence: " << foundInGenome[j][0]
-                          << ", Position: " << foundInGenome[j][1] << std::endl;
+                //std::cout << "Sequence: " << foundInGenome[j][0]
+                //          << ", Position: " << foundInGenome[j][1] << std::endl;
             }
         }
         seq_offsets.push_back(counter);
@@ -584,8 +584,8 @@ char** graph_glue::assemble_configuration_args(int argc,
 std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     std::cout << "Loading database from " << database_path << std::endl;
     int argc = 9;
-    const std::string app_name("metagraph_DNA5");
-    const std::string graph_name("graph.dbg");
+    const std::string app_name("metagraph_DNA");
+    const std::string graph_name("main_graph_primary.dbg");
 
     auto app_string = extract_child_from_build_dir(app_name);
     char* arg_app = (char*) app_string.c_str();
@@ -596,7 +596,7 @@ std::shared_ptr<AnnotatedDBG> graph_glue::load_dbg(std::string database_path) {
     auto annotation_string = extract_child_from_current_dir("count_brwt.int_brwt.annodbg", database_path);
     char* arg_annotation = (char*) annotation_string.c_str();
 
-    std::string filename_local = fs::current_path().append(database_path).append("graph.dbg");
+    std::string filename_local = fs::current_path().append(database_path).append("main_graph_primary.dbg");
 
     char** argv  = assemble_configuration_args(argc, arg_app, arg_graph, arg_annotation);
     auto config = std::make_unique<mtg::cli::Config>(argc, argv);

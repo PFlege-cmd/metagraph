@@ -342,5 +342,16 @@ int DeBruijnGraphWrapper::get_num_genomes() const {
     return this->get_graph()->get_annotator().num_labels(); // Labels are number of genomes
 }
 
+std::vector<GraphWrapper::genomeCoordinateTriple> DeBruijnGraphWrapper::get_kmer_coordinates(std::string kmer) {
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    return this->get_graph()->get_kmer_coordinates(kmer, num_top_labels, discovery_fraction, presence_fraction);
+}
+
+size_t DeBruijnGraphWrapper::get_K() const {
+    return this->get_graph()->get_graph().get_k();
+}
+
 
 

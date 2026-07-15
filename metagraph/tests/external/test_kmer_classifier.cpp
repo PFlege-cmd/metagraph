@@ -3,7 +3,9 @@
 //
 
 #include "../../../../../../../opt/homebrew/Cellar/boost/1.90.0_1/include/boost/iostreams/filter/zstd.hpp"
+#include "cli/DeBruijnGraphWrapper.h"
 #include "cli/GraphWrapper.hpp"
+#include "cli/graph_glue.hpp"
 #include "external/KmerClassifier.hpp"
 #include "kmer/kmer.hpp"
 #include "tests/cli/mock_graph_wrapper.h"
@@ -12,6 +14,8 @@
 #include "gmock/gmock-function-mocker.h"
 #include "gtest/gtest.h"
 
+
+struct KmerMatrix;
 using node_index_kmer = GraphWrapper::node_index_kmer;
 using Label =  mtg::graph::AnnotatedSequenceGraph::Label;
 using kmer_frequencies = GraphWrapper::kmer_frequencies;
@@ -453,5 +457,65 @@ TEST(TestKmerClassification, testFillCountMatrix) {
             ASSERT_EQ(flat[i*4 + j], all_total[i][j]);
         }
     }
+}
+
+TEST(IntegrationTest, realTest) {
+    std::string data_path = std::string("../../../patrick-pan-tools/covid_DB");
+        graph_glue glue = graph_glue(0, NULL);
+
+        //static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
+
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
+        int genome_number = 3;
+        auto wrapper = DeBruijnGraphWrapper(*graph);
+        auto kmerClassifier = KmerClassifier(wrapper, genome_number, 1);
+        //int num_genomes = kmerClassifier.get_num_genomes();
+        kmerClassifier.set_num_genomes(genome_number);
+        //kmerClassifier.set_kmer_map(kmer_map);
+        kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
+        auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
+        auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
+
+        for (size_t i = 0; i < total_kmer_matrix.size(); i++) {
+            for (size_t j = 0; j < total_kmer_matrix[i].size(); j++) {
+                std::cout << "Kmer entry at :" << i << j << "--" << total_kmer_matrix[i][j] << std::endl;
+            }
+        }
+        int* core_total_array = new int[total_kmer_matrix[0].size()];
+        std::move(total_kmer_matrix[0].begin(), total_kmer_matrix[0].end(), core_total_array);
+
+        int* accessory_total_array = new int[total_kmer_matrix[1].size()];
+        std::move(total_kmer_matrix[1].begin(), total_kmer_matrix[1].end(), accessory_total_array);
+
+        int* unique_total_array = new int[total_kmer_matrix[2].size()];
+        std::move(total_kmer_matrix[2].begin(), total_kmer_matrix[2].end(), unique_total_array);
+
+        int* core_distinct_array = new int[distinct_kmer_matrix[0].size()];
+        std::move(distinct_kmer_matrix[0].begin(), distinct_kmer_matrix[0].end(), core_distinct_array);
+
+        int* accessory_distinct_array = new int[distinct_kmer_matrix[1].size()];
+        std::move(distinct_kmer_matrix[1].begin(), distinct_kmer_matrix[1].end(), accessory_distinct_array);
+
+        int* unique_distinct_array = new int[distinct_kmer_matrix[2].size()];
+        std::move(distinct_kmer_matrix[2].begin(), distinct_kmer_matrix[2].end(), unique_distinct_array);
+
+        std::vector<std::vector<int>> distinct_shared = kmerClassifier.get_distinct_shared_matrix();
+        std::vector<std::vector<int>> distinct_total = kmerClassifier.get_distinct_total_matrix();
+        std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
+        std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
+
+        // KmerMatrix *kmerMatrix = new KmerMatrix(core_total_array,
+        //     accessory_total_array,
+        //     unique_total_array,
+        //     core_distinct_array,
+        //     accessory_distinct_array,
+        //     unique_distinct_array,
+        //     kmerClassifier.flatten(distinct_shared),
+        //     kmerClassifier.flatten(distinct_total),
+        //     kmerClassifier.flatten(all_shared),
+        //     kmerClassifier.flatten(
+        //                 all_total), nullptr, nullptr, nullptr
+        //     ); // Ahh... this new keyword creates a pointer, therefore it did not work
+        // return kmerMatrix;
 }
 

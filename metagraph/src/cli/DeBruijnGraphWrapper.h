@@ -11,6 +11,8 @@ class DeBruijnGraphWrapper : public GraphWrapper {
     public:
     typedef std::string Label;
     typedef uint64_t node_index;
+    typedef std::vector<SmallVector<uint64_t>> genomeCoordinateVector;
+    typedef std::tuple<Label, size_t, genomeCoordinateVector> genomeCoordinateTriple;
     explicit DeBruijnGraphWrapper(mtg::graph::AnnotatedDBG &graph);
     ~DeBruijnGraphWrapper();
     long retrieveAnchorCoordinates(std::string anchor_sequence,
@@ -27,6 +29,8 @@ class DeBruijnGraphWrapper : public GraphWrapper {
 
     kmer_frequencies get_kmer_frequencies(std::vector<node_index> nodes) override;
     int get_num_genomes() const override;
+    std::vector<GraphWrapper::genomeCoordinateTriple> get_kmer_coordinates(std::string kmer) override;
+    [[nodiscard]] size_t get_K() const override;
 };
 
 

@@ -24,4 +24,6 @@ public:
     MOCK_METHOD(unsigned long long, get_number_nodes, (), (override));
     MOCK_METHOD(kmer_frequencies, get_kmer_frequencies, (std::vector<node_index_kmer>), (override));
     MOCK_METHOD(int, get_num_genomes, (), (override, const));
+    MOCK_METHOD(std::vector<GraphWrapper::genomeCoordinateTriple>, get_kmer_coordinates, (std::string), (override));
+    MOCK_METHOD(size_t, get_K, (), (override, const));
 };

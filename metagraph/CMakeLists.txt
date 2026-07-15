@@ -23,7 +23,7 @@ include(GoogleTest)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_DBG_ALPHABET "DNA5")
+set(CMAKE_DBG_ALPHABET "DNA")
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
@@ -648,7 +648,10 @@ link_directories(
 )
 
 add_executable(unit_tests ${unit_tests_files}
+        tests/external/test_readmapping.cpp
         tests/external/test_kmer_classifier.cpp
+        tests/external/test_kmer_retriever.cpp
+        tests/external/test_genomecoordinate.cpp
         tests/cli/test_graph_glue.cpp
         tests/cli/test_graph_glue.h
         tests/cli/mock_annotated_dbg.cpp
@@ -688,6 +691,8 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifier.hpp"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifierAdapter.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifierAdapter.h"
+        "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinate.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinate.h"
 )
 
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})
