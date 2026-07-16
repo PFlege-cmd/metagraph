@@ -14,7 +14,7 @@ class MockGraphWrapper : public GraphWrapper {
 public:
     explicit MockGraphWrapper(mtg::graph::AnnotatedDBG& graph);
     explicit MockGraphWrapper(MockGraphWrapper& a);
-  MOCK_METHOD(long,
+    MOCK_METHOD(long,
               retrieveAnchorCoordinates,
               (std::string anchor_sequence, long anchor_position, std::string genome_name),
               (override));
@@ -24,6 +24,6 @@ public:
     MOCK_METHOD(unsigned long long, get_number_nodes, (), (override));
     MOCK_METHOD(kmer_frequencies, get_kmer_frequencies, (std::vector<node_index_kmer>), (override));
     MOCK_METHOD(int, get_num_genomes, (), (override, const));
-    MOCK_METHOD(std::vector<GraphWrapper::genomeCoordinateTriple>, get_kmer_coordinates, (std::string), (override));
+    MOCK_METHOD(std::vector<GraphWrapper::genomeCoordinateTriple>, get_kmer_coordinates, (std::string_view&), (override));
     MOCK_METHOD(size_t, get_K, (), (override, const));
 };

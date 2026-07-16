@@ -4,6 +4,7 @@
 
 #include "RegionOfInterestAdapter.h"
 
+#include "CoordinateRetriever.h"
 #include "cli/graph_glue.hpp"
 #include "graph/annotated_dbg.hpp"
 
@@ -14,12 +15,15 @@ struct HitsPerSequence {
     explicit HitsPerSequence(int* arr, int* offsets ) { hitsPerSequence = arr; sequenceOffsets = offsets; };
 };
 extern "C" {
-    HitsPerSequence* retrieveKmersOfInterest(char * database) {
-        auto results = new HitsPerSequence();
-        graph_glue glue = graph_glue(0, NULL);
-        static std::shared_ptr<mtg::graph::AnnotatedDBG> graph = glue.load_coord_dbg(database);
+    void retrieveKmersOfInterest(char ** kmers) {
+        //char * database, int max_frequency, int number_kmers, char* kmers
+        //auto results = new HitsPerSequence();
+        //graph_glue glue = graph_glue(0, NULL);
+        //static std::shared_ptr<mtg::graph::AnnotatedDBG> graph = glue.load_coord_dbg("database");
 
-        return results;
+        //CoordinateRetriever coordinate_retriever(graph);
+        std::cout << "Number of kmers:" << strlen(*kmers) << std::endl;
+        //return results;
     }
 
 

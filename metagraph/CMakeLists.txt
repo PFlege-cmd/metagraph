@@ -656,6 +656,8 @@ add_executable(unit_tests ${unit_tests_files}
         tests/cli/test_graph_glue.h
         tests/cli/mock_annotated_dbg.cpp
         tests/cli/mock_annotated_dbg.h
+        tests/external/mock_matrix_entry.h
+        tests/external/mock_matrix_entry.cpp
         tests/cli/test_graph_wrapper.cpp)
 target_include_directories(unit_tests PRIVATE "${PROJECT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE TEST_DATA_DIR="${PROJECT_SOURCE_DIR}/tests/data")
@@ -693,6 +695,10 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifierAdapter.h"
         "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinate.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinate.h"
+        "${PROJECT_SOURCE_DIR}/src/external/MatrixEntry.h"
+        "${PROJECT_SOURCE_DIR}/src/external/MatrixEntry.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/CoordinateRetriever.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/CoordinateRetriever.h"
 )
 
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})
