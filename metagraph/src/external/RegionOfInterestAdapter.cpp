@@ -5,26 +5,79 @@
 #include "RegionOfInterestAdapter.h"
 
 #include "CoordinateRetriever.h"
+#include "GenomeCoordinateFactory.h"
+#include "cli/DeBruijnGraphWrapper.h"
 #include "cli/graph_glue.hpp"
 #include "graph/annotated_dbg.hpp"
 
-struct HitsPerSequence {
-    int* hitsPerSequence;
-    int* sequenceOffsets;
-    HitsPerSequence() = default;
-    explicit HitsPerSequence(int* arr, int* offsets ) { hitsPerSequence = arr; sequenceOffsets = offsets; };
+struct SequencePositions {
+    int no_of_results;
+    int* sequences;
+    int* positions;
+    SequencePositions() = default;
+    SequencePositions(int no_results, int* seqs, int* poss ) { no_of_results = no_results; sequences = seqs; positions = poss; };
 };
 extern "C" {
-    void retrieveKmersOfInterest(char ** kmers) {
-        //char * database, int max_frequency, int number_kmers, char* kmers
-        //auto results = new HitsPerSequence();
-        //graph_glue glue = graph_glue(0, NULL);
-        //static std::shared_ptr<mtg::graph::AnnotatedDBG> graph = glue.load_coord_dbg("database");
+    SequencePositions* retrieveKmersOfInterest(char *database, int genome_nr, int no_of_kmers, int no_of_sequences, const char ** kmers, int * sequences) {
 
-        //CoordinateRetriever coordinate_retriever(graph);
-        std::cout << "Number of kmers:" << strlen(*kmers) << std::endl;
-        //return results;
+        graph_glue glue = graph_glue(0, NULL);
+        std::vector<int> lengths = std::vector<int>(no_of_sequences );
+        std::vector<std::string_view> kmer_views = std::vector<std::string_view>( no_of_kmers);
+        std::vector<int> idxs = std::vector<int>(no_of_kmers);
+        std::vector<int> seqs_idxs = std::vector<int>(no_of_sequences);
+
+        std::iota(seqs_idxs.begin(), seqs_idxs.end(), 0);
+        for_each(seqs_idxs.begin(), seqs_idxs.end(), [&sequences, &lengths](int idx) {
+            lengths[idx] = sequences[idx];
+        });
+
+        std::iota(idxs.begin(), idxs.end(), 0);
+        for_each(idxs.begin(), idxs.end(), [&kmer_views, &kmers](int idx) {
+            auto kv = std::string_view(kmers[idx]);
+            kmer_views[idx] = std::string_view(kv);
+        });
+
+        std::vector<unique_ptr<MatrixEntry>> coordinates
+            = std::vector<std::unique_ptr<MatrixEntry>>();
+
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_coord_dbg(database);
+        auto wrapper = DeBruijnGraphWrapper(*graph);
+
+        static std::shared_ptr<AnnotatedDBG> kmer_graph = glue.load_dbg(database);
+        auto kmer_graph_wrapper = DeBruijnGraphWrapper(*kmer_graph);
+
+        auto kmer_labels = kmer_graph_wrapper.get_graph()->get_annotator().get_label_encoder().get_labels();
+        auto coord_labels = wrapper.get_graph()->get_annotator().get_label_encoder().get_labels();
+
+        std::string genome_string = kmer_labels[genome_nr];
+        std::string_view genome_view_string = std::string_view(coord_labels[genome_nr]);
+
+        std::cout << "Kmer label is: " <<  genome_string << std::endl;
+        std::cout << "Coordinate label is: " <<  genome_view_string << std::endl;
+
+        CoordinateRetriever* retriever = new CoordinateRetriever(no_of_sequences, 5, genome_string, sequences, kmer_graph_wrapper);
+        kmer_views = retriever->filter_max_frequency(kmer_views);
+
+        for_each(kmer_views.begin(), kmer_views.end(), [&coordinates, &genome_view_string, &wrapper, &lengths](auto& kmer) {
+            coordinates.push_back(std::make_unique<GenomeCoordinate>(genome_view_string, kmer, lengths, wrapper));
+        });
+
+        auto pos = retriever->get_kmer_positions(coordinates);
+
+        for (size_t i = 0; i < pos.size(); i++) {
+            std::cout << pos[i][0] << std::endl;
+        }
+
+        int * found_sequences = new int[pos.size()];
+        int * found_positions = new int[pos.size()];
+        int number_results = (int) pos.size();
+
+        for (int i = 0; i < number_results; i++) {
+            found_sequences[i] = pos[i][0];
+            found_positions[i] = pos[i][1];
+        }
+        auto final_res = new SequencePositions(number_results, found_sequences, found_positions);
+        return final_res;
     }
-
 
 }

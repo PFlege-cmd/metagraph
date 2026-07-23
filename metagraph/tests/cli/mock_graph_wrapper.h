@@ -23,6 +23,7 @@ public:
     MOCK_METHOD(uint64_t, get_first_node_of_coord_range, (uint64_t, long long start_anchor, std::string, long long start_sequence), (override));
     MOCK_METHOD(unsigned long long, get_number_nodes, (), (override));
     MOCK_METHOD(kmer_frequencies, get_kmer_frequencies, (std::vector<node_index_kmer>), (override));
+    MOCK_METHOD(kmer_frequencies, get_kmer_frequencies, (std::string_view), (override));
     MOCK_METHOD(int, get_num_genomes, (), (override, const));
     MOCK_METHOD(std::vector<GraphWrapper::genomeCoordinateTriple>, get_kmer_coordinates, (std::string_view&), (override));
     MOCK_METHOD(size_t, get_K, (), (override, const));

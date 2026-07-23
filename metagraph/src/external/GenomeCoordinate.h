@@ -23,8 +23,11 @@ public:
     std::vector<std::array<int, 2>> locate() override;
     std::vector<std::array<int, 2>> locate_reverse() override;
     std::vector<std::array<int, 2>> locate_both_kmers() override;
+    std::string_view& get_kmer() override {return kmer;}
 
 private:
+        std::string_view& genome;
+        std::string_view& kmer;
         std::string_view& reverse_kmer;
         std::string_view& create_kmer_reverse_complement(const std::string_view& kmer);
         void calculate_sequence_location(unsigned long coord, const std::vector<int>& sequence_lengths, std::array<int, 2>& position_and_location);

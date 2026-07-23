@@ -658,6 +658,8 @@ add_executable(unit_tests ${unit_tests_files}
         tests/cli/mock_annotated_dbg.h
         tests/external/mock_matrix_entry.h
         tests/external/mock_matrix_entry.cpp
+        tests/external/mock_matrix_entry_factory.h
+        tests/external/mock_matrix_entry_factory.cpp
         tests/cli/test_graph_wrapper.cpp)
 target_include_directories(unit_tests PRIVATE "${PROJECT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE TEST_DATA_DIR="${PROJECT_SOURCE_DIR}/tests/data")
@@ -699,6 +701,12 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/MatrixEntry.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/CoordinateRetriever.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/CoordinateRetriever.h"
+        "${PROJECT_SOURCE_DIR}/src/external/RegionOfInterestAdapter.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/RegionOfInterestAdapter.h"
+        "${PROJECT_SOURCE_DIR}/src/external/MatrixEntryFactory.h"
+        "${PROJECT_SOURCE_DIR}/src/external/MatrixEntryFactory.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinateFactory.h"
+        "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinateFactory.cpp"
 )
 
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})

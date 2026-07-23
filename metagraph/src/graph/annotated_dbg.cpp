@@ -549,19 +549,19 @@ AnnotatedDBG::get_kmer_coordinates(const std::vector<node_index>& nodes,
                 std::get<2>(result[col_counts[j] - 1])[kmer_positions[i]] = std::move(tuple);
         } // TODO: PFlege: Continue here to get the proper structure for localization!
     }
-    // std::cout << std::get<2>(result[0])[kmer_positions[0]][0] << std::endl;
-    // std::cout << std::get<2>(result[1])[kmer_positions[0]][0] << std::endl;
-    // std::cout << std::get<2>(result[1])[kmer_positions[0]][1] << std::endl;
+    // //std::cout << std::get<2>(result[0])[kmer_positions[0]][0] << std::endl;
+    // //std::cout << std::get<2>(result[1])[kmer_positions[0]][0] << std::endl;
+    // //std::cout << std::get<2>(result[1])[kmer_positions[0]][1] << std::endl;
     return result; // TODO: PF: Last note for 1. 8., 2.24: with a sequence that occurs only in one genome- column count gives only 1 to it!
 }
 
 std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector){
-   std::vector<std::array<int, 2>> kmer_positions = read_mapping_pantools(read, genome, sequence_lengths_vector);
+    std::vector<std::array<int, 2>> kmer_positions = read_mapping_pantools(read, genome, sequence_lengths_vector);
 
     std::string reverse_read = std::string(read);
     reverse_complement(reverse_read);
 
-    std::cout << "REVERSE READ: " << reverse_read << std::endl;
+    ////std::cout << "REVERSE READ: " << reverse_read << std::endl;
     std::string_view reverse_read_view = reverse_read;
     std::vector<std::array<int, 2>> kmer_positions_reverse = read_mapping_pantools_reverse(reverse_read_view, genome, sequence_lengths_vector);
 
@@ -589,23 +589,24 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
         std::string_view current_kmer = read.substr(position, k);
         if ((int) current_kmer.size() < k)
             break;
-        std::cout << current_kmer << std::endl;
+        //std::cout << current_kmer << std::endl;
         std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
-        std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
+        ////std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
         for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
             std::string current_genome = std::get<0>(coordinates[coord_idx]);
             if (current_genome != genome_name) {
-                std::cout << current_genome << std::endl;
-                std::cout << genome_name << std::endl;
-                std::cout << "NOT SAME NAME!! DYMBASS" << std::endl;
+                //std::cout << current_genome << std::endl;
+                //std::cout << genome_name << std::endl;
+                //std::cout << "NOT SAME NAME!! DYMBASS" << std::endl;
                 continue;
             }
             auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
+            auto test = coords_for_genome[0];
             auto coords_for_genome_size = coords_for_genome[0].size();
             for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
-                //std::cout << current_genome << std::endl;
-                std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
-                //std::cout << read_length << std::endl;
+                ////std::cout << current_genome << std::endl;
+                //std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
+                ////std::cout << read_length << std::endl;
                 std::array<int,2>  target_and_position = {0, 0};
                 calculate_sequence_location(coords_for_genome[0][current_coord_idx],
                                             sequence_lengths, target_and_position);
@@ -615,18 +616,19 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
 
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);
-                    std::cout << target_sequence + 1 << " - " << loc << std::endl;
+                    //std::cout << target_sequence + 1 << " - " << loc << std::endl;
                     kmer_positions.push_back({target_sequence + 1, loc});
+                    std::cout << "At position: " << position << std::endl;
                 }
             }
         }
     }
-    std::cout << candidate_coords.size() << std::endl;
+    //std::cout << candidate_coords.size() << std::endl;
     std::vector<std::array<int, 3>> node_results;
     for (int loc: candidate_coords) {
         std::array<int, 3> result = {4, 1, loc};
         node_results.push_back(result);
-        std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
+        //std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
     }
     return kmer_positions;
 }
@@ -647,17 +649,17 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
     step_size = (step_size == 0 ? 1 : step_size);
 
     int k = get_graph().get_k();
-    for (int position = (int) read.size() - k; position > 0; --position -= step_size) {
+    for (int position = (int) read.size() - k; position > 0; position -= step_size) { // Error was here:
         std::string_view current_kmer = read.substr(position, k);
-        std::cout << current_kmer <<  ": is current kmer!" << std::endl;
+        //std::cout << current_kmer <<  ": is current kmer!" << std::endl;
         if ((int) current_kmer.size() < k) {
-            std::cout << "Break for KMER: " <<  current_kmer << std::endl;
+            //std::cout << "Break for KMER: " <<  current_kmer << std::endl;
             break;
         }
 
-        std::cout << current_kmer << std::endl;
+        //std::cout << current_kmer << std::endl;
         std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
-        std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
+        //std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
         for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
             std::string current_genome = std::get<0>(coordinates[coord_idx]);
             if (current_genome != genome_name) {
@@ -666,9 +668,9 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
             auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
             auto coords_for_genome_size = coords_for_genome[0].size();
             for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
-                //std::cout << current_genome << std::endl;
-                std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
-                //std::cout << read_length << std::endl;
+                ////std::cout << current_genome << std::endl;
+                //std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
+                ////std::cout << read_length << std::endl;
                 std::array<int,2>  target_and_position = {0, 0};
                 calculate_sequence_location_reverse(coords_for_genome[0][current_coord_idx],
                                             sequence_lengths, target_and_position);
@@ -678,20 +680,21 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
 
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);
-                    std::cout << target_sequence + 1 << " - " << loc << std::endl;
-                    kmer_positions.push_back({target_sequence + 1, -loc + 1});
+                    //std::cout << target_sequence + 1 << " - " << loc << std::endl;
+                    std::cout << "At (reversed) position: " << position << std::endl;
+                    kmer_positions.push_back({target_sequence + 1, -loc });
                 } else {
-                    std::cout << "OUT OF BOUNDS!" << " - " << loc << std::endl;
+                    //std::cout << "OUT OF BOUNDS!" << " - " << loc << std::endl;
                 }
             }
         }
     }
-    std::cout << candidate_coords.size() << std::endl;
+    //std::cout << candidate_coords.size() << std::endl;
     std::vector<std::array<int, 3>> node_results;
     for (int loc: candidate_coords) {
         std::array<int, 3> result = {4, 1, loc};
         node_results.push_back(result);
-        std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
+        //std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
     }
     return kmer_positions;
 }
@@ -699,7 +702,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
 void AnnotatedDBG::array_fun(int* pointy, int arr_size_1, int arr_size_2) {
     for (int i = 0; i < arr_size_1; ++i) {
         for (int j = 0; j < arr_size_2; ++j) {
-            std::cout << *((pointy + j*arr_size_2) + i) << std::endl;
+            //std::cout << *((pointy + j*arr_size_2) + i) << std::endl;
         }
     }
 }
@@ -745,7 +748,7 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
     unsigned long long num_top_labels = 4294967295;
     const double discovery_fraction = 0.699999999999996;
     const double presence_fraction = 0.0;
-    std::cout << "Start search" << std::endl;
+    //std::cout << "Start search" << std::endl;
     //unsigned int kmer_size = this->get_graph().get_k();
 
     unsigned long size_kmer = this->get_graph().get_k();
@@ -780,13 +783,13 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
 
             for (unsigned long j = 0; j < std::get<2>(kmer_results[i])[0].size(); ++j) {
                 if (std::get<2>(kmer_results[i])[0][j] == start) {
-                    std::cout << "Found starting kmer: " << std::endl;
-                    std::cout << sequence << std::endl;
-                    std::cout << std::get<2>(kmer_results[i])[0][j] << std::endl;
+                    //std::cout << "Found starting kmer: " << std::endl;
+                    //std::cout << sequence << std::endl;
+                    //std::cout << std::get<2>(kmer_results[i])[0][j] << std::endl;
                     starting_kmer.append(sequence);
                     next_coordinate++;
                     searching_for_first_kmer = false;
-                    std::cout << "FOUND STARTING KMER!"  << std::endl;
+                    //std::cout << "FOUND STARTING KMER!"  << std::endl;
                 }
             }
         }
@@ -798,20 +801,20 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
         bool multi_outgoing = this->get_graph().has_multiple_outgoing(current_kmer);
         std::string one_outgoing_string = (one_outgoing)?"True":"False";
         std::string multiple_outgoing_string = (multi_outgoing)?"True":"False";
-        //std::cout << "Has one outgoing? " << one_outgoing_string << std::endl;
-        //std::cout << "Has multiple outgoing? " << multiple_outgoing_string << std::endl;
+        ////std::cout << "Has one outgoing? " << one_outgoing_string << std::endl;
+        ////std::cout << "Has multiple outgoing? " << multiple_outgoing_string << std::endl;
         if (!one_outgoing && !multi_outgoing) {
-            std::cout << "Edge stuck!" << std::endl;
-            std::cout << next_coordinate << std::endl;
+            //std::cout << "Edge stuck!" << std::endl;
+            //std::cout << next_coordinate << std::endl;
             return "BAKA";
         }
 
         if (multi_outgoing) {
-            std::cout << "Multiple outgoing in Search for kmer: " << this->get_graph().get_node_sequence(current_kmer) << std::endl;
+            //std::cout << "Multiple outgoing in Search for kmer: " << this->get_graph().get_node_sequence(current_kmer) << std::endl;
             this->get_graph().adjacent_outgoing_nodes(current_kmer, [&](auto i) {outgoing_nodes.push_back(i);});
             for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
-                //std::cout << outgoing_nodes[i] << std::endl;
-                //std::cout << this-> get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                ////std::cout << outgoing_nodes[i] << std::endl;
+                ////std::cout << this-> get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
                 // create std::vector for this.
                 std::vector<node_index> edge_node = {outgoing_nodes[i]};
                 std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> edge_node_coords = get_kmer_coordinates(edge_node, num_top_labels, discovery_fraction, presence_fraction);
@@ -825,17 +828,17 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
                     if (!found)
                         continue;
 
-                    //std::cout << "Size of range of coordinates: " << std::get<2>(edge_node_coords[k])[0].size()<< std::endl;
+                    ////std::cout << "Size of range of coordinates: " << std::get<2>(edge_node_coords[k])[0].size()<< std::endl;
                     auto extracted_coords = std::get<2>(edge_node_coords[k]);
                     auto coordinate_size = extracted_coords[0].size();
                     for (unsigned long j =0; j < coordinate_size; ++j) {
                         auto all_coords = extracted_coords[0];
                         auto outgoing_edge_coords = extracted_coords[0][j];
-                        //std::cout << outgoing_edge_coords << std::endl;
+                        ////std::cout << outgoing_edge_coords << std::endl;
                         if (outgoing_edge_coords == next_coordinate) {
-                            std::cout << "Found Next kmer: " << std::endl;
-                            std::cout << this->get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
-                            std::cout << "Position: " << extracted_coords[0][j] << std::endl;
+                            //std::cout << "Found Next kmer: " << std::endl;
+                            //std::cout << this->get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                            //std::cout << "Position: " << extracted_coords[0][j] << std::endl;
                             next_coordinate++;
                             auto next_char = this->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                             found_next_coordinate = true;
@@ -852,39 +855,39 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
                     break;
             }
         } else if (one_outgoing) {
-            std::cout << "SINGLE outgoing in Search for kmer: " << this->get_graph().get_node_sequence(current_kmer) << std::endl;
+            //std::cout << "SINGLE outgoing in Search for kmer: " << this->get_graph().get_node_sequence(current_kmer) << std::endl;
             this->get_graph().adjacent_outgoing_nodes(current_kmer, [&](auto i) {outgoing_nodes.push_back(i);});
             for (unsigned long i = 0; i < outgoing_nodes.size(); ++i) {
-                //std::cout << outgoing_nodes[i] << std::endl;
-                //std::cout << this-> get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                ////std::cout << outgoing_nodes[i] << std::endl;
+                ////std::cout << this-> get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
                 // create std::vector for this.
                 std::vector<node_index> edge_node = {outgoing_nodes[i]};
                 std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> edge_node_coords = get_kmer_coordinates(edge_node, num_top_labels, discovery_fraction, presence_fraction);
                 for (unsigned long k = 0; k < edge_node_coords.size(); ++k) {
                     std::string curr_genome = std::get<0>(edge_node_coords[k]);
                     /*if (std::get<0>(edge_node_coords[k]) != genome ) {
-                        std::cout << "Not correct genome: " << std::endl;
-                        std::cout << curr_genome<< std::endl;
+                        //std::cout << "Not correct genome: " << std::endl;
+                        //std::cout << curr_genome<< std::endl;
                         continue;
                     }*/ //TODO: Fix the degenerate issue here!
                     auto x = std::get<2>(edge_node_coords[k])[0];
                     //bool found  = binary_search(x.begin(), x.end(), next_coordinate);
                     /*
                     if (!found) {
-                        std::cout << "Did not  next coordinate" << std::endl;
+                        //std::cout << "Did not  next coordinate" << std::endl;
                         continue;
                     }*/ // TODO: All not necessary with unitig
 
 
                     for (unsigned long j =0; j < std::get<2>(edge_node_coords[k])[0].size(); ++j) {
-                        auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
-                        std::cout << next_coor << std::endl;
+                        //auto next_coor = std::get<2>(edge_node_coords[k])[j][0];
+                        //std::cout << next_coor << std::endl;
 
                         //std::binary_search(std::get<2>(edge_node_coords[k])[0])
                         //if (std::get<2>(edge_node_coords[k])[0][j] == next_coordinate) {
-                            std::cout << "Found Next kmer: " << std::endl;
-                            std::cout << this->get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
-                            std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j] << std::endl;
+                            //std::cout << "Found Next kmer: " << std::endl;
+                            //std::cout << this->get_graph().get_node_sequence(outgoing_nodes[i]) << std::endl;
+                            //std::cout << "Position: " << std::get<2>(edge_node_coords[k])[0][j] << std::endl;
                             next_coordinate++;
                             char next_char = this->get_graph().get_node_sequence(outgoing_nodes[i]).at(size_kmer - 1);
                             found_next_coordinate = true;
@@ -903,7 +906,7 @@ const char* AnnotatedDBG::get_sequence_for_coords(std::string genome, unsigned l
         }
     }
 
-    std::cout << starting_kmer << std::endl;
+    //std::cout << starting_kmer << std::endl;
     char e[] = "g";
     std::string s(e);
     const  char * result = starting_kmer.c_str();
@@ -917,7 +920,7 @@ std::string AnnotatedDBG::get_kmer_for_coords(std::string genome, unsigned long 
     unsigned long long num_top_labels = 4294967295;
     const double discovery_fraction = 0.699999999999996;
     const double presence_fraction = 0.0;
-    std::cout << "Start search" << std::endl;
+    //std::cout << "Start search" << std::endl;
     //unsigned int kmer_size = this->get_graph().get_k();
 
     unsigned long size_kmer = this->get_graph().get_k();
@@ -962,7 +965,7 @@ std::string AnnotatedDBG::get_kmer_for_coords(std::string genome, unsigned long 
 
 
 
-    std::cout << starting_kmer << std::endl;
+    //std::cout << starting_kmer << std::endl;
     char e[] = "g";
     std::string s(e);
 

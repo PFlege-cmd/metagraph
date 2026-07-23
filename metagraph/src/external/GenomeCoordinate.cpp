@@ -12,7 +12,11 @@ GenomeCoordinate::GenomeCoordinate(std::string_view& genome,
                                    std::vector<int>& sequence_lengths,
                                    GraphWrapper& graph)
     : MatrixEntry(genome, kmer, sequence_lengths, graph),
-    reverse_kmer(create_kmer_reverse_complement(kmer)) {};
+      genome(genome),
+      kmer(kmer),
+      reverse_kmer(create_kmer_reverse_complement(kmer)) {
+        this->kmer = kmer;
+};
 
 std::string_view& GenomeCoordinate::get_reverse_kmer() {
     return reverse_kmer;
@@ -29,7 +33,6 @@ std::string_view& GenomeCoordinate::create_kmer_reverse_complement(const std::st
 std::vector<std::array<int, 2>> GenomeCoordinate::locate() {
     std::string_view current_kmer = kmer;
     std::vector<std::array<int, 2>> kmer_positions;
-
         std::vector<genomeCoordinateTriple> coordinates = this->graph.get_kmer_coordinates(current_kmer);
         for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
             std::string current_genome = std::get<0>(coordinates[coord_idx]);
@@ -37,7 +40,7 @@ std::vector<std::array<int, 2>> GenomeCoordinate::locate() {
                 continue;
             }
             auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
-            auto test = coords_for_genome[0];
+           // auto test = coords_for_genome[0];
             auto coords_for_genome_size = coords_for_genome[0].size();
             for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
                 std::array<int,2>  target_and_position = {0, 0};
@@ -46,7 +49,6 @@ std::vector<std::array<int, 2>> GenomeCoordinate::locate() {
                 int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
                 int pantools_location = target_and_position[0];
                 int loc = pantools_location;
-
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence]) {
                     kmer_positions.push_back({target_sequence + 1, loc + 1});
                 }
@@ -86,6 +88,7 @@ std::vector<std::array<int, 2>> GenomeCoordinate::locate_reverse() {
 }
 
 std::vector<std::array<int, 2>> GenomeCoordinate::locate_both_kmers() {
+    //TODO: In principle, I could take only ONE graph here, since the PRIMARY does what I want..
     std::vector<std::array<int, 2>> kmer_positions_forward = this->locate();
     std::vector<std::array<int, 2>> kmer_positions_reverse = this->locate_reverse();
     std::vector<std::array<int, 2>> kmer_positions_both = kmer_positions_forward;
@@ -98,7 +101,7 @@ std::vector<std::array<int, 2>> GenomeCoordinate::locate_both_kmers() {
 void GenomeCoordinate::calculate_sequence_location(unsigned long coord, const std::vector<int>& sequence_lengths, std::array<int, 2>& position_and_location) {
     int current_length = 0;
     int k = this->graph.get_K();
-    int target_sequence = -1;
+    int target_sequence = 0;
     for (int i = 0; i < (int)sequence_lengths.size(); i++) {
         int seq_length = sequence_lengths[i] - k + 1;
         if ((int) coord >= current_length && (int) coord < current_length + seq_length) {

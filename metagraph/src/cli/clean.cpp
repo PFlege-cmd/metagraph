@@ -52,14 +52,14 @@ int clean_graph(Config *config) {
     // try loading k-mer counts
     auto node_weights = graph->load_extension<graph::NodeWeights>(files.at(0));
     std::cout << "Nodez node weights... " << std::endl;
-    int node_number = graph->num_nodes();
-    for (int i = 1; i < node_number; ++i) {
-        std::string seq = graph->get_node_sequence(i);
-        if (seq.compare("CTTAAAAGGTAAG") == 0) {
-            significant_node_id = i;
-            std::cout << (*node_weights)[i] << std::endl;
-        }
-    }
+    // int node_number = graph->num_nodes();
+    // for (int i = 1; i < node_number; ++i) {
+    //     std::string seq = graph->get_node_sequence(i);
+    //     if (seq.compare("CTTAAAAGGTAAG") == 0) {
+    //         significant_node_id = i;
+    //         std::cout << (*node_weights)[i] << std::endl;
+    //     }
+    // }
     if (node_weights) {
         if (auto *dbg_succ = dynamic_cast<graph::DBGSuccinct*>(graph.get()))
             dbg_succ->reset_mask();
@@ -165,7 +165,6 @@ int clean_graph(Config *config) {
                                 graph->get_mode() == graph::DeBruijnGraph::CANONICAL);
 
         } else {
-            std::cout << "ELSE BRANCH!" << std::endl;
             graph->call_sequences(callback, num_threads,
                                   graph->get_mode() == graph::DeBruijnGraph::CANONICAL);
         }
@@ -194,20 +193,10 @@ int clean_graph(Config *config) {
                 std::vector<uint32_t> kmer_counts;
                 kmer_counts.reserve(path.size());
                 for (auto node : path) {
-                    //std::cout << "NEEDY NODE: " << node << std::endl;
-                    if (node == significant_node_id) {
-                        std::cout << "Questionable node information:" << std::endl;
-                        std::cout << contig << std::endl;
-                        //std::cout << path << std::endl;
-                        std::cout << ((*node_weights)[node]) << std::endl;
-                    }
                     kmer_counts.push_back((*node_weights)[node]);
                 }
 
-                std::cout << "CONTIG IS: " << contig << std::endl;
-                // smooth k-mer counts in the unitig
-                std::cout << "SMOOTHING CONTIGS" << std::endl;
-                std::cout << "Smoothing window: " << config->smoothing_window << std::endl;
+
                 utils::smooth_vector(config->smoothing_window, &kmer_counts);
 
                 std::lock_guard<std::mutex> lock(seq_mutex);

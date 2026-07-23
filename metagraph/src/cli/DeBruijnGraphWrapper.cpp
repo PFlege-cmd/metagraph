@@ -338,6 +338,14 @@ GraphWrapper::kmer_frequencies DeBruijnGraphWrapper::get_kmer_frequencies(std::v
                                               presence_fraction);
 }
 
+GraphWrapper::kmer_frequencies DeBruijnGraphWrapper::get_kmer_frequencies(std::string_view kmers) {
+    constexpr unsigned long long num_top_labels = 4294967295;
+    constexpr double discovery_fraction = 0.699999999999996;
+    constexpr double presence_fraction = 0.0;
+    return this->get_graph()->get_kmer_counts(kmers, num_top_labels, discovery_fraction,
+                                              presence_fraction);
+}
+
 int DeBruijnGraphWrapper::get_num_genomes() const {
     return this->get_graph()->get_annotator().num_labels(); // Labels are number of genomes
 }

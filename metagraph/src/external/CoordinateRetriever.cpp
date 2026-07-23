@@ -3,14 +3,12 @@
 //
 
 #include "CoordinateRetriever.h"
-CoordinateRetriever::CoordinateRetriever(int number_of_sequences, int max_frequency, std::string& genome, int* sequences, std::vector<std::unique_ptr<MatrixEntry>>& genomeCoordinates, GraphWrapper& graph): number_of_sequences(number_of_sequences), max_frequency(max_frequency), genome(genome), sequences(sequences), graph(graph), genomeCoordinates(genomeCoordinates) {
-    std::cout << "Created CoordinateRetriever" << std::endl;
-    std::cout << "Max frequency: " << max_frequency << std::endl;
-    std::cout << "Genome: " << genome << std::endl;
-    std::cout << "Number of sequences: " << number_of_sequences << std::endl;
-    std::cout << "Number of sequences in the graph: " << number_of_sequences << std::endl;
-    std::cout << "Graph ref :"  << std::endl;
+
+#include "MatrixEntryFactory.h"
+CoordinateRetriever::CoordinateRetriever(int number_of_sequences, int max_frequency, std::string& genome, int* sequences,GraphWrapper& graph): number_of_sequences(number_of_sequences), max_frequency(max_frequency), genome(genome), sequences(sequences), graph(graph) {
+
 };
+
 CoordinateRetriever::~CoordinateRetriever(){};
 int CoordinateRetriever::get_number_of_sequences(){return this->number_of_sequences;};
 int CoordinateRetriever::get_sequence_length(int sequence_number) {
@@ -21,14 +19,19 @@ int CoordinateRetriever::get_sequence_length(int sequence_number) {
     }
     return sequences[sequence_number];
 };
-std::vector<std::array<int, 2>> CoordinateRetriever::get_kmer_positions() {
+std::vector<std::array<int, 2>> CoordinateRetriever::get_kmer_positions(std::vector<std::unique_ptr<MatrixEntry>>& genomeCoordinates) {
     std::vector<std::array<int, 2>> kmer_positions;
-    std::for_each(this->genomeCoordinates.begin(), this->genomeCoordinates.end(), [&kmer_positions](auto const &genome_coords) {
+    std::for_each(genomeCoordinates.begin(), genomeCoordinates.end(), [&kmer_positions](auto const &genome_coords) {
         auto found_coords = genome_coords->locate_both_kmers();
         kmer_positions.insert(end(kmer_positions), begin(found_coords), end(found_coords));
     });
     return kmer_positions;
 };
+
+void CoordinateRetriever::set_graph(GraphWrapper& wrapper) {
+    this->graph = wrapper;
+}
+
 GraphWrapper& CoordinateRetriever::get_graph() {
     return graph;
 }
@@ -49,12 +52,27 @@ int* CoordinateRetriever::get_sequences() {
 //     this->genomeCoordinates.insert(this->genomeCoordinates.end(), genomeCoordinates.begin(), genomeCoordinates.end());
 // }
 
-std::vector<std::unique_ptr<MatrixEntry>>& CoordinateRetriever::getCoordinates() {
-    return genomeCoordinates;
+std::vector<std::unique_ptr<MatrixEntry>>
+CoordinateRetriever::createEntries(MatrixEntryFactory& factpry,
+                                   const char** kmers,
+                                   int number_of_kmers) {
+    return factpry.createKmerEntries(kmers, number_of_kmers);
 }
 
-std::vector<std::unique_ptr<MatrixEntry>>& CoordinateRetriever::createEmpty() {
-    std::vector<std::unique_ptr<MatrixEntry>>* tmp
-            = new std::vector<std::unique_ptr<MatrixEntry>>(0);
-    return *tmp;
+std::vector<std::string_view> CoordinateRetriever::filter_max_frequency(std::vector<std::string_view> kmers) {
+    std::vector<std::string_view> filtered = std::vector<std::string_view>();
+    std::for_each(kmers.begin(), kmers.end(), [&](auto kmer) {
+        auto freqs = this->graph.get_kmer_frequencies(kmer); // OK since we only get a single entry
+
+        for (size_t i = 0; i < freqs.size(); i++) {
+            auto lab = std::get<0>(freqs[i]);
+            auto equal_to_genome = this->genome.compare(lab);
+            if (equal_to_genome == 0) {
+                if (static_cast<int>(std::get<2>(freqs[i])[0]) <= this->max_frequency) {
+                    filtered.push_back(kmer);
+                }
+            }
+        }
+    });
+    return filtered;
 }

@@ -14,6 +14,8 @@ class MockMatrixEntry : public MatrixEntry {
 
 
         MOCK_METHOD(std::string_view&, get_reverse_kmer, (), (override));
+        MOCK_METHOD((std::string_view&), get_kmer, (), (override));
+
         MOCK_METHOD((std::vector<std::array<int, 2>>), locate, (), (override));
         MOCK_METHOD((std::vector<std::array<int, 2>>), locate_reverse, (), (override));
         MOCK_METHOD((std::vector<std::array<int, 2>>), locate_both_kmers, (), (override));

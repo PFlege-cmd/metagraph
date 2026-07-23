@@ -25,13 +25,14 @@ public:
 
     virtual ~MatrixEntry() = default;
     virtual std::string_view& get_reverse_kmer() = 0;
+    virtual std::string_view& get_kmer() = 0;
     virtual std::vector<std::array<int, 2>> locate() = 0;
     virtual std::vector<std::array<int, 2>> locate_reverse() = 0;
     virtual std::vector<std::array<int, 2>> locate_both_kmers() = 0;
 
 protected:
     std::string_view& genome;
-    std::string_view& kmer;
+    std::string_view kmer;
     std::vector<int>& sequence_lengths;
     GraphWrapper& graph;
 };

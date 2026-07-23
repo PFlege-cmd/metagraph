@@ -449,10 +449,10 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
 
 
     static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
-    uint64 n = graph->get_graph().num_nodes();
+    uint64 number_of_kmers = graph->get_graph().num_nodes();
 
     uint64 current = 1;
-    long max_freq = 0;
+    unsigned long max_freq = 0;
     auto wrapper = DeBruijnGraphWrapper(*graph);
     // auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
     // int num_genomes = kmerClassifier.get_num_genomes();
@@ -465,8 +465,8 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
     //     }
     // }
 
-    while (current < n) {
-        long sum_total = 0;
+    while (current < number_of_kmers/2) {
+        unsigned long sum_total = 0;
         auto single_node_vec = std::vector<node_index>{current};
         auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
                                               presence_fraction);
@@ -488,9 +488,7 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
                 sum_total += kmer_counts[j];
             }
         }
-        if (sum_total > 127) {
-            std::cout << "Maximum frequency: " << sum_total << std::endl;
-        }
+
         max_freq = sum_total > max_freq ? sum_total : max_freq;
         current += 1;
     }
