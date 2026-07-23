@@ -60,7 +60,7 @@ std::vector<std::array<int, 2>> GenomeCoordinate::locate() {
 std::vector<std::array<int, 2>> GenomeCoordinate::locate_reverse() {
     std::string_view current_kmer = reverse_kmer;
     std::vector<std::array<int, 2>> kmer_positions;
-    int kmer_size = this->graph.get_K();
+    //int kmer_size = this->graph.get_K();
 
     std::vector<genomeCoordinateTriple> coordinates = this->graph.get_kmer_coordinates(current_kmer);
     for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
@@ -80,7 +80,7 @@ std::vector<std::array<int, 2>> GenomeCoordinate::locate_reverse() {
             int loc = pantools_location;
 
             if (loc >= 0 && loc <= sequence_lengths[target_sequence]) {
-                kmer_positions.push_back({target_sequence + 1, loc + kmer_size + 1});
+                kmer_positions.push_back({target_sequence + 1, loc + 1});
             }
         }
     }

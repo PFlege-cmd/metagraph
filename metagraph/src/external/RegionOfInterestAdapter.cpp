@@ -18,7 +18,7 @@ struct SequencePositions {
     SequencePositions(int no_results, int* seqs, int* poss ) { no_of_results = no_results; sequences = seqs; positions = poss; };
 };
 extern "C" {
-    SequencePositions* retrieveKmersOfInterest(char *database, int genome_nr, int no_of_kmers, int no_of_sequences, const char ** kmers, int * sequences) {
+    SequencePositions* retrieveKmersOfInterest(char *database, int genome_nr, char * genome_name, int no_of_kmers, int no_of_sequences, const char ** kmers, int * sequences) {
 
         graph_glue glue = graph_glue(0, NULL);
         std::vector<int> lengths = std::vector<int>(no_of_sequences );
@@ -49,24 +49,20 @@ extern "C" {
         auto kmer_labels = kmer_graph_wrapper.get_graph()->get_annotator().get_label_encoder().get_labels();
         auto coord_labels = wrapper.get_graph()->get_annotator().get_label_encoder().get_labels();
 
-        std::string genome_string = kmer_labels[genome_nr];
-        std::string_view genome_view_string = std::string_view(coord_labels[genome_nr]);
+        std::string genome_number_string = kmer_labels[genome_nr];
+        std::string_view genome_name_view = genome_name;
 
-        std::cout << "Kmer label is: " <<  genome_string << std::endl;
-        std::cout << "Coordinate label is: " <<  genome_view_string << std::endl;
+        std::cout << "Kmer label is: " <<  genome_number_string << std::endl;
+        std::cout << "Coordinate label is: " <<  genome_name_view << std::endl;
 
-        CoordinateRetriever* retriever = new CoordinateRetriever(no_of_sequences, 5, genome_string, sequences, kmer_graph_wrapper);
+        CoordinateRetriever* retriever = new CoordinateRetriever(no_of_sequences, 5, genome_number_string, sequences, kmer_graph_wrapper);
         kmer_views = retriever->filter_max_frequency(kmer_views);
 
-        for_each(kmer_views.begin(), kmer_views.end(), [&coordinates, &genome_view_string, &wrapper, &lengths](auto& kmer) {
-            coordinates.push_back(std::make_unique<GenomeCoordinate>(genome_view_string, kmer, lengths, wrapper));
+        for_each(kmer_views.begin(), kmer_views.end(), [&coordinates, &genome_name_view, &wrapper, &lengths](auto& kmer) {
+            coordinates.push_back(std::make_unique<GenomeCoordinate>(genome_name_view, kmer, lengths, wrapper));
         });
 
         auto pos = retriever->get_kmer_positions(coordinates);
-
-        for (size_t i = 0; i < pos.size(); i++) {
-            std::cout << pos[i][0] << std::endl;
-        }
 
         int * found_sequences = new int[pos.size()];
         int * found_positions = new int[pos.size()];

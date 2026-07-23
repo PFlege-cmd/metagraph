@@ -207,7 +207,7 @@ TEST(testIntegration, TestRegionOfInterest) {
     std::string data_path = std::string("../../../patrick-pan-tools/chloroplast_DB");
 
     graph_glue glue = graph_glue(0, NULL);
-    int genome_nr = 0;
+    int genome_nr = 1;
 
     //static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
     //int * seqs_ptr = new int[1]{134496};
