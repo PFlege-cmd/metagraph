@@ -2,7 +2,6 @@
 // Created by Patrick Flege on 16/03/2026.
 //
 
-#include "../../../../../../../opt/homebrew/Cellar/boost/1.90.0_1/include/boost/iostreams/filter/zstd.hpp"
 #include "cli/DeBruijnGraphWrapper.h"
 #include "cli/GraphWrapper.hpp"
 #include "cli/graph_glue.hpp"
