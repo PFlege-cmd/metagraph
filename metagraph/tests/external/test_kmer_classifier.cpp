@@ -504,6 +504,9 @@ TEST(IntegrationTest, realTest) {
         std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
         std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
 
+        auto res = kmerClassifier.flatten(distinct_shared);
+
+
         // KmerMatrix *kmerMatrix = new KmerMatrix(core_total_array,
         //     accessory_total_array,
         //     unique_total_array,
@@ -517,5 +520,6 @@ TEST(IntegrationTest, realTest) {
         //                 all_total), nullptr, nullptr, nullptr
         //     ); // Ahh... this new keyword creates a pointer, therefore it did not work
         // return kmerMatrix;
+        std::cout << *(res) << std::endl;
 }
 

@@ -99,23 +99,28 @@ void KmerClassifier::fill_triangular_matrices(const genomes_and_frequencies& gen
 }
 
 int* KmerClassifier::flatten(const std::vector<std::vector<int>>& matrix) {
-    std::vector<std::vector<const int>::iterator> all_shared_iter_start;
-    std::vector<std::vector<const int>::iterator> all_shared_iter_end;
+    // std::vector<std::vector<const int>::iterator> all_shared_iter_start;
+    //
+    // all_shared_iter_start.resize(genome_number);
+    // int* flattened = new int[genome_number*genome_number];
+    //
+    // for (int i = 0; i < genome_number; i++) {
+    //     all_shared_iter_start[i] = matrix[i].begin();
+    // }
+    //
+    // for (int i = 0; i < genome_number; i++) {
+    //     for (int j = 0; j < genome_number; j++) {
+    //         std::cout  << *all_shared_iter_start[i] << ","  << std::endl;
+    //         flattened[i*genome_number + j] = *all_shared_iter_start[i];
+    //         ++all_shared_iter_start[i];
+    //     }
+    // }
 
-    all_shared_iter_start.resize(genome_number);
-    //all_shared_iter_end.resize(genome_number);
     int* flattened = new int[genome_number*genome_number];
 
     for (int i = 0; i < genome_number; i++) {
-        all_shared_iter_start[i] = matrix[i].begin();
-        //all_shared_iter_end[i] = matrix[i].end();
-    }
-
-    for (int i = 0; i < genome_number; i++) {
         for (int j = 0; j < genome_number; j++) {
-            std::cout  << *all_shared_iter_start[i] << ","  << std::endl;
-            flattened[i*genome_number + j] = *all_shared_iter_start[i];
-            ++all_shared_iter_start[i];
+            flattened[i*genome_number + j] = matrix[i][j];
         }
     }
     return flattened;
