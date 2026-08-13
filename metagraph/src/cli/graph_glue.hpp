@@ -37,6 +37,7 @@ class graph_glue {
                           const char* read,
                           const std::shared_ptr<AnnotatedDBG>& graph);
     unsigned long calculate_maximum_kmer_frequency(char* database_path);
+    unsigned long calculate_maximum_kmer_frequency_parallel(char* database_path);
     char** get_cmd_arguments();
     int get_cmd_arg_count();
     unique_ptr<Config> create_config();

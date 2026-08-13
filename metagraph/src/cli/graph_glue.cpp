@@ -35,36 +35,28 @@ using node_index = SequenceGraph::node_index;
 extern "C"{
     unsigned long get_maximum_kmer_frequency(char * database_path) {
 
-
+        auto start_time = std::chrono::high_resolution_clock::now();
         std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
         std::string data_path = std::string(database_path);
         graph_glue glue = graph_glue(0, NULL);
 
-        long maximum_freq  = glue.calculate_maximum_kmer_frequency(database_path);
-        /*unsigned long long num_top_labels = 4294967295;
-        const double discovery_fraction = 0.699999999999996;
-        const double presence_fraction = 0.0;
+        long maximum_freq_par  = glue.calculate_maximum_kmer_frequency_parallel(database_path);
+        auto end_time_parallel = std::chrono::high_resolution_clock::now();
+        auto time_parallel = end_time_parallel - start_time;
 
-        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
-        uint64 n = graph->get_graph().num_nodes();
-        uint64 current = 1;
-        long max_freq = 0;
+        //start_time = std::chrono::high_resolution_clock::now();
+        //long maximum_freq_ser  = glue.calculate_maximum_kmer_frequency(database_path);
 
-        while (current < n) {
-            long sum_total = 0;
-            auto single_node_vec = std::vector<node_index>{current};
-            auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
-                                                  presence_fraction);
-            for (int i = 0; i < (int) count_vector.size(); i++) {
-                auto stuff = std::get<2>(count_vector[i]);
-                for (int j = 0; j < (int) stuff.size(); j++) {
-                    sum_total += stuff[j];
-                }
-            }
-            max_freq = sum_total > max_freq ? sum_total : max_freq;
-            current += 1;
-        }*/
-        return maximum_freq;
+        //auto end_time_serial  = std::chrono::high_resolution_clock::now();
+        //auto time_ser = end_time_serial - start_time;
+
+        std::cout << "Parallel result:" << time_parallel.count() << std::endl;
+        //std::cout << "Serial result:" << time_ser.count() << std::endl;
+
+        //bool same_freqs = maximum_freq_par == maximum_freq_ser;
+        //std::cout << "Frequencies the same? " << same_freqs << boolalpha << std::endl;
+
+        return maximum_freq_par;
     }
 }
 
@@ -485,6 +477,66 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
                     //std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
                 //}
 
+                sum_total += kmer_counts[j];
+            }
+        }
+
+        max_freq = sum_total > max_freq ? sum_total : max_freq;
+        current += 1;
+    }
+    return max_freq;
+}
+
+unsigned long graph_glue::calculate_maximum_kmer_frequency_parallel(char * database_path) {
+    std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
+    std::string data_path = std::string(database_path);
+    graph_glue glue = graph_glue(0, NULL);
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+
+    static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
+
+
+    // // --------- Testing acquiring coordinates ------ //
+    //
+    // auto deg_kmer = std::string_view("GGTMTTT");
+    // auto deg_stuff = graph_coord->get_kmer_coordinates(deg_kmer,num_top_labels, discovery_fraction, presence_fraction);
+    // std::cout << "Number of M DEG k-mers: " << deg_stuff.size() << std::endl;
+    // for (int i = 0; i < (int) deg_stuff.size(); i++) {
+    //     std::cout << std::get<0>(deg_stuff[i]) << std::endl;
+    // }
+    //
+    // // --------- Testing acquiring coordinates ------ //
+
+
+    static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
+    uint64 number_of_kmers = graph->get_graph().num_nodes();
+
+    //uint64 current = 1;
+    unsigned long max_freq = 0;
+    auto wrapper = DeBruijnGraphWrapper(*graph);
+    // auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
+    // int num_genomes = kmerClassifier.get_num_genomes();
+    // kmerClassifier.set_num_genomes(num_genomes);
+    // kmerClassifier.create_kmer_classification_matrix();
+    // auto kmer_matrix = kmerClassifier.get_total_kmer_matrix();
+    // for (size_t i = 0; i < kmer_matrix.size(); i++) {
+    //     for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
+    //         std::cout << "Kmer entry at :" << i << j << "--" << kmer_matrix[i][j] << std::endl;
+    //     }
+    // }
+    #pragma omp parallel for reduction(max:max_freq)
+    for (uint64 current = 1; current < number_of_kmers/2; current++) {
+        unsigned long sum_total = 0;
+        auto single_node_vec = std::vector<node_index>{current};
+        auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
+                                              presence_fraction);
+
+        for (int i = 0; i < (int) count_vector.size(); i++) {
+            auto kmer_counts = std::get<2>(count_vector[i]);
+            for (int j = 0; j < (int) kmer_counts.size(); j++) {
                 sum_total += kmer_counts[j];
             }
         }
