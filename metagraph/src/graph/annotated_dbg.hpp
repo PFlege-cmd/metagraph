@@ -149,11 +149,20 @@ class AnnotatedDBG : public AnnotatedSequenceGraph {
                                                           std::string_view& genome_name,
                                                           std::vector<int>& sequence_lengths);
 
+    std::vector<std::array<int, 2>> read_mapping_pantools(
+            std::string_view& read,
+            std::string_view& genome_name,
+            std::vector<int>& sequence_lengths,
+            std::map<std::string, std::vector<std::array<int, 2>>>& genome_hits_map);
+
     std::vector<std::array<int, 2>> read_mapping_pantools_reverse(std::string_view& read,
                                                           std::string_view& genome_name,
                                                           std::vector<int>& sequence_lengths);
 
+    std::vector<std::array<int, 2>> read_mapping_pantools_reverse(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths, std::map<std::string, std::vector<std::array<int, 2>>>& genome_hits_map);
+
     virtual std::vector<std::array<int, 2>> read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector);
+    virtual std::vector<std::array<int, 2>> read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector, std::map<std::string, std::vector<std::array<int, 2>>>& genome_hits_map);
     void array_fun(int* pointy, int arr_size_1, int arr_size_2);
 
     // returns tuples (label, num_kmer_matches, kmer_abundances)

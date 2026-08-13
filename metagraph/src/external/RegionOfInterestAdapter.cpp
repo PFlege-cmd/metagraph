@@ -75,5 +75,4 @@ extern "C" {
         auto final_res = new SequencePositions(number_results, found_sequences, found_positions);
         return final_res;
     }
-
 }

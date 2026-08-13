@@ -32,6 +32,8 @@ class DeBruijnGraphWrapper : public GraphWrapper {
     int get_num_genomes() const override;
     std::vector<GraphWrapper::genomeCoordinateTriple> get_kmer_coordinates(std::string_view& kmer) override;
     [[nodiscard]] size_t get_K() const override;
+    const std::vector<std::string>& get_genome_labels() const override;
+    std::string get_node_sequence(node_index kmer_index) const override;
 };
 
 

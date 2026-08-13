@@ -6,7 +6,7 @@
 #include "cli/GraphWrapper.hpp"
 #include "cli/graph_glue.hpp"
 #include "external/KmerClassifier.hpp"
-#include "kmer/kmer.hpp"
+#include "tests/cli/mock_annotated_dbg.h"
 #include "tests/cli/mock_graph_wrapper.h"
 #include "tests/external/kmer_classifier_auxiliary.h"
 
@@ -18,6 +18,48 @@ struct KmerMatrix;
 using node_index_kmer = GraphWrapper::node_index_kmer;
 using Label =  mtg::graph::AnnotatedSequenceGraph::Label;
 using kmer_frequencies = GraphWrapper::kmer_frequencies;
+typedef std::tuple<Label, size_t, std::vector<size_t>> kmer_tuple;
+typedef PangenomeStructureAdapter::PangenomeStructureCollector kmerCollector;
+
+std::vector<kmer_frequencies> createMockKmerFreqs() {
+
+    Label genome_one_name = std::string("/0_contig/t");
+    Label genome_two_name = std::string("/1_contig/t");
+    Label genome_three_name = std::string("/3_contig");
+
+    size_t genome_one_kmer_count = 3;
+    size_t genome_two_kmer_count = 4;
+    size_t genome_three_kmer_count = 5;
+
+    auto first_genome_counts = std::make_tuple(genome_one_name, 1, std::vector<size_t>({genome_one_kmer_count}));
+    auto second_genome_counts = std::make_tuple(genome_two_name, 1, std::vector<size_t>({genome_two_kmer_count}));
+    auto third_genome_counts = std::make_tuple(genome_three_name, 1, std::vector<size_t>({genome_three_kmer_count}));
+
+    kmer_frequencies frequencies_1 =  std::vector<kmer_tuple>({first_genome_counts, second_genome_counts, third_genome_counts});
+
+    Label genome_one_name_freq_2 = std::string("/0_contig/t");
+    Label genome_two_name_freq_2 = std::string("/1_contig/t");
+    Label genome_three_name_freq_2 = std::string("/2_contig");
+    Label genome_four_name_freq_2 = std::string("/3_contig");
+
+    size_t genome_one_kmer_count_freq_2 = 3;
+    size_t genome_two_kmer_count_freq_2 = 4;
+    size_t genome_three_kmer_count_freq_2 = 5;
+    size_t genome_four_kmer_count_freq_2 = 5;
+
+    auto first_genome_counts_freq_2 = std::make_tuple(genome_one_name_freq_2, 1, std::vector<size_t>({genome_one_kmer_count_freq_2}));
+    auto second_genome_counts_freq_2 = std::make_tuple(genome_two_name_freq_2, 1, std::vector<size_t>({genome_two_kmer_count_freq_2}));
+    auto third_genome_counts_freq_2 = std::make_tuple(genome_three_name_freq_2, 1, std::vector<size_t>({genome_three_kmer_count_freq_2}));
+    auto fourth_genome_counts_freq_2 = std::make_tuple(genome_four_name_freq_2, 1, std::vector<size_t>({genome_four_kmer_count_freq_2}));
+
+    kmer_frequencies frequencies_2 =  std::vector<kmer_tuple>({first_genome_counts_freq_2,
+        second_genome_counts_freq_2,
+        third_genome_counts_freq_2,
+        fourth_genome_counts_freq_2});
+
+    std::vector<kmer_frequencies> freqs{frequencies_1, frequencies_2};
+    return freqs;
+};
 
 TEST(testKmerClassifier, testGetGraph) {
     mtg::graph::AnnotatedDBG*  graph = nullptr;
@@ -458,6 +500,41 @@ TEST(TestKmerClassification, testFillCountMatrix) {
     }
 }
 
+
+TEST(TestKmerClassification, testGetFirstNonDummyNodeIndex) {
+    std::shared_ptr<AnnotatedDBG> ptr {nullptr};
+    auto graph = MockGraphWrapper(*ptr);
+    //    EXPECT_CALL(wrapper, get_kmer_frequencies(idx)).WillOnce(testing::Return(frequencies_1));
+
+    size_t idx_1{1};
+    size_t idx_2{2};
+    size_t idx_3{3};
+    size_t idx_4{4};
+    size_t idx_5{5};
+    size_t idx_6{6};
+
+    std::string firstDummy{"$$$$$"};
+    std::string secondDummy{"$$$$A"};
+    std::string thirdDummy{"$$$AA"};
+    std::string fourthDummy{"$$AAA"};
+    std::string fifthDummy{"$AAAA"};
+    std::string non_dummy{"AAAAA"};
+
+    //WillOnce(testing::Return(frequencies_3)
+    EXPECT_CALL(graph, get_node_sequence(idx_1)).WillOnce(testing::Return(firstDummy));
+    EXPECT_CALL(graph, get_node_sequence(idx_2)).WillOnce(testing::Return(secondDummy));
+    EXPECT_CALL(graph, get_node_sequence(idx_3)).WillOnce(testing::Return(thirdDummy));
+    EXPECT_CALL(graph, get_node_sequence(idx_4)).WillOnce(testing::Return(fourthDummy));
+    EXPECT_CALL(graph, get_node_sequence(idx_5)).WillOnce(testing::Return(fifthDummy));
+    EXPECT_CALL(graph, get_node_sequence(idx_6)).WillOnce(testing::Return(non_dummy));
+
+    auto kmerClassifier = KmerClassifier(graph, 3, 1);
+
+    size_t real_idx{kmerClassifier.get_first_real_node_idx()};
+
+    ASSERT_EQ(real_idx, idx_6);
+}
+
 TEST(IntegrationTest, realTest) {
     std::string data_path = std::string("../../../patrick-pan-tools/covid_DB");
         graph_glue glue = graph_glue(0, NULL);
@@ -471,7 +548,15 @@ TEST(IntegrationTest, realTest) {
         //int num_genomes = kmerClassifier.get_num_genomes();
         kmerClassifier.set_num_genomes(genome_number);
         //kmerClassifier.set_kmer_map(kmer_map);
-        kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
+        //auto node_n = graph->get_graph().num_nodes()/2;
+        std::vector<unsigned long long> vi{100, 101,102, 103, 104};
+        //std::iota(vi.begin(), vi.end(), 1);
+        auto fkmers = kmerClassifier.get_kmer_frequencies(vi);
+        //kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
+
+        size_t initial_node_idx{kmerClassifier.get_first_real_node_idx()};
+        std::cout << "Initial node index: " << initial_node_idx << std::endl;
+        kmerClassifier.create_kmer_classification_matrix_parallel(initial_node_idx);
         auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
         auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
 
@@ -480,6 +565,7 @@ TEST(IntegrationTest, realTest) {
                 std::cout << "Kmer entry at :" << i << j << "--" << total_kmer_matrix[i][j] << std::endl;
             }
         }
+
         int* core_total_array = new int[total_kmer_matrix[0].size()];
         std::move(total_kmer_matrix[0].begin(), total_kmer_matrix[0].end(), core_total_array);
 
@@ -521,4 +607,49 @@ TEST(IntegrationTest, realTest) {
         // return kmerMatrix;
         std::cout << *(res) << std::endl;
 }
+
+TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {
+    int loops{100};
+    std::vector<kmer_frequencies> frequencies = createMockKmerFreqs();
+
+    std::cout <<  "Freqs size:  " << frequencies.size() << std::endl;
+
+    node_index idx1{2};
+    node_index idx2{3};
+
+    std::vector<node_index> idx1_vec{std::vector<node_index>({idx1})};
+    std::vector<node_index> idx2_vec{std::vector<node_index>({idx2})};
+
+    AnnotatedDBG* graph = nullptr;
+    MockGraphWrapper wrapper{*graph};
+
+    int core_threshold{4};
+    int unique_threshold{1};
+    int genome_number{4};
+    KmerClassifier kmer_classifier(wrapper, core_threshold, unique_threshold, genome_number);
+
+    std::vector<int> v=std::vector<int>(4, 5);
+
+    kmerCollector collector;
+    collector.core_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, -1));
+    collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, -1));
+    collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, -1));
+
+    std::vector<node_index> all_node_ids{idx1, idx2};
+
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx1_vec)).WillOnce(testing::Return(frequencies[0]));
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx2_vec)).WillOnce(testing::Return(frequencies[1]));
+    std::pair<vector<std::vector<int>>, kmerCollector> acc_core_frequencies_and_collector{ kmer_classifier.initialize_core_kmers(collector, all_node_ids)};
+
+    ASSERT_EQ(acc_core_frequencies_and_collector.first.size(), 1);
+
+    for (size_t i = 0; i < static_cast<size_t> (loops); i++) {
+        ASSERT_EQ(acc_core_frequencies_and_collector.second.core_loops[i][genome_number - 2], 17);
+        ASSERT_EQ(acc_core_frequencies_and_collector.second.accessory_loops[i][genome_number - 2], 12);
+    }
+
+    std::vector<int> expected_freq_non_core{3, 4, 0, 5};
+   ASSERT_EQ(acc_core_frequencies_and_collector.first[0], expected_freq_non_core);
+}
+
 

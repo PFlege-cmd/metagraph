@@ -332,7 +332,7 @@ unsigned long long DeBruijnGraphWrapper::get_number_nodes() {
 
 GraphWrapper::kmer_frequencies DeBruijnGraphWrapper::get_kmer_frequencies(std::vector<node_index> nodes) {
     constexpr unsigned long long num_top_labels = 4294967295;
-    constexpr double discovery_fraction = 0.699999999999996;
+    constexpr double discovery_fraction = 0.0;
     constexpr double presence_fraction = 0.0;
     return this->get_graph()->get_kmer_counts(nodes, num_top_labels, discovery_fraction,
                                               presence_fraction);
@@ -360,6 +360,20 @@ std::vector<GraphWrapper::genomeCoordinateTriple> DeBruijnGraphWrapper::get_kmer
 size_t DeBruijnGraphWrapper::get_K() const {
     return this->get_graph()->get_graph().get_k();
 }
+
+
+/*
+ Returns const-vector of genome labels
+*/
+const std::vector<std::string>& DeBruijnGraphWrapper::get_genome_labels() const{
+    auto& output = this->get_graph()->get_annotator().get_label_encoder().get_labels();
+    return output; // Is this a dangling pointer?
+}
+
+
+std::string DeBruijnGraphWrapper::get_node_sequence(node_index kmer_index) const {
+    return this->get_graph()->get_graph().get_node_sequence(kmer_index);
+};
 
 
 

@@ -223,8 +223,12 @@ extern "C" {
         auto kmerClassifier = KmerClassifier(wrapper, genome_number, 1);
         //int num_genomes = kmerClassifier.get_num_genomes();
         kmerClassifier.set_num_genomes(genome_number);
-        //kmerClassifier.set_kmer_map(kmer_map);
-        kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
+        
+
+        size_t initial_node_idx{kmerClassifier.get_first_real_node_idx()};
+        std::cout << "Initial node index: " << initial_node_idx << std::endl;
+        kmerClassifier.create_kmer_classification_matrix_parallel(initial_node_idx);
+
         auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
         auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
 

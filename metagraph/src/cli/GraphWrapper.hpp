@@ -40,6 +40,8 @@ class GraphWrapper {
         virtual int get_num_genomes() const = 0;
         virtual std::vector<genomeCoordinateTriple> get_kmer_coordinates(std::string_view& kmer) = 0;
         virtual size_t get_K() const = 0;
+        virtual const std::vector<std::string>& get_genome_labels() const = 0;
+        virtual std::string get_node_sequence(node_index_kmer kmer_index) const = 0;
     protected:
         mtg::graph::AnnotatedDBG * graph_;
 };

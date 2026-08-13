@@ -24,6 +24,7 @@
 #include "cli/align.hpp"
 #include "cli/transform_annotation.hpp"
 #include "external/KmerClassifier.hpp"
+#include "external/ReadMapper.h"
 
 #include <chrono>
 #include <ranges>
@@ -35,36 +36,28 @@ using node_index = SequenceGraph::node_index;
 extern "C"{
     unsigned long get_maximum_kmer_frequency(char * database_path) {
 
-
+        auto start_time = std::chrono::high_resolution_clock::now();
         std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
         std::string data_path = std::string(database_path);
         graph_glue glue = graph_glue(0, NULL);
 
-        long maximum_freq  = glue.calculate_maximum_kmer_frequency(database_path);
-        /*unsigned long long num_top_labels = 4294967295;
-        const double discovery_fraction = 0.699999999999996;
-        const double presence_fraction = 0.0;
+        long maximum_freq_par  = glue.calculate_maximum_kmer_frequency_parallel(database_path);
+        auto end_time_parallel = std::chrono::high_resolution_clock::now();
+        auto time_parallel = end_time_parallel - start_time;
 
-        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
-        uint64 n = graph->get_graph().num_nodes();
-        uint64 current = 1;
-        long max_freq = 0;
+        //start_time = std::chrono::high_resolution_clock::now();
+        //long maximum_freq_ser  = glue.calculate_maximum_kmer_frequency(database_path);
 
-        while (current < n) {
-            long sum_total = 0;
-            auto single_node_vec = std::vector<node_index>{current};
-            auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
-                                                  presence_fraction);
-            for (int i = 0; i < (int) count_vector.size(); i++) {
-                auto stuff = std::get<2>(count_vector[i]);
-                for (int j = 0; j < (int) stuff.size(); j++) {
-                    sum_total += stuff[j];
-                }
-            }
-            max_freq = sum_total > max_freq ? sum_total : max_freq;
-            current += 1;
-        }*/
-        return maximum_freq;
+        //auto end_time_serial  = std::chrono::high_resolution_clock::now();
+        //auto time_ser = end_time_serial - start_time;
+
+        std::cout << "Parallel result:" << time_parallel.count() << std::endl;
+        //std::cout << "Serial result:" << time_ser.count() << std::endl;
+
+        //bool same_freqs = maximum_freq_par == maximum_freq_ser;
+        //std::cout << "Frequencies the same? " << same_freqs << boolalpha << std::endl;
+
+        return maximum_freq_par;
     }
 }
 
@@ -107,12 +100,52 @@ extern "C"{
         return results;
     }
 
+    struct SequenceInfo {
+        int** seqLengths;
+        int* seqsPerGenome;
+    };
+
+    struct HitsPerGenomes {
+        int* hitFreqPerGenome{};
+        HitsPerSequence* hitsPerSequence{};
+    };
+
+
+    NativeStructures::HitsPerGenomes* retrieve_hits_for_genome_all(char * database, int* seqsPerGenome,
+                                                  int* seqLengths,  char * read) {
+
+        graph_glue glue = graph_glue(0, NULL);
+        static std::shared_ptr<AnnotatedDBG> graph = glue.load_coord_dbg(database);
+        auto wrapper = DeBruijnGraphWrapper(*graph);
+
+        ReadMapper read_mapper(wrapper);
+
+        //td::cout << seqLengths << std::endl;
+        read_mapper.initialize_all_fields(seqLengths, seqsPerGenome);
+        read_mapper.set_read(std::string_view{read});
+
+        read_mapper.read_mapping_forward();
+        read_mapper.read_mapping_backward();
+
+        NativeStructures::HitsPerGenomes* hitsPerGenome {read_mapper.transform_to_native_output()};
+        //std::cout << "Address when calling: " << hitsPerGenome << std::endl;
+        return hitsPerGenome;
+    }
+
     void free_hits(HitsPerSequence* hits, int size_of_array) {
         for (int i = 0; i < size_of_array; i++) {
             delete hits[i].hitsPerSequence;
             delete hits[i].sequenceOffsets;
         }
         delete[] hits;
+    }
+
+    void free_hits_pangenome(NativeStructures::HitsPerGenomes* hit) {
+        //std::cout << "free_hits_pangenome called" << std::endl;
+        //std::cout << "Address: " << hit << std::endl;
+        //std::cout.flush();
+        delete hit;
+        //std::cout << "DONE with it! "<< std::endl;
     }
 }
 
@@ -373,6 +406,8 @@ void graph_glue::do_pantools_work(char* genome_name,
              int no_of_sequences,
              HitsPerSequence*& results,
                       const char* read_ptr, const std::shared_ptr<AnnotatedDBG>& graph) {
+    //I should simply be able to retrieve all genome-names, and return the below ordered.
+
     //static std::shared_ptr<AnnotatedDBG> graph = load_dbg();
     std::string_view read = read_ptr;
         //"AGTACCAGAGATTCCTAGAGGCATAC";
@@ -385,6 +420,14 @@ void graph_glue::do_pantools_work(char* genome_name,
     //std::cout << "GENOME IS: " << genome << std::endl;
     //std::vector<std::array<int, 2>> foundInGenome
     //        = graph->read_mapping_pantools(read, genome, sequence_lengths_vector);
+
+
+    // here, simply change the return type to a map or so. Should give all outputs for all genomes for a read.
+    // Simply save the current genome-name, and later insert the results in a map.
+    using foundHitsPerGenome =  std::vector<std::array<int, 2>>;
+    std::map<std::string, foundHitsPerGenome> genome_hits_map;
+
+    //TODO: Starts here...
     std::vector<std::array<int, 2>> foundInGenome = graph->read_mapping_pantools_both_sides(read, genome, sequence_lengths_vector);
     for (int i = 0; i < (int)foundInGenome.size(); i++) {
     }
@@ -394,12 +437,13 @@ void graph_glue::do_pantools_work(char* genome_name,
     std::vector<int> seq_offsets;
     //*results = new HitsPerSequence();
     int* offsets = new int[no_of_sequences];
-    for (int i = 0; i < no_of_sequences; i++) {
+
+    for (int i = 0; i < no_of_sequences; i++) { // Goes through all sequences, and adds results...
         //std::cout << sequence_lengths[i] << std::endl;
         int counter = 0;
         for (int j = 0; j < (int)foundInGenome.size(); j++) {
             //std::cout << "SEQUENCE: " << foundInGenome[j][0] << std::endl;
-            if (foundInGenome[j][0] == i + 1) {
+            if (foundInGenome[j][0] == i + 1) { // Checks if the offsets
                 tmp_hits.push_back(foundInGenome[j][1]);
                 counter++;
                 //std::cout << "Sequence: " << foundInGenome[j][0]
@@ -408,11 +452,11 @@ void graph_glue::do_pantools_work(char* genome_name,
         }
         seq_offsets.push_back(counter);
     }
-        int* arraymarray = new int[tmp_hits.size()];
-        std::copy(tmp_hits.begin(), tmp_hits.end(), arraymarray);
-        std::copy(seq_offsets.begin(), seq_offsets.end(), offsets);
-        results[0].hitsPerSequence = arraymarray;
-        results[0].sequenceOffsets = offsets;
+    int* arraymarray = new int[tmp_hits.size()];
+    std::copy(tmp_hits.begin(), tmp_hits.end(), arraymarray);
+    std::copy(seq_offsets.begin(), seq_offsets.end(), offsets);
+    results[0].hitsPerSequence = arraymarray;
+    results[0].sequenceOffsets = offsets;
 
         //'const int no_of_hits = foundInGenome.size();
         //const int const_size = 2;
@@ -485,6 +529,66 @@ unsigned long graph_glue::calculate_maximum_kmer_frequency(char * database_path)
                     //std::cout << "LABEL IS: " << std::get<0>(count_vector[i]) << std::endl;
                 //}
 
+                sum_total += kmer_counts[j];
+            }
+        }
+
+        max_freq = sum_total > max_freq ? sum_total : max_freq;
+        current += 1;
+    }
+    return max_freq;
+}
+
+unsigned long graph_glue::calculate_maximum_kmer_frequency_parallel(char * database_path) {
+    std::cout << "get_maximum_kmer_frequency in C++!" << std::endl;
+    std::string data_path = std::string(database_path);
+    graph_glue glue = graph_glue(0, NULL);
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+
+    //static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
+
+
+    // // --------- Testing acquiring coordinates ------ //
+    //
+    // auto deg_kmer = std::string_view("GGTMTTT");
+    // auto deg_stuff = graph_coord->get_kmer_coordinates(deg_kmer,num_top_labels, discovery_fraction, presence_fraction);
+    // std::cout << "Number of M DEG k-mers: " << deg_stuff.size() << std::endl;
+    // for (int i = 0; i < (int) deg_stuff.size(); i++) {
+    //     std::cout << std::get<0>(deg_stuff[i]) << std::endl;
+    // }
+    //
+    // // --------- Testing acquiring coordinates ------ //
+
+
+    static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
+    uint64 number_of_kmers = graph->get_graph().num_nodes();
+
+    //uint64 current = 1;
+    unsigned long max_freq = 0;
+    auto wrapper = DeBruijnGraphWrapper(*graph);
+    // auto kmerClassifier = KmerClassifier(wrapper, 3, 1);
+    // int num_genomes = kmerClassifier.get_num_genomes();
+    // kmerClassifier.set_num_genomes(num_genomes);
+    // kmerClassifier.create_kmer_classification_matrix();
+    // auto kmer_matrix = kmerClassifier.get_total_kmer_matrix();
+    // for (size_t i = 0; i < kmer_matrix.size(); i++) {
+    //     for (size_t j = 0; j < kmer_matrix[i].size(); j++) {
+    //         std::cout << "Kmer entry at :" << i << j << "--" << kmer_matrix[i][j] << std::endl;
+    //     }
+    // }
+    #pragma omp parallel for reduction(max:max_freq)
+    for (uint64 current = 1; current < number_of_kmers/2; current++) {
+        unsigned long sum_total = 0;
+        auto single_node_vec = std::vector<node_index>{current};
+        auto count_vector = graph->get_kmer_counts(single_node_vec, num_top_labels, discovery_fraction,
+                                              presence_fraction);
+
+        for (int i = 0; i < (int) count_vector.size(); i++) {
+            auto kmer_counts = std::get<2>(count_vector[i]);
+            for (int j = 0; j < (int) kmer_counts.size(); j++) {
                 sum_total += kmer_counts[j];
             }
         }

@@ -404,6 +404,9 @@ AnnotatedDBG::get_kmer_counts(const std::vector<node_index> &nodes,
         }
     }
 
+    // constexpr double discovery_fraction = 0.699999999999996;
+    // constexpr double presence_fraction = 0.0;
+
     uint64_t min_count = std::max(1.0, std::ceil(presence_fraction * nodes.size()));
     if (rows.size() < min_count)
         return {};
@@ -569,6 +572,20 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(s
    return kmer_positions;
 }
 
+std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_both_sides(std::string_view& read, std::string_view& genome, std::vector<int>& sequence_lengths_vector, std::map<std::string, std::vector<std::array<int, 2>>>& genome_hits_map){
+    std::vector<std::array<int, 2>> kmer_positions = read_mapping_pantools(read, genome, sequence_lengths_vector, genome_hits_map);
+
+    std::string reverse_read = std::string(read);
+    reverse_complement(reverse_read);
+
+    ////std::cout << "REVERSE READ: " << reverse_read << std::endl;
+    std::string_view reverse_read_view = reverse_read;
+    std::vector<std::array<int, 2>> kmer_positions_reverse = read_mapping_pantools_reverse(reverse_read_view, genome, sequence_lengths_vector);
+
+    kmer_positions.insert(kmer_positions.end(), kmer_positions_reverse.begin(), kmer_positions_reverse.end());
+    return kmer_positions;
+}
+
 std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths) {
     //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
     //TODO: For now, assume that a sequence is a genome.
@@ -584,7 +601,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
     int step_size = read_length / 15;
     step_size = (step_size == 0 ? 1 : step_size);
 
-    int k = get_graph().get_k();
+    int k = static_cast<int>(get_graph().get_k());
     for (int position = 0; position < (int) read.size(); position += step_size) {
         std::string_view current_kmer = read.substr(position, k);
         if ((int) current_kmer.size() < k)
@@ -593,7 +610,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
         std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
         ////std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
         for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
-            std::string current_genome = std::get<0>(coordinates[coord_idx]);
+            std::string_view current_genome = std::get<0>(coordinates[coord_idx]);
             if (current_genome != genome_name) {
                 //std::cout << current_genome << std::endl;
                 //std::cout << genome_name << std::endl;
@@ -601,7 +618,7 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
                 continue;
             }
             auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
-            auto test = coords_for_genome[0];
+            //auto test = coords_for_genome[0];
             auto coords_for_genome_size = coords_for_genome[0].size();
             for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
                 ////std::cout << current_genome << std::endl;
@@ -633,6 +650,142 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_
     return kmer_positions;
 }
 
+std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools(std::string_view& read,
+                                                          std::string_view& genome_name,
+                                                          std::vector<int>& sequence_lengths, std::map<std::string, std::vector<std::array<int, 2>>>& genome_hits_map) {
+    //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
+    //TODO: For now, assume that a sequence is a genome.
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    int read_length = read.length();
+    //int sequence_length = 44;
+    std::vector<int> candidate_coords;
+    std::vector<std::array<int, 2>> kmer_positions;
+
+    int step_size = read_length / 15;
+    step_size = (step_size == 0 ? 1 : step_size);
+
+    int k = static_cast<int>(get_graph().get_k());
+    for (int position = 0; position < (int) read.size(); position += step_size) {
+        std::string_view current_kmer = read.substr(position, k);
+        if ((int) current_kmer.size() < k)
+            break;
+        //std::cout << current_kmer << std::endl;
+        std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
+        ////std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
+        for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
+            std::string_view current_genome = std::get<0>(coordinates[coord_idx]);
+            if (current_genome != genome_name) {
+                //std::cout << current_genome << std::endl;
+                //std::cout << genome_name << std::endl;
+                //std::cout << "NOT SAME NAME!! DYMBASS" << std::endl;
+                continue;
+            }
+            auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
+            //auto test = coords_for_genome[0];
+            auto coords_for_genome_size = coords_for_genome[0].size();
+            for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
+                ////std::cout << current_genome << std::endl;
+                //std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
+                ////std::cout << read_length << std::endl;
+                std::array<int,2>  target_and_position = {0, 0};
+                calculate_sequence_location(coords_for_genome[0][current_coord_idx],
+                                            sequence_lengths, target_and_position);
+                int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
+                int pantools_location = target_and_position[0];
+                int loc = pantools_location - position;
+
+                if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
+                    candidate_coords.push_back(loc);
+                    //std::cout << target_sequence + 1 << " - " << loc << std::endl;
+                    kmer_positions.push_back({target_sequence + 1, loc});
+                    std::cout << "At position: " << position << std::endl;
+                }
+            }
+        }
+    }
+    //std::cout << candidate_coords.size() << std::endl;
+    std::vector<std::array<int, 3>> node_results;
+    for (int loc: candidate_coords) {
+        std::array<int, 3> result = {4, 1, loc};
+        node_results.push_back(result);
+        //std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
+    }
+    return kmer_positions;
+}
+
+std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths, std::map<std::string, std::vector<std::array<int, 2>>>& genome_hits_map) {
+    //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
+    //TODO: For now, assume that a sequence is a genome.
+
+    unsigned long long num_top_labels = 4294967295;
+    const double discovery_fraction = 0.699999999999996;
+    const double presence_fraction = 0.0;
+    int read_length = read.length();
+    //int sequence_length = 44;
+    std::vector<int> candidate_coords;
+    std::vector<std::array<int, 2>> kmer_positions;
+    std::string current_genome{};
+
+    int step_size = read_length / 15;
+    step_size = (step_size == 0 ? 1 : step_size);
+
+    int k = get_graph().get_k();
+    for (int position = (int) read.size() - k; position > 0; position -= step_size) { // Error was here:
+        std::string_view current_kmer = read.substr(position, k);
+        //std::cout << current_kmer <<  ": is current kmer!" << std::endl;
+        if ((int) current_kmer.size() < k) {
+            //std::cout << "Break for KMER: " <<  current_kmer << std::endl;
+            break;
+        }
+
+        //std::cout << current_kmer << std::endl;
+        std::vector<std::tuple<Label, size_t, std::vector<SmallVector<uint64_t>>>> coordinates = this->get_kmer_coordinates(current_kmer, num_top_labels, discovery_fraction, presence_fraction);
+        //std::cout << "Coordinate size: "<< coordinates.size() << std::endl;
+        for (unsigned long coord_idx = 0; coord_idx < coordinates.size();coord_idx++) {
+            current_genome = std::get<0>(coordinates[coord_idx]);
+             if (current_genome != genome_name) {
+                 continue;
+             }
+            genome_hits_map[current_genome] = {};
+            auto coords_for_genome = std::get<2>(coordinates[coord_idx]);
+            auto coords_for_genome_size = coords_for_genome[0].size();
+            for (unsigned long current_coord_idx = 0; current_coord_idx < coords_for_genome_size; current_coord_idx++) {
+                ////std::cout << current_genome << std::endl;
+                //std::cout <<"CURRENT COORD: " << coords_for_genome[0][current_coord_idx] << std::endl;
+                ////std::cout << read_length << std::endl;
+                std::array<int,2>  target_and_position = {0, 0};
+                calculate_sequence_location_reverse(coords_for_genome[0][current_coord_idx],
+                                            sequence_lengths, target_and_position);
+                int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
+                int pantools_location = target_and_position[0];
+                int loc = pantools_location - position + 1; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
+
+                if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
+                    candidate_coords.push_back(loc);
+                    //std::cout << target_sequence + 1 << " - " << loc << std::endl;
+                    std::cout << "At (reversed) position: " << position << std::endl;
+                    //Todo: insert the map-call here.
+                    std::cout << "Calling old" << std::endl;
+                    kmer_positions.push_back({target_sequence + 1, -loc });
+                } else {
+                    //std::cout << "OUT OF BOUNDS!" << " - " << loc << std::endl;
+                }
+            }
+        }
+    }
+    //std::cout << candidate_coords.size() << std::endl;
+    std::vector<std::array<int, 3>> node_results;
+    for (int loc: candidate_coords) {
+        std::array<int, 3> result = {4, 1, loc};
+        node_results.push_back(result);
+        //std::cout << "Number of matches found: "<< kmer_positions.size() << std::endl;
+    }
+    genome_hits_map[current_genome] = kmer_positions;
+    return kmer_positions;
+}
 std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std::string_view& read, std::string_view& genome_name, std::vector<int>& sequence_lengths) {
     //TODO: Requires me to also give in sequence start and ends. This then will convert it totally to PanTools convertible input.
     //TODO: For now, assume that a sequence is a genome.
@@ -676,12 +829,15 @@ std::vector<std::array<int, 2>> AnnotatedDBG::read_mapping_pantools_reverse(std:
                                             sequence_lengths, target_and_position);
                 int target_sequence = target_and_position[1]; // TODO: Make it inline with pantools
                 int pantools_location = target_and_position[0];
+                std:: cout << "At (reversed) pantoolsposition: " << pantools_location << std::endl;
                 int loc = pantools_location - position +1; //TODO: THis is very basic. I need to read up on readmapping, and testing in C++. AND clean code
-
+                std::cout << "LOC is: " << loc << std::endl;
                 if (loc >= 0 && loc <= sequence_lengths[target_sequence] - read_length) {
                     candidate_coords.push_back(loc);
                     //std::cout << target_sequence + 1 << " - " << loc << std::endl;
                     std::cout << "At (reversed) position: " << position << std::endl;
+                    std::cout << "Current kmer is: " << current_kmer << std::endl;
+                    std::cout << "Location is: " << -loc << std::endl;
                     kmer_positions.push_back({target_sequence + 1, -loc });
                 } else {
                     //std::cout << "OUT OF BOUNDS!" << " - " << loc << std::endl;
@@ -730,7 +886,14 @@ void AnnotatedDBG::calculate_sequence_location_reverse(unsigned long coord, cons
     int k = get_graph().get_k();
     int target_sequence = -1;
     for (int i = 0; i < (int)sequence_lengths.size(); i++) {
-        int seq_length = sequence_lengths[i] - k + 1;
+        int seq_length{0};
+        if (i > 0) {
+            seq_length = sequence_lengths[i] - k + 1;
+        }
+        //int seq_length = sequence_lengths[i] - k + 1; // issue was here.
+        std::cout << "Seq lengths is in reverse: " << seq_length << std::endl;
+        std::cout << "Coord is: " << coord << std::endl;
+
         if ((int) coord >= current_length && (int) coord < current_length + seq_length) {
             target_sequence = i;
             break;
@@ -739,6 +902,8 @@ void AnnotatedDBG::calculate_sequence_location_reverse(unsigned long coord, cons
     }
 
     int pantools_location = coord - current_length;
+    std::cout << "Cur length is: " << current_length << std::endl;
+    std::cout << "In calc pantools 0 is: " << pantools_location << std::endl;
     position_and_location[0] = pantools_location;
     position_and_location[1] = target_sequence;
 }

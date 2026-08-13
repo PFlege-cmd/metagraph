@@ -26,7 +26,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_DBG_ALPHABET "DNA")
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
-
 if(NOT WIN32)
   string(ASCII 27 Esc)
   set(ColourReset "${Esc}[m")
@@ -299,10 +298,13 @@ include(ExternalProject)
 set(SDSL_INSTALL ${PROJECT_BINARY_DIR}/external-libraries/sdsl)
 ExternalProject_Add(SDSL
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/sdsl-lite
+        PATCH_COMMAND /bin/sh -c "grep -q '^// template<> struct is_arithmetic<sdsl::uint256_t>' ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/sdsl-lite/include/sdsl/uint256_t.hpp || sed -i '' '401,404s/^/\\/\\/ /' ${CMAKE_CURRENT_SOURCE_DIR}/external-libraries/sdsl-lite/include/sdsl/uint256_t.hpp"
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${SDSL_INSTALL}
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
         -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
 )
 
 message("POSITION INDEPENDENT CODE ON:")
@@ -652,6 +654,7 @@ add_executable(unit_tests ${unit_tests_files}
         tests/external/test_kmer_classifier.cpp
         tests/external/test_kmer_retriever.cpp
         tests/external/test_genomecoordinate.cpp
+        tests/external/test_pangenome_structure.cpp
         tests/cli/test_graph_glue.cpp
         tests/cli/test_graph_glue.h
         tests/cli/mock_annotated_dbg.cpp
@@ -691,6 +694,8 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         src/cli/DeBruijnGraphWrapper.h
         src/cli/GraphWrapper.cpp
         src/cli/GraphWrapper.hpp
+        "${PROJECT_SOURCE_DIR}/src/external/ReadMapper.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/ReadMapper.h"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifier.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifier.hpp"
         "${PROJECT_SOURCE_DIR}/src/external/KmerClassifierAdapter.cpp"
@@ -707,6 +712,8 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/MatrixEntryFactory.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinateFactory.h"
         "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinateFactory.cpp"
+        src/external/PangenomeStructureClassifier.h
+        src/external/KmerUtils.h
 )
 
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})

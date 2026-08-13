@@ -86,6 +86,25 @@ void KmerClassifier::fill_triangular_matrices(const genomes_and_frequencies& gen
         int inner_index = inner_genome_idx.first;
 
         int lowest  =  outer_genome_idx.second < inner_genome_idx.second?outer_genome_idx.second : inner_genome_idx.second;
+
+        if (lowest > 0) {
+            ++distinct_shared[outer_index][inner_index];
+        }
+
+        this->all_shared_matrix[outer_index][inner_index] += lowest;
+        //this->all_total_matrix[outer_index][inner_index] += highest;
+    });
+}
+
+void KmerClassifier::fill_triangular_matrices_parallel(const genomes_and_frequencies& genome_frequencies,
+                                              std::pair<int, int> outer_genome_idx,
+                                              std::vector<std::vector<int>>& distinct_shared,
+                                              std::vector<std::vector<int>>& all_shared_matrix) {
+    std::for_each(genome_frequencies.begin(), genome_frequencies.end(),[&](auto inner_genome_idx) {
+        int outer_index = outer_genome_idx.first;
+        int inner_index = inner_genome_idx.first;
+
+        int lowest  =  outer_genome_idx.second < inner_genome_idx.second?outer_genome_idx.second : inner_genome_idx.second;
         //int highest =  outer_genome_idx.second > inner_genome_idx.second?outer_genome_idx.second : inner_genome_idx.second;
 
         if (lowest > 0) {
@@ -93,28 +112,12 @@ void KmerClassifier::fill_triangular_matrices(const genomes_and_frequencies& gen
         }
         //++this->distinct_total[outer_index][inner_index];
 
-        this->all_shared_matrix[outer_index][inner_index] += lowest;
+        all_shared_matrix[outer_index][inner_index] += lowest;
         //this->all_total_matrix[outer_index][inner_index] += highest;
     });
 }
 
 int* KmerClassifier::flatten(const std::vector<std::vector<int>>& matrix) {
-    // std::vector<std::vector<const int>::iterator> all_shared_iter_start;
-    //
-    // all_shared_iter_start.resize(genome_number);
-    // int* flattened = new int[genome_number*genome_number];
-    //
-    // for (int i = 0; i < genome_number; i++) {
-    //     all_shared_iter_start[i] = matrix[i].begin();
-    // }
-    //
-    // for (int i = 0; i < genome_number; i++) {
-    //     for (int j = 0; j < genome_number; j++) {
-    //         std::cout  << *all_shared_iter_start[i] << ","  << std::endl;
-    //         flattened[i*genome_number + j] = *all_shared_iter_start[i];
-    //         ++all_shared_iter_start[i];
-    //     }
-    // }
 
     int* flattened = new int[genome_number*genome_number];
 
@@ -126,19 +129,56 @@ int* KmerClassifier::flatten(const std::vector<std::vector<int>>& matrix) {
     return flattened;
 }
 
+std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> KmerClassifier::initialize_core_kmers(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<node_index_kmer>& all_node_ids) {
+    std::vector<std::vector<int>> freqs{};
 
-//Note: this needs to call the num_genomes beforehand.
-// template <int genome_number>
-// std::array<int, genome_number> KmerClassifier::classify_kmer(node_index_kmer idx) {
-//     std::array<int, genome_number> kmer_counts(0);
-//     auto frequencies = this->get_kmer_frequencies(std::vector<node_index_kmer>(idx));
-//     for (size_t i = 0; i < frequencies.size(); i++) {
-//         auto genome_name =  std::get<0>(frequencies[i]);
-//         std::regex contig_del("contig");
-//         std::sregex_token_iterator it(genome_name.begin(), genome_name.end(), contig_del, -1);
-//         std::sregex_token_iterator end;
-//
-//         //int genome_number = std::get<0>(frequencies[i]).
-//     }
-//     return kmer_counts;
-// }
+    std::for_each(all_node_ids.begin(), all_node_ids.end(), [&](const auto& node_idx) {
+        auto counts_per_genomes{this->count_kmer_per_genome(node_idx)};
+        auto classified_kmers = this->(counts_per_genomes);
+
+        if (std::get<0>(classified_kmers) != KmerType::CORE) {
+            freqs.push_back(counts_per_genomes);
+        }
+
+        int reduced{std::reduce(counts_per_genomes.begin(), counts_per_genomes.end())};
+        KmerType kmer_type{std::get<0>(classified_kmers)};
+
+        std::cout << "case:  " <<  kmer_type << std::endl;
+        switch (std::get<0>(classified_kmers)) {
+            case KmerType::CORE: {
+                std::for_each(
+                    loop_collector.core_loops.begin(),
+                    loop_collector.core_loops.end(),
+                    [&](auto& core_kmer_freq_combs)
+                    {
+                    core_kmer_freq_combs[this->genome_number - 2] += reduced;
+                });
+                break;
+            }
+
+            case KmerType::ACCESSORY: {
+                std::for_each(
+                    loop_collector.accessory_loops.begin(),
+                    loop_collector.accessory_loops.end(),
+                    [&](auto& accessory_kmer_freq_combs)
+                    {
+                    accessory_kmer_freq_combs[this->genome_number - 2] += reduced;
+                 });
+                break;
+            }
+
+            case KmerType::UNIQUE: {
+                std::for_each(
+                    loop_collector.unique_loops.begin(),
+                    loop_collector.unique_loops.end(),
+                    [&](auto& unique_kmer_freq_combs)
+                    {
+                    unique_kmer_freq_combs[this->genome_number - 2] += reduced;
+                 });
+                break;
+            }
+        }
+    });
+    return std::make_pair(freqs, std::ref(loop_collector));
+};
+
