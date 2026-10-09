@@ -5,7 +5,6 @@
 #ifndef NATIVE_STRUCTS_H
 #define NATIVE_STRUCTS_H
 #include <iostream>
-#include <__ostream/basic_ostream.h>
 namespace NativeStructures {
     struct HitsPerSequence {
         int* hitsPerSequence{nullptr};
