@@ -115,7 +115,6 @@ PangenomeStructureClassifier::StructureCollector& PangenomeStructureClassifier::
         #pragma omp parallel
         {
             #pragma omp for schedule(static, 3)
-            {
                 for (int idx = 1; idx < static_cast<int>(cur_combinations.size()); idx++) {
                     // Innermost loop: Go through all frequencies, update the core-, accessory-, and unique entries for each loop-combination join
                     #pragma omp critical
@@ -125,7 +124,7 @@ PangenomeStructureClassifier::StructureCollector& PangenomeStructureClassifier::
                                                               growing_combinations);
                     }
                 }
-            }
+
         }
     }
     return collector;

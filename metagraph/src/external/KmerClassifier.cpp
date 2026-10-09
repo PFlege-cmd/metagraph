@@ -129,7 +129,7 @@ int* KmerClassifier::flatten(const std::vector<std::vector<int>>& matrix) {
     return flattened;
 }
 
-std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> KmerClassifier::initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<node_index_kmer>& all_node_ids) {
+std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> KmerClassifier::initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<long long unsigned int>& all_node_ids) {
     std::vector<std::vector<int>> freqs(all_node_ids.size(), std::vector<int>(genome_number, 0));
 
     // std::for_each(all_node_ids.begin(), all_node_ids.end(), [&](const auto& node_idx) {
