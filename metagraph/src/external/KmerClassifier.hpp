@@ -5,14 +5,12 @@
 #pragma once
 #include "PangenomeStructureAdapter.h"
 #include "PhenotypeClass.h"
-#include "../../../../../../../opt/homebrew/Cellar/boost/1.90.0_1/include/boost/locale/formatting.hpp"
 #include "cli/GraphWrapper.hpp"
 #include "external/KmerType.h"
 
 #include <regex>
 #include <utility>
 #include <vector>
-#include <omp.h>
 
 using node_index_kmer = GraphWrapper::node_index_kmer;
 using kmer_frequencies = GraphWrapper::kmer_frequencies;
