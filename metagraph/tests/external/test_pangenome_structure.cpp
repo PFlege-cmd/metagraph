@@ -1,3 +1,4 @@
+#include "../../src/external/CombinationUtils.h"
 #include "cli/DeBruijnGraphWrapper.h"
 #include "cli/graph_glue.hpp"
 #include "external/KmerClassifier.hpp"
@@ -10,6 +11,39 @@
 //
 // Created by Patrick Flege on 16/09/2026.
 //
+
+vector<vector<int>> create_five_genome_test_combinations() {
+    std::vector<int> combinations1 { 0, 1, 2, 3 };
+    std::vector<int> combinations2 { 0, 3, 2, 1 };
+    std::vector<int> combinations3 { 2, 1, 0, 3 };
+    std::vector<int> combinations4 { 3, 2, 1, 1 };
+    std::vector<int> combinations5 { 0, 1, 2, 3 };
+    vector<vector<int>> all_combinations { combinations1, combinations2, combinations3,
+                                           combinations4, combinations5 };
+    return all_combinations;
+}
+
+std::vector<std::vector<int>> create_test_frequencies_five_genomes(size_t frequencies) {
+    std::mt19937 random_engine { std::random_device {}() };
+    std::uniform_int_distribution<int> distribution { 0, 10 };
+
+    std::vector<std::vector<int>> freqs(frequencies, std::vector<int>(4, 0));
+
+    for (size_t i = 0; i < frequencies; i++) {
+        freqs[i][0] = distribution(random_engine);
+        freqs[i][1] = distribution(random_engine);
+        freqs[i][2] = distribution(random_engine);
+        freqs[i][3] = distribution(random_engine);
+        while (freqs[i][0] == freqs[i][1] == freqs[i][2] == freqs[i][3] == 0) {
+            // std::cout << "ZERO FREQUENCY! Update with unitary!" << std::endl;
+            freqs[i][0] = 1;
+            freqs[i][1] = 1;
+            freqs[i][2] = 1;
+            freqs[i][3] = 1;
+        }
+    }
+    return freqs;
+}
 
 typedef PangenomeStructureAdapter::PangenomeStructureCollector kmerCollector;
 TEST(testPangenomeStructure, testIntegration) {
@@ -39,18 +73,34 @@ TEST(testPangenomeStructure, testIntegration) {
     collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, -1));
     collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, -1));
 
-    auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_core_kmers(collector, all_nodes)};
+    auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
 
     std::vector<std::vector<int>> accessory_unique_kmers{accessory_unique_kmers_and_collector.first};
     constexpr int unique_kmers = 64;
-    constexpr int accessory_kmers = 247;
-    constexpr int core_kmers = 89282;
+    constexpr int accessory_kmers = 405;
+    constexpr int core_kmers = 29700;
 
     for (size_t i = 0; i < static_cast<size_t> (loops); i++) {
         ASSERT_EQ(accessory_unique_kmers_and_collector.second.core_loops[i][num_genomes - 2], core_kmers);
         ASSERT_EQ(accessory_unique_kmers_and_collector.second.accessory_loops[i][num_genomes - 2], accessory_kmers);
         ASSERT_EQ(accessory_unique_kmers_and_collector.second.unique_loops[i][num_genomes - 2], unique_kmers);
     }
+    PangenomeStructureClassifier pangenome_classifier{graph_wrapper, num_genomes, loops};
+
+    std::vector<std::vector<int>> combinations{pangenome_classifier.generate_genome_combinations_for_loop()};
+
+    ASSERT_EQ(combinations.size(), loops);
+
+    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, accessory_unique_kmers_and_collector.first, combinations);
+
+    for (int loop = 0; loop < loops; loop++) {
+        ASSERT_GT(std::reduce(collector.accessory_loops[loop].begin(), collector.accessory_loops[loop].end()), 0);
+    }
+
+    auto kmerMatrix{*PangenomeStructureAdapter::export_matrix(collector)};
+    ASSERT_NE(kmerMatrix.core, nullptr);
+    ASSERT_NE(kmerMatrix.accessory, nullptr);
+    ASSERT_NE(kmerMatrix.unique, nullptr);
 }
 
 TEST(testPangenomeStructure, testGenerateRandomCombinations) {
@@ -68,7 +118,7 @@ TEST(testPangenomeStructure, testGenerateRandomCombinations) {
         distributions[i] = std::uniform_int_distribution<int>{0, static_cast<int>(i)};
     }
 
-    auto genome_combinations{pangenome_classifier.generate_genome_combinations(random_engine, distributions)};
+    auto genome_combinations{CombinationUtils::generate_combinations(random_engine, distributions, number_genomes)};
     for (size_t i = 0; i < genome_combinations.size(); i++) {
         for (size_t j = 0; j < genome_combinations.size() && i != j; j++) {
             ASSERT_NE(genome_combinations[j], genome_combinations[i]);
@@ -101,7 +151,117 @@ TEST(testPangenomeStructure, testClassifyKmersForLimitedGenomes) {
 
     std::vector<int> genome_idx{1, 2, 3};
 
-    std::vector<int> kmer_frequencies_accessory{2, 0, 2, 3};
-    std::vector<int> kmer_frequencies_core{0, 1, 2, 3};
-    auto kmer_classified{KmerUtils::classify_selected_kmers(kmer_frequencies_accessory, genome_idx)};
+    std::vector<int> kmer_frequencies_accessory{2, 0, 2, 10};
+    std::vector<int> kmer_frequencies_core{0, 14, 2, 11};
+    auto accessory_kmer_classified{KmerUtils::classify_selected_kmers(kmer_frequencies_accessory, genome_idx)};
+    auto core_kmer_classified{KmerUtils::classify_selected_kmers(kmer_frequencies_core, genome_idx)};
+
+    ASSERT_EQ(std::get<0>(accessory_kmer_classified), KmerType::ACCESSORY);
+    ASSERT_EQ(std::get<0>(core_kmer_classified), KmerType::CORE);
+
+    auto accessory_pair_vector{std::get<1>(accessory_kmer_classified)};
+    auto core_pair_vector{std::get<1>(core_kmer_classified)};
+
+    ASSERT_EQ(accessory_pair_vector[0].first, 2);
+    ASSERT_EQ(accessory_pair_vector[0].second, 2);
+
+    ASSERT_EQ(accessory_pair_vector[1].first, 3);
+    ASSERT_EQ(accessory_pair_vector[1].second, 10);
+
+    ASSERT_EQ(core_pair_vector[0].first, 1);
+    ASSERT_EQ(core_pair_vector[0].second, 14);
+}
+
+struct FrequencyExpectation {
+    KmerType expected_kmer;
+    std::vector<int> genome_idxs;
+    std::vector<int> kmer_frequencies;
+};
+
+class KmerFrequencyClassifyTest : public testing::TestWithParam<FrequencyExpectation> {};
+
+TEST_P(KmerFrequencyClassifyTest, testClassifyKmersForLoops) {
+    const FrequencyExpectation& expectation = GetParam();
+    auto kmer_classified = KmerUtils::classify_selected_kmers(expectation.kmer_frequencies, expectation.genome_idxs);
+    ASSERT_EQ(expectation.expected_kmer, std::get<0>(kmer_classified));
+}
+
+INSTANTIATE_TEST_SUITE_P(testClassifyKmersForLoops, KmerFrequencyClassifyTest, testing::Values(
+    FrequencyExpectation{
+        KmerType::ACCESSORY,
+        {1, 2, 3},
+        {0, 14, 0, 11},
+    },
+    FrequencyExpectation{
+        KmerType::CORE,
+        {1, 2, 3},
+        {0, 14, 2, 11},
+    },
+    FrequencyExpectation{
+        KmerType::UNIQUE,
+        {1, 2, 3},
+        {1, 0, 0, 1},
+    },
+    FrequencyExpectation{
+        KmerType::NOT_PRESENT,
+        {1, 2, 3},
+        {1, 0, 0, 0},
+    }
+));
+TEST(testPangenomeStructure, testIterativelyCreatesLargerGenomeCombinations) {
+
+}
+
+TEST(testPangenomeStructure, testClassifyKmersForLoops) {
+
+    int loops{5};
+    int number_genomes{4};
+    AnnotatedDBG* graph = nullptr;
+    MockGraphWrapper wrapper = MockGraphWrapper(*graph);
+
+    size_t frequencies{10000000};
+    std::vector<std::vector<int>> freqs = create_test_frequencies_five_genomes(frequencies);
+    vector<vector<int>> all_combinations = create_five_genome_test_combinations();
+
+    std::vector<std::vector<int>> core_collection(5, std::vector<int>(3, 0));
+    std::vector<std::vector<int>> accessory_collection(5, std::vector<int>(3, 0));
+    std::vector<std::vector<int>> unique_collection(5, std::vector<int>(3, 0));
+    PangenomeStructureAdapter::PangenomeStructureCollector collector{core_collection, accessory_collection, unique_collection};
+    PangenomeStructureClassifier pangenome_classifier{wrapper, number_genomes, loops};
+
+    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, freqs, all_combinations);
+
+    for (int loop = 0; loop < loops; loop++) {
+        ASSERT_GT(std::reduce(collector.accessory_loops[loop].begin(), collector.accessory_loops[loop].end()), 0);
+    }
+}
+
+TEST(testPangenomeStructure, testExportStructureMatrix) {
+    size_t frequencies{100000};
+    std::vector<std::vector<int>> freqs = create_test_frequencies_five_genomes(frequencies);
+    vector<vector<int>> all_combinations = create_five_genome_test_combinations();
+
+    int num_genomes{5};
+    int num_loops{5};
+    int combinations{num_genomes - 1};
+
+    std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<int> distribution(0, 1000);
+
+    std::vector<std::vector<int>> core_collection(num_loops, std::vector<int>(num_genomes, distribution(gen)));
+    std::vector<std::vector<int>> accessory_collection(num_loops, std::vector<int>(num_genomes, distribution(gen)));
+    std::vector<std::vector<int>> unique_collection(num_loops, std::vector<int>(num_genomes, distribution(gen)));
+
+    PangenomeStructureAdapter::PangenomeStructureCollector collector{core_collection, accessory_collection, unique_collection};
+    auto kmer_matrix{*PangenomeStructureAdapter::export_matrix(collector)};
+    for (int loop = 0; loop < num_loops; loop++) {
+        for (int com_idx = 0; com_idx < combinations; com_idx++) {
+            ASSERT_NE(kmer_matrix.core, nullptr);
+            ASSERT_NE(kmer_matrix.accessory, nullptr);
+            ASSERT_NE(kmer_matrix.unique, nullptr);
+            ASSERT_EQ(kmer_matrix.core[combinations*loop + com_idx], core_collection[loop][com_idx]);
+            ASSERT_EQ(kmer_matrix.accessory[combinations*loop + com_idx], accessory_collection[loop][com_idx]);
+            ASSERT_EQ(kmer_matrix.unique[combinations*loop + com_idx], unique_collection[loop][com_idx]);
+        }
+    }
 }

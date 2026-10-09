@@ -8,7 +8,7 @@
 
 
 enum class KmerType {
-   CORE = 1, ACCESSORY = 2, UNIQUE = 3
+   CORE = 1, ACCESSORY = 2, UNIQUE = 3, NOT_PRESENT = -1
 };
 
 inline std::ostream& operator<<(std::ostream& os, const KmerType& kmer_type) {
@@ -22,6 +22,8 @@ inline std::ostream& operator<<(std::ostream& os, const KmerType& kmer_type) {
         case KmerType::UNIQUE:
             os << "UNIQUE" << std::endl;
             break;
+        case KmerType::NOT_PRESENT:
+            os << "NOT_PRESENT" << std::endl;
     }
     return os;
 };

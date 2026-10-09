@@ -4,11 +4,15 @@
 
 #ifndef METAGRAPH_PANGENOMESTRUCTURECLASSIFIER_H
 #define METAGRAPH_PANGENOMESTRUCTURECLASSIFIER_H
+#include "PangenomeStructureAdapter.h"
 #include "cli/GraphWrapper.hpp"
 
 
 class PangenomeStructureClassifier {
+    //TODO: Make frequencies union-type, and part of the PangenomeCollector. Flatten std::vector<std::vector<int>> to std::vector<int>
     public:
+    typedef PangenomeStructureAdapter::PangenomeStructureCollector StructureCollector;
+
         PangenomeStructureClassifier(GraphWrapper &graph_wrapper, int number_of_genomes, int loops)
     : m_graph_wrapper_(graph_wrapper),
     m_number_of_genomes(number_of_genomes),
@@ -32,7 +36,29 @@ std::vector<int> generate_genome_combinations(std::mt19937 &generator, std::vect
      *
      * @return vector of 'loop'-pseudorandom combinations of genome-ids.
      */
-std::vector<std::vector<int>> generate_genome_combinations_for_loop();
+std::vector<std::vector<int>> generate_genome_combinations_for_loop() const;
+
+
+    /**
+     * @brief For a given loop-iteration and genome (index) combination, calculate the core-, accessory- and unique-kmers of the collector.
+     * @param collector Collector for distinct-kmer frequency-categories and size of (sub)-pangenome.
+     * @param frequencies Integer-array of total number of kmer-frequencies per genome
+     * @param loop Current loop-iteration
+     * @param growing_combinations current subset of powerset of all possible combinations.
+     */
+void integrate_frequencies_for_combination(StructureCollector& collector,
+                                           std::vector<std::vector<int>>& frequencies,
+                                           int loop,
+                                           const std::vector<int>& growing_combinations) const;
+
+/**@brief Loops through a set of random combinations of genome-ids of the pangenome, iteratively classifying it.
+ *
+ * @param collector Collector for core-, accessory-, and unique kmers
+ * @param frequencies Kmer-frequencies
+ * @param combinations Combinations of genome-ids.
+ * @return Updated collector.
+ */
+PangenomeStructureAdapter::PangenomeStructureCollector& loop_for_increasing_pangenome_size(StructureCollector& collector, std::vector<std::vector<int>> &frequencies, std::vector<std::vector<int>>& combinations) const;
 
     private:
         GraphWrapper &m_graph_wrapper_;

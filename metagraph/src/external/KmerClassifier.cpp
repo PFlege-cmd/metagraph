@@ -129,56 +129,161 @@ int* KmerClassifier::flatten(const std::vector<std::vector<int>>& matrix) {
     return flattened;
 }
 
-std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> KmerClassifier::initialize_core_kmers(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<node_index_kmer>& all_node_ids) {
-    std::vector<std::vector<int>> freqs{};
+std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> KmerClassifier::initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<node_index_kmer>& all_node_ids) {
+    std::vector<std::vector<int>> freqs(all_node_ids.size(), std::vector<int>(genome_number, 0));
 
-    std::for_each(all_node_ids.begin(), all_node_ids.end(), [&](const auto& node_idx) {
-        auto counts_per_genomes{this->count_kmer_per_genome(node_idx)};
-        auto classified_kmers = this->(counts_per_genomes);
+    // std::for_each(all_node_ids.begin(), all_node_ids.end(), [&](const auto& node_idx) {
+    //     auto counts_per_genomes{this->count_kmer_per_genome(node_idx)};
+    //     auto classified_kmers = this->classify_kmers(counts_per_genomes);
+    //
+    //     int reduced{std::reduce(counts_per_genomes.begin(), counts_per_genomes.end())};
+    //
+    //     if (reduced > 0) {
+    //         freqs.push_back(counts_per_genomes);
+    //     }
+    //     //std::cout << "case:  " <<  kmer_type << std::endl;
+    //     switch (std::get<0>(classified_kmers)) {
+    //         case KmerType::CORE: {
+    //             std::for_each(
+    //                 loop_collector.core_loops.begin(),
+    //                 loop_collector.core_loops.end(),
+    //                 [&](auto& core_kmer_freq_combs)
+    //                 {
+    //                 core_kmer_freq_combs[this->genome_number - 2] += 1;
+    //             });
+    //             break;
+    //         }
+    //
+    //         case KmerType::ACCESSORY: {
+    //             std::for_each(
+    //                 loop_collector.accessory_loops.begin(),
+    //                 loop_collector.accessory_loops.end(),
+    //                 [&](auto& accessory_kmer_freq_combs)
+    //                 {
+    //                 accessory_kmer_freq_combs[this->genome_number - 2] += 1;
+    //              });
+    //             break;
+    //         }
+    //
+    //         case KmerType::UNIQUE: {
+    //             std::for_each(
+    //                 loop_collector.unique_loops.begin(),
+    //                 loop_collector.unique_loops.end(),
+    //                 [&](auto& unique_kmer_freq_combs)
+    //                 {
+    //                 unique_kmer_freq_combs[this->genome_number - 2] += 1;
+    //              });
+    //             break;
+    //         }
+    //         case KmerType::NOT_PRESENT: {
+    //             break;
+    //         }
+    //     }
+    // });
 
-        if (std::get<0>(classified_kmers) != KmerType::CORE) {
-            freqs.push_back(counts_per_genomes);
+    #pragma omp parallel
+    {
+        #pragma omp for schedule(static, 3)
+        for (node_index_kmer node_idx = 0; node_idx < all_node_ids.size(); node_idx++) {
+            auto counts_per_genomes{this->count_kmer_per_genome(all_node_ids[node_idx])};
+            auto classified_kmers = this->classify_kmers(counts_per_genomes);
+
+            //int reduced{std::reduce(counts_per_genomes.begin(), counts_per_genomes.end())};
+
+            //if (reduced > 0) {
+            #pragma omp critical
+            {
+            freqs[node_idx] = counts_per_genomes;
+            //}
+            switch (std::get<0>(classified_kmers)) {
+                case KmerType::CORE: {
+                    std::for_each(
+                        loop_collector.core_loops.begin(),
+                        loop_collector.core_loops.end(),
+                        [&](auto& core_kmer_freq_combs)
+                        {
+                        core_kmer_freq_combs[this->genome_number - 2] += 1;
+                    });
+                    break;
+                }
+
+                case KmerType::ACCESSORY: {
+                    std::for_each(
+                        loop_collector.accessory_loops.begin(),
+                        loop_collector.accessory_loops.end(),
+                        [&](auto& accessory_kmer_freq_combs)
+                        {
+                        accessory_kmer_freq_combs[this->genome_number - 2] += 1;
+                     });
+                    break;
+                }
+
+                case KmerType::UNIQUE: {
+                    std::for_each(
+                        loop_collector.unique_loops.begin(),
+                        loop_collector.unique_loops.end(),
+                        [&](auto& unique_kmer_freq_combs)
+                        {
+                        unique_kmer_freq_combs[this->genome_number - 2] += 1;
+                     });
+                    break;
+                }
+                case KmerType::NOT_PRESENT: {
+                    break;
+                }
+            }
+            }
+
         }
+    }
 
-        int reduced{std::reduce(counts_per_genomes.begin(), counts_per_genomes.end())};
-        KmerType kmer_type{std::get<0>(classified_kmers)};
-
-        std::cout << "case:  " <<  kmer_type << std::endl;
-        switch (std::get<0>(classified_kmers)) {
-            case KmerType::CORE: {
-                std::for_each(
-                    loop_collector.core_loops.begin(),
-                    loop_collector.core_loops.end(),
-                    [&](auto& core_kmer_freq_combs)
-                    {
-                    core_kmer_freq_combs[this->genome_number - 2] += reduced;
-                });
-                break;
-            }
-
-            case KmerType::ACCESSORY: {
-                std::for_each(
-                    loop_collector.accessory_loops.begin(),
-                    loop_collector.accessory_loops.end(),
-                    [&](auto& accessory_kmer_freq_combs)
-                    {
-                    accessory_kmer_freq_combs[this->genome_number - 2] += reduced;
-                 });
-                break;
-            }
-
-            case KmerType::UNIQUE: {
-                std::for_each(
-                    loop_collector.unique_loops.begin(),
-                    loop_collector.unique_loops.end(),
-                    [&](auto& unique_kmer_freq_combs)
-                    {
-                    unique_kmer_freq_combs[this->genome_number - 2] += reduced;
-                 });
-                break;
-            }
-        }
-    });
+    //     auto counts_per_genomes{this->count_kmer_per_genome(node_idx)};
+    //     auto classified_kmers = this->classify_kmers(counts_per_genomes);
+    //
+    //     int reduced{std::reduce(counts_per_genomes.begin(), counts_per_genomes.end())};
+    //
+    //     if (reduced > 0) {
+    //         freqs.push_back(counts_per_genomes);
+    //     }
+    //     //std::cout << "case:  " <<  kmer_type << std::endl;
+    //     switch (std::get<0>(classified_kmers)) {
+    //         case KmerType::CORE: {
+    //             std::for_each(
+    //                 loop_collector.core_loops.begin(),
+    //                 loop_collector.core_loops.end(),
+    //                 [&](auto& core_kmer_freq_combs)
+    //                 {
+    //                 core_kmer_freq_combs[this->genome_number - 2] += 1;
+    //             });
+    //             break;
+    //         }
+    //
+    //         case KmerType::ACCESSORY: {
+    //             std::for_each(
+    //                 loop_collector.accessory_loops.begin(),
+    //                 loop_collector.accessory_loops.end(),
+    //                 [&](auto& accessory_kmer_freq_combs)
+    //                 {
+    //                 accessory_kmer_freq_combs[this->genome_number - 2] += 1;
+    //              });
+    //             break;
+    //         }
+    //
+    //         case KmerType::UNIQUE: {
+    //             std::for_each(
+    //                 loop_collector.unique_loops.begin(),
+    //                 loop_collector.unique_loops.end(),
+    //                 [&](auto& unique_kmer_freq_combs)
+    //                 {
+    //                 unique_kmer_freq_combs[this->genome_number - 2] += 1;
+    //              });
+    //             break;
+    //         }
+    //         case KmerType::NOT_PRESENT: {
+    //             break;
+    //         }
+    //     }
+    // };
     return std::make_pair(freqs, std::ref(loop_collector));
 };
 

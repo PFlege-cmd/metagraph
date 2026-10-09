@@ -63,9 +63,23 @@ namespace NativeStructures {
         long * unique{};
 
         ~PangenomeStructureKmerMatrix() {
+            std::cout << "~PangenomeStructureKmerMatrix destructor" << std::endl;
             delete[] core;
             delete[] accessory;
             delete[] unique;
+        }
+
+        PangenomeStructureKmerMatrix(long* core, long* accessory, long* unique) {
+            this->core = core;
+            this->accessory = accessory;
+            this->unique = unique;
+        }
+
+        PangenomeStructureKmerMatrix(const PangenomeStructureKmerMatrix& other) {
+            std::cout << "PangenomeStructureKmerMatrix copy constructor" << std::endl;
+            core = other.core;
+            accessory = other.accessory;
+            unique = other.unique;
         }
     };
 

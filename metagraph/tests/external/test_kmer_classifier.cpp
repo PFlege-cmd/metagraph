@@ -639,7 +639,7 @@ TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {
 
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx1_vec)).WillOnce(testing::Return(frequencies[0]));
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx2_vec)).WillOnce(testing::Return(frequencies[1]));
-    std::pair<vector<std::vector<int>>, kmerCollector> acc_core_frequencies_and_collector{ kmer_classifier.initialize_core_kmers(collector, all_node_ids)};
+    std::pair<vector<std::vector<int>>, kmerCollector> acc_core_frequencies_and_collector{ kmer_classifier.initialize_kmer_frequencies(collector, all_node_ids)};
 
     ASSERT_EQ(acc_core_frequencies_and_collector.first.size(), 1);
 

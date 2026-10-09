@@ -23,28 +23,33 @@ typedef std::vector<std::pair<int, int>> genomes_and_frequencies;
      * @param genome_indices    Indices of genomes for which we wish to classify genomes.
      * @return
      */
-    static std::tuple<KmerType, genomes_and_frequencies> classify_selected_kmers(std::vector<int> kmer_counts, std::vector<int> genome_indices) {
+    static std::tuple<KmerType, genomes_and_frequencies> classify_selected_kmers(const std::vector<int>& kmer_counts, const std::vector<int>& genome_indices) {
         KmerType type;
-        auto number_of_occuring_genomes{2};
+        auto number_of_occuring_genomes{0};
         genomes_and_frequencies genome_frequencies({});
-        for (size_t i = 0; i < kmer_counts.size(); i++) {
-            if (kmer_counts[i] > 0){
+        int unique_threshold{1};
+        int core_threshold{static_cast<int>(genome_indices.size())};
+
+        for (int g_idx: genome_indices) {
+            if (kmer_counts[g_idx] > 0 ) {
                 number_of_occuring_genomes++;
-                auto occurrence_pair = std::make_pair(i, kmer_counts[i]);
+                auto occurrence_pair = std::make_pair(g_idx, kmer_counts[g_idx]);
                 genome_frequencies.push_back(occurrence_pair);
             }
         }
 
-        if (number_of_occuring_genomes == this->unique_threshold) {
+        if (number_of_occuring_genomes == unique_threshold) {
             //std::cout << "Working" << std::endl;
             type = KmerType::UNIQUE;
         }
-        else if (number_of_occuring_genomes == this->core_threshold) {
+        else if (number_of_occuring_genomes == core_threshold) {
             //std::cout << "Not unique" << std::endl;
             type = KmerType::CORE;
         }
-        else {
+        else  if (number_of_occuring_genomes > 0) {
             type = KmerType::ACCESSORY;
+        } else {
+            type = KmerType::NOT_PRESENT;
         }
 
         return std::tuple<KmerType, genomes_and_frequencies>(type, genome_frequencies);

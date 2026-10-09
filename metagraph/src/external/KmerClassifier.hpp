@@ -59,7 +59,7 @@ public:
 
     /**
      *@brief Does the first run of the pangenome-structure flow, filling in also the
-     * vector with non-core indices, as only those need to be considered later.
+     * vector with indices, updating the occurrences of kmers already in the loop-collector for the case of n genomes.
      *
      *
      * @param loop_collector Main object of flow, carries vectors of vectors, which have structure:
@@ -67,7 +67,7 @@ public:
      * @param all_node_ids Vector of all node-ids.
      * @returns tuple of vector of kmer-frequencies of non-core kmers, loop-collector object.
      */
-    std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> initialize_core_kmers(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<node_index_kmer>& all_node_ids);
+    std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<node_index_kmer>& all_node_ids);
 
 
 
@@ -191,7 +191,11 @@ public:
             freq_equal_indices,
             not_zero_indices); // Default: case phenotype exclusive
     }
-classify_kmers
+    /**
+     * @brief Classifies kmers into core, accessory or unique, depending on their occurrences.
+     * @param kmer_counts vector containing kmers-frequencies for each genome.
+     * @return tuple of kmertype, and pair of genome_idx and associated frequencies.
+     */
     std::tuple<KmerType, genomes_and_frequencies> classify_kmers(std::vector<int> kmer_counts) {
         KmerType type;
         genomes_and_frequencies genome_frequencies({});

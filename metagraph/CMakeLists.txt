@@ -712,8 +712,12 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/MatrixEntryFactory.cpp"
         "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinateFactory.h"
         "${PROJECT_SOURCE_DIR}/src/external/GenomeCoordinateFactory.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/PangenomeStructureAdapter.cpp"
+        "${PROJECT_SOURCE_DIR}/src/external/PangenomeStructureAdapter.h"
+        "${PROJECT_SOURCE_DIR}/src/external/native_structs.h"
         src/external/PangenomeStructureClassifier.h
         src/external/KmerUtils.h
+        src/external/CombinationUtils.h
 )
 
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})

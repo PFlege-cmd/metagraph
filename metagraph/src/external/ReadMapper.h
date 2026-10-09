@@ -5,7 +5,7 @@
 #ifndef READMAPPER_H
 #define READMAPPER_H
 
-#include "../../tests/external/native_structs.h"
+#include "native_structs.h"
 
 
 #include <map>

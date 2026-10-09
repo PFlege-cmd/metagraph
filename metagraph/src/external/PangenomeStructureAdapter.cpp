@@ -4,6 +4,8 @@
 
 #include "PangenomeStructureAdapter.h"
 
+#include "KmerClassifier.hpp"
+#include "PangenomeStructureClassifier.h"
 #include "cli/DeBruijnGraphWrapper.h"
 #include "cli/GraphWrapper.hpp"
 #include "cli/graph_glue.hpp"
@@ -13,7 +15,7 @@ namespace NativeStructures {
 struct PangenomeStructureKmerMatrix;
 }
 extern "C" {
-
+typedef PangenomeStructureAdapter::PangenomeStructureCollector kmerCollector;
 /**
  * @brief Calculates kmer-based pangenome structure.
  *
@@ -27,27 +29,43 @@ extern "C" {
  * @param loops number of times to loop over different random combinations of genomes
  * @return PangenomeStructureKmerMatrix for core-, accessory-, and unique kmers.
  */
-NativeStructures::PangenomeStructureKmerMatrix* calculate_pangenome_stucture(char * database_path, int loops) {
-        std::string data_path = std::string(database_path);
-        graph_glue glue = graph_glue(0, NULL);
+NativeStructures::PangenomeStructureKmerMatrix* calculate_pangenome_structure(char * database_path, int loops) {
+    std::string data_path = std::string(database_path);
+    graph_glue glue = graph_glue(0, NULL);
 
-        static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
-        DeBruijnGraphWrapper graph_wrapper{*graph};
-        int num_genomes{graph_wrapper.get_num_genomes()};
-        std::cout << "num_genomes = " << num_genomes << std::endl;
-        std::vector genome_labels{graph_wrapper.get_genome_labels()};
-        unsigned long long number_nodes_primary_graph{graph_wrapper.get_number_nodes()/2 + 1};
-        std::cout << "number_nodes_primary_graph = " << number_nodes_primary_graph << std::endl;
+    static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
+    DeBruijnGraphWrapper graph_wrapper{*graph};
+    int num_genomes{graph_wrapper.get_num_genomes()};
+    std::cout << "num_genomes = " << num_genomes << std::endl;
+    std::vector genome_labels{graph_wrapper.get_genome_labels()};
+    unsigned long long number_nodes_primary_graph{graph_wrapper.get_number_nodes()/2 + 1};
+    std::cout << "number_nodes_primary_graph = " << number_nodes_primary_graph << std::endl;
 
-        std::vector<long long> all_nodes(graph_wrapper.get_number_nodes()/2);
-        std::vector<long long> accessory_or_unique_node_ids{};
-        std::iota(all_nodes.begin(), all_nodes.end(), 1);
+    std::vector<unsigned long long> all_nodes(graph_wrapper.get_number_nodes()/2);
+    std::vector<long long> accessory_or_unique_node_ids{};
+    std::iota(all_nodes.begin(), all_nodes.end(), 1);
 
-        for_each(all_nodes.begin(), all_nodes.end(), [&](long long node_id) {
-            std::cout << "node_id: " << node_id << std::endl;
-        });
 
-        std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, -1));
-    return nullptr;
+
+    int core_threshold{num_genomes};
+    int unique_threshold{1};
+    KmerClassifier kmer_classifier{graph_wrapper, core_threshold, unique_threshold, num_genomes};
+
+    kmerCollector collector;
+    collector.core_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, 0));
+    collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, 0));
+    collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, 0));
+
+    auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
+
+    std::vector<std::vector<int>> accessory_unique_kmers{accessory_unique_kmers_and_collector.first};
+
+    PangenomeStructureClassifier pangenome_classifier{graph_wrapper, num_genomes, loops};
+
+    std::vector<std::vector<int>> combinations{pangenome_classifier.generate_genome_combinations_for_loop()};
+    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, accessory_unique_kmers_and_collector.first, combinations);
+
+    auto kmerMatrix{PangenomeStructureAdapter::export_matrix(collector)};
+    return kmerMatrix;
     }
 }
