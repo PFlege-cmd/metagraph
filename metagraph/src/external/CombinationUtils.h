@@ -33,9 +33,12 @@ inline std::vector<int> generate_combinations(std::mt19937 &generator, std::vect
         id_combinations.push_back(next_number);
 
         std::vector<int> updated_idxs{};
-        std::remove_copy_if(ids.begin(), ids.end(), std::back_inserter(updated_idxs), [next_number](int idx) {
-            return idx == next_number;
+        std::copy_if(ids.begin(), ids.end(), std::back_inserter(updated_idxs), [next_number](int idx) {
+            return idx != next_number;
         });
+        // std::remove_copy_if(ids.begin(), ids.end(), std::back_inserter(updated_idxs), [next_number](int idx) {
+        //     return idx == next_number;
+        // });
         ids = updated_idxs;
     }
 
