@@ -549,7 +549,7 @@ TEST(IntegrationTest, realTest) {
         kmerClassifier.set_num_genomes(genome_number);
         //kmerClassifier.set_kmer_map(kmer_map);
         //auto node_n = graph->get_graph().num_nodes()/2;
-        std::vector<unsigned long long> vi{100, 101,102, 103, 104};
+        std::vector<node_index_kmer> vi{100, 101,102, 103, 104};
         //std::iota(vi.begin(), vi.end(), 1);
         auto fkmers = kmerClassifier.get_kmer_frequencies(vi);
         //kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
