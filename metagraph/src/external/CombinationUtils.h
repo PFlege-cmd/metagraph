@@ -7,6 +7,7 @@
 #include <numeric>
 #include <random>
 #include <vector>
+#include <algorithm>
 
 namespace CombinationUtils {
 
@@ -21,11 +22,12 @@ namespace CombinationUtils {
 inline std::vector<int> generate_combinations(std::mt19937 &generator, std::vector<std::uniform_int_distribution<int>> &distributions, int max_number) {
 
     std::vector<int> ids(max_number, 0);
-    std::iota(ids.begin(), ids.end(), 0);
+    std::iota(ids.begin(), ids.end(), 0); // IDs to draw from in uniform distribution
 
     std::vector<int> id_combinations{};
+    // Updates a set of ID-values (to be taken from successively smaller distributions
     for (int i = max_number - 1; i >= 1; i--) {
-        int next_idx{distributions[i](generator)};
+        int next_idx{distributions[i](generator)}; // next index from distributions.
 
         int next_number{ids[next_idx]};
         id_combinations.push_back(next_number);
