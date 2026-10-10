@@ -631,9 +631,9 @@ TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {
     std::vector<int> v=std::vector<int>(4, 5);
 
     kmerCollector collector;
-    collector.core_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, -1));
-    collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, -1));
-    collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, -1));
+    collector.core_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, 0));
+    collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, 0));
+    collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, 0));
 
     std::vector<node_index> all_node_ids{idx1, idx2};
 
@@ -641,11 +641,11 @@ TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx2_vec)).WillOnce(testing::Return(frequencies[1]));
     std::pair<vector<std::vector<int>>, kmerCollector> acc_core_frequencies_and_collector{ kmer_classifier.initialize_kmer_frequencies(collector, all_node_ids)};
 
-    ASSERT_EQ(acc_core_frequencies_and_collector.first.size(), 1);
+    ASSERT_EQ(acc_core_frequencies_and_collector.first.size(), 2);
 
     for (size_t i = 0; i < static_cast<size_t> (loops); i++) {
-        ASSERT_EQ(acc_core_frequencies_and_collector.second.core_loops[i][genome_number - 2], 17);
-        ASSERT_EQ(acc_core_frequencies_and_collector.second.accessory_loops[i][genome_number - 2], 12);
+        ASSERT_EQ(acc_core_frequencies_and_collector.second.core_loops[i][genome_number - 2], 1);
+        ASSERT_EQ(acc_core_frequencies_and_collector.second.accessory_loops[i][genome_number - 2], 1);
     }
 
     std::vector<int> expected_freq_non_core{3, 4, 0, 5};

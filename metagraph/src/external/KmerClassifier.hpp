@@ -65,7 +65,7 @@ public:
      * @param all_node_ids Vector of all node-ids.
      * @returns tuple of vector of kmer-frequencies of non-core kmers, loop-collector object.
      */
-    std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<long long unsigned int>& all_node_ids);
+    std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<unsigned long long>& all_node_ids);
 
 
 

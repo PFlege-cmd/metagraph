@@ -34,7 +34,7 @@ std::vector<std::vector<int>> create_test_frequencies_five_genomes(size_t freque
         freqs[i][1] = distribution(random_engine);
         freqs[i][2] = distribution(random_engine);
         freqs[i][3] = distribution(random_engine);
-        while (freqs[i][0] == freqs[i][1] == freqs[i][2] == freqs[i][3] == 0) {
+        while (freqs[i][0] == (freqs[i][1] == (freqs[i][2] == (freqs[i][3] == 0)))) {
             // std::cout << "ZERO FREQUENCY! Update with unitary!" << std::endl;
             freqs[i][0] = 1;
             freqs[i][1] = 1;
