@@ -635,7 +635,7 @@ TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {
     collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, 0));
     collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(genome_number - 1, 0));
 
-    std::vector<node_index> all_node_ids{idx1, idx2};
+    const std::vector<unsigned long long> all_node_ids{idx1, idx2};
 
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx1_vec)).WillOnce(testing::Return(frequencies[0]));
     EXPECT_CALL(wrapper, get_kmer_frequencies(idx2_vec)).WillOnce(testing::Return(frequencies[1]));
