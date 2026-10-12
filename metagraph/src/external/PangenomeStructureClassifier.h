@@ -20,7 +20,6 @@ class PangenomeStructureClassifier {
             std::cout << "PangenomeStructureClassifier constructed" << std::endl;
             std::cout << "Number of genomes: " << m_number_of_genomes << std::endl;
             std::cout << "Loops: " << m_loops << std::endl;
-            std::cout << "Size graph: " << sizeof(m_graph_wrapper_) << std::endl;
         };
 
     /**@brief Calculates random combination of collection of genome indices.
@@ -39,32 +38,35 @@ std::vector<int> generate_genome_combinations(std::mt19937 &generator, std::vect
 std::vector<std::vector<int>> generate_genome_combinations_for_loop() const;
 
 
+
+
+
     /**
-     * @brief For a given loop-iteration and genome (index) combination, calculate the core-, accessory- and unique-kmers of the collector.
-     * @param collector Collector for distinct-kmer frequency-categories and size of (sub)-pangenome.
-     * @param frequencies Integer-array of total number of kmer-frequencies per genome
-     * @param loop Current loop-iteration
-     * @param growing_combinations current subset of powerset of all possible combinations.
-     */
-void integrate_frequencies_for_combination(StructureCollector& collector,
-                                           std::vector<std::vector<int>>& frequencies,
-                                           int loop,
-                                           const std::vector<int>& growing_combinations) const;
+         * @brief For a given loop-iteration and genome (index) combination, calculate the core-, accessory- and unique-kmers of the collector.
+         * @param collector Collector for distinct-kmer frequency-categories and size of (sub)-pangenome, contains bit-valued frequencies.
+         * @param loop Current loop-iteration
+         * @param growing_combinations current subset of powerset of all possible combinations.
+    */
+void integrate_frequencies_for_combination(
+        StructureCollector& collector,
+            int loop,
+            const std::vector<int>& growing_combinations) const;
 
 /**@brief Loops through a set of random combinations of genome-ids of the pangenome, iteratively classifying it.
  *
  * @param collector Collector for core-, accessory-, and unique kmers
- * @param frequencies Kmer-frequencies
  * @param combinations Combinations of genome-ids.
  * @return Updated collector.
  */
-PangenomeStructureAdapter::PangenomeStructureCollector& loop_for_increasing_pangenome_size(StructureCollector& collector, std::vector<std::vector<int>> &frequencies, std::vector<std::vector<int>>& combinations) const;
+PangenomeStructureAdapter::PangenomeStructureCollector& loop_for_increasing_pangenome_size(StructureCollector& collector, std::vector<std::vector<int>>& combinations) const;
 
     private:
         GraphWrapper &m_graph_wrapper_;
         int m_number_of_genomes{0};
         int m_loops{0};
 };
+
+
 
 
 #endif // METAGRAPH_PANGENOMESTRUCTURECLASSIFIER_H

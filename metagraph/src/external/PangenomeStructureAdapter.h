@@ -6,12 +6,13 @@
 #define PANGENOMESTRUCTUREADAPTER_H
 #include "native_structs.h"
 #include <vector>
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <boost/iostreams/filter/zstd.hpp>
 
 /**
  * @brief Adaptor for connecting to C++-code from PanTools for 'pangenome-structure' command
  *
- * Carries the different list-loop constructs which will be evaluated in PanTools' Java-codebase.
+ * Carries the different list-loop constructs which will be evaluated in PanTools' Java-codebase, as well as frequencies.
  */
 class PangenomeStructureAdapter {
 public:
@@ -19,6 +20,9 @@ public:
         std::vector < std::vector<int> > core_loops{std::vector<std::vector<int>>(100)};
         std::vector < std::vector<int> > accessory_loops{std::vector<std::vector<int>>(100)};
         std::vector < std::vector<int> > unique_loops{std::vector<std::vector<int>>(100)};
+        boost::dynamic_bitset<> freqs
+                = boost::dynamic_bitset<>(boost::dynamic_bitset<>(100));
+        size_t number_nodes{1};
     };
 
     /**

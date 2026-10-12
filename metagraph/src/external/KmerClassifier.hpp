@@ -57,15 +57,15 @@ public:
 
     /**
      *@brief Does the first run of the pangenome-structure flow, filling in also the
-     * vector with indices, updating the occurrences of kmers already in the loop-collector for the case of n genomes.
+     * bitset with indices, updating the occurrences of kmers already in the loop-collector for the case of n genomes.
      *
      *
      * @param loop_collector Main object of flow, carries vectors of vectors, which have structure:
      * Number of loops x genome_number - 1. Three of those lists are carried, one for core, accessory, and unique kmers.
      * @param all_node_ids Vector of all node-ids.
-     * @returns tuple of vector of kmer-frequencies of non-core kmers, loop-collector object.
+     * @returns loop-collector object with updated bit-frequencies in a single vector.
      */
-    std::pair<std::vector<std::vector<int>>, PangenomeStructureAdapter::PangenomeStructureCollector&> initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<unsigned long long>& all_node_ids);
+    PangenomeStructureAdapter::PangenomeStructureCollector& initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<unsigned long long>& all_node_ids);
 
 
 
