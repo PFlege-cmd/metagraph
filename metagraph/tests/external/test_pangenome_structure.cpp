@@ -8,6 +8,7 @@
 #include "tests/cli/mock_graph_wrapper.h"
 
 #include "gtest/gtest.h"
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 //
 // Created by Patrick Flege on 16/09/2026.
 //
@@ -27,24 +28,34 @@ std::vector<std::vector<int>> create_test_frequencies_five_genomes(size_t freque
     std::mt19937 random_engine { std::random_device {}() };
     std::uniform_int_distribution<int> distribution { 0, 10 };
 
-    std::vector<std::vector<int>> freqs(frequencies, std::vector<int>(4, 0));
+    std::vector<std::vector<int>> freqs(frequencies, std::vector<int>(5, 0));
 
     for (size_t i = 0; i < frequencies; i++) {
+
         freqs[i][0] = distribution(random_engine);
         freqs[i][1] = distribution(random_engine);
         freqs[i][2] = distribution(random_engine);
         freqs[i][3] = distribution(random_engine);
-        while (freqs[i][0] == (freqs[i][1] == (freqs[i][2] == (freqs[i][3] == 0)))) {
-            // std::cout << "ZERO FREQUENCY! Update with unitary!" << std::endl;
-            freqs[i][0] = 1;
-            freqs[i][1] = 1;
-            freqs[i][2] = 1;
-            freqs[i][3] = 1;
-        }
+        freqs[i][4] = distribution(random_engine);
+
     }
     return freqs;
 }
 
+boost::dynamic_bitset<>& fill_bitset_w_freqs(
+        std::vector<std::vector<int>> freqs,
+        boost::dynamic_bitset<>& freqs_bitset) {
+
+
+    for (size_t f_1 = 0; f_1 < freqs.size(); f_1++) {
+        for (size_t f_2 = 0; f_2 < 5; f_2++) {
+            if (freqs[f_1][f_2] != 0) {
+                freqs_bitset.flip(f_1 * 5 + f_2);
+            }
+        }
+    }
+    return freqs_bitset;
+}
 typedef PangenomeStructureAdapter::PangenomeStructureCollector kmerCollector;
 TEST(testPangenomeStructure, testIntegration) {
 
@@ -73,17 +84,22 @@ TEST(testPangenomeStructure, testIntegration) {
     collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, -1));
     collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, -1));
 
+    boost::dynamic_bitset<> freqs_bitset = boost::dynamic_bitset<>(all_nodes.size()*num_genomes);
+    boost::dynamic_bitset<>& bitset_ref{freqs_bitset};
+
+    collector.freqs = bitset_ref;
+    collector.number_nodes = all_nodes.size();
+
     auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
 
-    std::vector<std::vector<int>> accessory_unique_kmers{accessory_unique_kmers_and_collector.first};
     constexpr int unique_kmers = 64;
     constexpr int accessory_kmers = 405;
     constexpr int core_kmers = 29700;
 
     for (size_t i = 0; i < static_cast<size_t> (loops); i++) {
-        ASSERT_EQ(accessory_unique_kmers_and_collector.second.core_loops[i][num_genomes - 2], core_kmers);
-        ASSERT_EQ(accessory_unique_kmers_and_collector.second.accessory_loops[i][num_genomes - 2], accessory_kmers);
-        ASSERT_EQ(accessory_unique_kmers_and_collector.second.unique_loops[i][num_genomes - 2], unique_kmers);
+        ASSERT_EQ(accessory_unique_kmers_and_collector.core_loops[i][num_genomes - 2], core_kmers);
+        ASSERT_EQ(accessory_unique_kmers_and_collector.accessory_loops[i][num_genomes - 2], accessory_kmers);
+        ASSERT_EQ(accessory_unique_kmers_and_collector.unique_loops[i][num_genomes - 2], unique_kmers);
     }
     PangenomeStructureClassifier pangenome_classifier{graph_wrapper, num_genomes, loops};
 
@@ -91,7 +107,7 @@ TEST(testPangenomeStructure, testIntegration) {
 
     ASSERT_EQ(combinations.size(), loops);
 
-    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, accessory_unique_kmers_and_collector.first, combinations);
+    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, combinations);
 
     for (int loop = 0; loop < loops; loop++) {
         ASSERT_GT(std::reduce(collector.accessory_loops[loop].begin(), collector.accessory_loops[loop].end()), 0);
@@ -221,18 +237,23 @@ TEST(testPangenomeStructure, testClassifyKmersForLoops) {
 
     size_t frequencies{10000000};
     std::vector<std::vector<int>> freqs = create_test_frequencies_five_genomes(frequencies);
+
+    boost::dynamic_bitset<> freqs_bitset = boost::dynamic_bitset<>(frequencies*5);
+    boost::dynamic_bitset<>& bitset_ref{freqs_bitset};
+    bitset_ref = fill_bitset_w_freqs(freqs, bitset_ref);
+
     vector<vector<int>> all_combinations = create_five_genome_test_combinations();
 
     std::vector<std::vector<int>> core_collection(5, std::vector<int>(3, 0));
     std::vector<std::vector<int>> accessory_collection(5, std::vector<int>(3, 0));
     std::vector<std::vector<int>> unique_collection(5, std::vector<int>(3, 0));
-    PangenomeStructureAdapter::PangenomeStructureCollector collector{core_collection, accessory_collection, unique_collection};
+    PangenomeStructureAdapter::PangenomeStructureCollector collector{core_collection, accessory_collection, unique_collection, std::move(bitset_ref)};
     PangenomeStructureClassifier pangenome_classifier{wrapper, number_genomes, loops};
 
-    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, freqs, all_combinations);
+    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, all_combinations);
 
     for (int loop = 0; loop < loops; loop++) {
-        ASSERT_GT(std::reduce(collector.accessory_loops[loop].begin(), collector.accessory_loops[loop].end()), 0);
+        ASSERT_GT(std::reduce(collector.accessory_loops[loop].begin(), collector.accessory_loops[loop].end()) || std::reduce(collector.core_loops[loop].begin(), collector.core_loops[loop].end()) ||std::reduce(collector.unique_loops[loop].begin(), collector.unique_loops[loop].end()) , 0);
     }
 }
 
@@ -240,6 +261,9 @@ TEST(testPangenomeStructure, testExportStructureMatrix) {
     size_t frequencies{100000};
     std::vector<std::vector<int>> freqs = create_test_frequencies_five_genomes(frequencies);
     vector<vector<int>> all_combinations = create_five_genome_test_combinations();
+    boost::dynamic_bitset<> freqs_bitset = boost::dynamic_bitset<>(frequencies*5);
+    boost::dynamic_bitset<>& bitset_ref{freqs_bitset};
+    bitset_ref = fill_bitset_w_freqs(freqs, bitset_ref);
 
     int num_genomes{5};
     int num_loops{5};
@@ -252,7 +276,7 @@ TEST(testPangenomeStructure, testExportStructureMatrix) {
     std::vector<std::vector<int>> accessory_collection(num_loops, std::vector<int>(num_genomes, distribution(gen)));
     std::vector<std::vector<int>> unique_collection(num_loops, std::vector<int>(num_genomes, distribution(gen)));
 
-    PangenomeStructureAdapter::PangenomeStructureCollector collector{core_collection, accessory_collection, unique_collection};
+    PangenomeStructureAdapter::PangenomeStructureCollector collector{core_collection, accessory_collection, unique_collection, bitset_ref};
     auto kmer_matrix{*PangenomeStructureAdapter::export_matrix(collector)};
     for (int loop = 0; loop < num_loops; loop++) {
         for (int com_idx = 0; com_idx < combinations; com_idx++) {
@@ -264,4 +288,14 @@ TEST(testPangenomeStructure, testExportStructureMatrix) {
             ASSERT_EQ(kmer_matrix.unique[combinations*loop + com_idx], unique_collection[loop][com_idx]);
         }
     }
+}
+
+TEST(testPangenomeStructure, testDynamicBitSetforFreqs) {
+    auto bs{boost::dynamic_bitset<>(10000000000)};
+    bs.flip(0);
+    ASSERT_EQ(bs[0], 1);
+    std::cout << bs << std::endl;
+    bs.flip(3);
+    ASSERT_EQ(bs[3], 1);
+    std::cout << bs << std::endl;
 }

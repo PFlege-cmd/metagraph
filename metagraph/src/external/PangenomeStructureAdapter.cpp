@@ -45,8 +45,6 @@ NativeStructures::PangenomeStructureKmerMatrix* calculate_pangenome_structure(ch
     std::vector<long long> accessory_or_unique_node_ids{};
     std::iota(all_nodes.begin(), all_nodes.end(), 1);
 
-
-
     int core_threshold{num_genomes};
     int unique_threshold{1};
     KmerClassifier kmer_classifier{graph_wrapper, core_threshold, unique_threshold, num_genomes};
@@ -55,15 +53,16 @@ NativeStructures::PangenomeStructureKmerMatrix* calculate_pangenome_structure(ch
     collector.core_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, 0));
     collector.accessory_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, 0));
     collector.unique_loops = std::vector<std::vector<int>>(loops, std::vector<int>(num_genomes - 1, 0));
+    auto bit_freqs {boost::dynamic_bitset<>(num_genomes*all_nodes.size())};
+    collector.freqs = std::move(bit_freqs);
+    collector.number_nodes = all_nodes.size();
 
-    auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
-
-    std::vector<std::vector<int>> accessory_unique_kmers{accessory_unique_kmers_and_collector.first};
+    auto frequencies_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
 
     PangenomeStructureClassifier pangenome_classifier{graph_wrapper, num_genomes, loops};
 
     std::vector<std::vector<int>> combinations{pangenome_classifier.generate_genome_combinations_for_loop()};
-    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, accessory_unique_kmers_and_collector.first, combinations);
+    collector = pangenome_classifier.loop_for_increasing_pangenome_size(collector, combinations);
 
     auto kmerMatrix{PangenomeStructureAdapter::export_matrix(collector)};
     return kmerMatrix;
