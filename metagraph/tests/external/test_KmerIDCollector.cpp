@@ -2,10 +2,9 @@
 // Created by Patrick Flege on 13/10/2026.
 //
 
-#include "external/KmerIDCollector.h"
-
-
+#include "../src/external/KmerIDCollector.h"
 #include "gtest/gtest.h"
+
 TEST(testKmerIDCollector, testMergeToSource) {
 
     std::vector<unsigned long long> core_ids{1, 2, 3};
