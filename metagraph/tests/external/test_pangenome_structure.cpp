@@ -90,10 +90,10 @@ TEST(testPangenomeStructure, testIntegration) {
     collector.freqs = bitset_ref;
     collector.number_nodes = all_nodes.size();
 
-    auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
+    auto accessory_unique_kmers_and_collector{kmer_classifier.initialize_kmer_frequencies_bitvector(collector, all_nodes)};
 
     constexpr int unique_kmers = 64;
-    constexpr int accessory_kmers = 405;
+    constexpr int accessory_kmers = 109;
     constexpr int core_kmers = 29700;
 
     for (size_t i = 0; i < static_cast<size_t> (loops); i++) {

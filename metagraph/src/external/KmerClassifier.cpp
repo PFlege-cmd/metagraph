@@ -49,8 +49,12 @@ std::vector<std::vector<int>> KmerClassifier::get_distinct_shared_matrix() {
     return this->distinct_shared;
 }
 
-void KmerClassifier::set_num_genomes(int genome_number) {
-    this->genome_number = genome_number;
+std::vector<unsigned long long> KmerClassifier::get_core_ids() {
+    return this->core_ids;
+}
+
+void KmerClassifier::set_num_genomes(int gen_number) {
+    this->genome_number = gen_number;
 }
 
 unsigned long long KmerClassifier::get_node_number() {
@@ -106,15 +110,12 @@ void KmerClassifier::fill_triangular_matrices_parallel(const genomes_and_frequen
         int inner_index = inner_genome_idx.first;
 
         int lowest  =  outer_genome_idx.second < inner_genome_idx.second?outer_genome_idx.second : inner_genome_idx.second;
-        //int highest =  outer_genome_idx.second > inner_genome_idx.second?outer_genome_idx.second : inner_genome_idx.second;
 
         if (lowest > 0) {
             ++distinct_shared[outer_index][inner_index];
         }
-        //++this->distinct_total[outer_index][inner_index];
 
         all_shared_matrix[outer_index][inner_index] += lowest;
-        //this->all_total_matrix[outer_index][inner_index] += highest;
     });
 }
 
@@ -192,4 +193,62 @@ PangenomeStructureAdapter::PangenomeStructureCollector& KmerClassifier::initiali
     }
     return std::ref(loop_collector);
 };
+
+
+PangenomeStructureAdapter::PangenomeStructureCollector& KmerClassifier::initialize_kmer_frequencies_bitvector(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<unsigned long long>& all_node_ids) {
+
+    #pragma omp parallel
+    {
+        std::vector<node_index_kmer> container(1, 0);
+        #pragma omp for schedule(static, 3)
+        for (node_index_kmer node_idx = 0; node_idx < all_node_ids.size(); node_idx++) {
+            container[0] = all_node_ids[node_idx];
+
+            KmerType type = this->presence_absence_classification_kmer(loop_collector.freqs, container, node_idx);
+            #pragma omp critical
+            {
+            switch (type) {
+                case KmerType::CORE: {
+                    std::for_each(
+                        loop_collector.core_loops.begin(),
+                        loop_collector.core_loops.end(),
+                        [&](auto& core_kmer_freq_combs)
+                        {
+                        core_kmer_freq_combs[this->genome_number - 2] += 1;
+                    });
+                    break;
+                }
+
+                case KmerType::ACCESSORY: {
+                    std::for_each(
+                        loop_collector.accessory_loops.begin(),
+                        loop_collector.accessory_loops.end(),
+                        [&](auto& accessory_kmer_freq_combs)
+                        {
+                        accessory_kmer_freq_combs[this->genome_number - 2] += 1;
+                     });
+                    break;
+                }
+
+                case KmerType::UNIQUE: {
+                    std::for_each(
+                        loop_collector.unique_loops.begin(),
+                        loop_collector.unique_loops.end(),
+                        [&](auto& unique_kmer_freq_combs)
+                        {
+                        unique_kmer_freq_combs[this->genome_number - 2] += 1;
+                     });
+                    break;
+                }
+                case KmerType::NOT_PRESENT: {
+                    break;
+                }
+            }
+            }
+
+        }
+    }
+    return std::ref(loop_collector);
+}
+
 

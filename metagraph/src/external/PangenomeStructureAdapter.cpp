@@ -56,8 +56,8 @@ NativeStructures::PangenomeStructureKmerMatrix* calculate_pangenome_structure(ch
     auto bit_freqs {boost::dynamic_bitset<>(num_genomes*all_nodes.size())};
     collector.freqs = std::move(bit_freqs);
     collector.number_nodes = all_nodes.size();
-
-    auto frequencies_and_collector{kmer_classifier.initialize_kmer_frequencies(collector, all_nodes)};
+    //TODO: Modify Kmer-classfifier to avoid useless creation of vectors
+    auto frequencies_and_collector{kmer_classifier.initialize_kmer_frequencies_bitvector(collector, all_nodes)};
 
     PangenomeStructureClassifier pangenome_classifier{graph_wrapper, num_genomes, loops};
 

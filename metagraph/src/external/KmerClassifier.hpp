@@ -23,7 +23,7 @@ public:
     unsigned long long get_node_number();
     kmer_frequencies get_kmer_frequencies(std::vector<node_index_kmer>& nodes);
     int get_num_genomes();
-    void set_num_genomes(int genome_number);
+    void set_num_genomes(int gen_number);
     int extractGenomeNumber(std::string genome_contig_path);
 
 
@@ -68,6 +68,10 @@ public:
     PangenomeStructureAdapter::PangenomeStructureCollector& initialize_kmer_frequencies(PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector, const std::vector<unsigned long long>& all_node_ids);
 
 
+    PangenomeStructureAdapter::PangenomeStructureCollector&
+    initialize_kmer_frequencies_bitvector(
+            PangenomeStructureAdapter::PangenomeStructureCollector& loop_collector,
+            const std::vector<unsigned long long>& all_node_ids);
 
     std::vector<int> count_kmer_per_genome_all(node_index_kmer idx) {
 
@@ -396,6 +400,9 @@ public:
                 = std::vector<std::vector<int>>(this->genome_number,
                                                 std::vector<int>(this->genome_number, 0));
 
+        this->core_ids
+        = std::vector<unsigned long long>{};
+
         auto number_of_kmers = this->get_node_number();
         std::cout << "Node number:" << number_of_kmers << std::endl;
         //node_index_kmer current = 1;
@@ -422,6 +429,9 @@ public:
         auto local_all_shared_matrix = std::vector<std::vector<int>>(this->genome_number,std::vector<int>(this->genome_number, 0));
         auto local_all_total_matrix = std::vector<std::vector<int>>(this->genome_number,std::vector<int>(this->genome_number, 0));
 
+        auto local_core_ids = std::vector<unsigned long long>{};
+
+
         #pragma omp for schedule(static, 3)
         for (size_t i = 1; i < limit; i++) {
 
@@ -433,6 +443,11 @@ public:
 
             auto classified_kmers = this->classify_kmers(counts_per_genomes);
             KmerType type = std::get<0>(classified_kmers);
+            if (type == KmerType::CORE) {
+                local_core_ids.push_back(current);
+            }
+            if (type == KmerType::ACCESSORY) {}
+            if (type == KmerType::UNIQUE) {}
 
             genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
             // TODO: FIll distinct counts as well.
@@ -460,6 +475,7 @@ public:
                     this->all_total_matrix[r][c] += local_all_total_matrix[r][c];
                 }
             }
+            core_ids.insert(core_ids.end(), local_core_ids.begin(), local_core_ids.end());
         }
     }
 
@@ -474,71 +490,52 @@ public:
         std::vector<std::vector<int>>& all_shared_matrix,
         std::vector<std::vector<int>>& all_total_matrix
         ) {
-        bool* is_present_in_genome = new bool[genome_number];
         switch (type) {
             case KmerType::CORE: {
-                //int counter = 0;
-                //std::cout << "Core" << std::endl;
                 for_each(genome_frequencies.begin(), genome_frequencies.end(),
                          [&](auto gen_idx) {
-                             //std::cout << "CORE, at index: " << gen_idx.first << std::endl;
-                             //std::cout << "CORE, adding: " << gen_idx.second << std::endl;
-                             //counter =+  gen_idx.second;
                              total_kmer_matrix[0][gen_idx.first] += gen_idx.second;
                              distinct_kmer_matrix[0][gen_idx.first] += 1;
-                             this->fill_triangular_matrices_parallel(genome_frequencies, gen_idx, distinct_shared, all_shared_matrix);
-                            is_present_in_genome[gen_idx.first] = true;
                          });
                 break;
             }
             case KmerType::ACCESSORY: {
-                //std::cout << "Accessory" << std::endl;
                 std::for_each(genome_frequencies.begin(), genome_frequencies.end(),
                               [&](auto gen_idx) {
-                                  // std::cout << "Accessory at index: " << gen_idx.first
-                                  //           << std::endl;
-                                  // std::cout << "Accessory, adding: " << gen_idx.second
-                                  //           << std::endl;
-
-
                                   total_kmer_matrix[1][gen_idx.first] += gen_idx.second;
                                   distinct_kmer_matrix[1][gen_idx.first] += 1;
-                                  this->fill_triangular_matrices_parallel(genome_frequencies, gen_idx, all_shared_matrix, all_total_matrix);
-                                  is_present_in_genome[gen_idx.first] = true;
-
                               });
                 break;
             }
             case KmerType::UNIQUE: {
-                // std::cout << "Unique" << std::endl;
-                // std::cout << "Unique, adding: " << genome_frequencies[0].second << std::endl;
                 total_kmer_matrix[2][genome_frequencies[0].first] += genome_frequencies[0].second;
                 distinct_kmer_matrix[2][genome_frequencies[0].first] += 1;
-
-                all_shared_matrix[genome_frequencies[0].first][genome_frequencies[0].first] += genome_frequencies[0].second;
-                all_total_matrix[genome_frequencies[0].first][genome_frequencies[0].first] += genome_frequencies[0].second;
-
-                distinct_shared[genome_frequencies[0].first][genome_frequencies[0].first]++;
-                distinct_total[genome_frequencies[0].first][genome_frequencies[0].first]++;
-                is_present_in_genome[genome_frequencies[0].first] = true;
                 break;
             }
             default:
                 break;
         }
+
         std::vector<int> frequencies = std::vector<int>(this->genome_number);
         for_each(genome_frequencies.begin(), genome_frequencies.end(), [frequencies_ref = &frequencies](auto gen_idx) {
             (*frequencies_ref)[gen_idx.first] += gen_idx.second;
         });
 
-        for (int i = 0; i < genome_number; i++) {
-            for (int j = 0; j < genome_number; j++) {
-                int highest = frequencies[i] > frequencies[j]? frequencies[i] : frequencies[j];
+        for (int first_genome = 0; first_genome < genome_number; first_genome++) {
+            for (int other_genome = 0; other_genome < genome_number; other_genome++) {
+                if (first_genome < other_genome)
+                    continue;
+                int highest = frequencies[first_genome] > frequencies[other_genome]? frequencies[first_genome] : frequencies[other_genome];
+                int lowest = frequencies[first_genome] < frequencies[other_genome]? frequencies[first_genome] : frequencies[other_genome];
                 if (highest == 0)
                     continue;
+                if (lowest > 0) {
+                    ++distinct_shared[first_genome][other_genome];
+                }
 
-                ++distinct_total[i][j];
-                all_total_matrix[i][j] += highest;
+                ++distinct_total[first_genome][other_genome];
+                all_total_matrix[first_genome][other_genome] += highest;
+                all_shared_matrix[first_genome][other_genome] += lowest;
             }
         }
     }
@@ -616,6 +613,43 @@ public:
         return matrix_pair;
     }
 
+    KmerType presence_absence_classification_kmer(boost::dynamic_bitset<>& bs, std::vector<node_index_kmer>& nodes, int bitvector_offset) {
+        auto frequencies = this->get_kmer_frequencies(nodes);
+
+        int number_of_occuring_genomes{static_cast<int>(frequencies.size())};
+        for (size_t i = 0; i < frequencies.size(); i++) {
+            auto genome_name = std::get<0>(frequencies[i]);
+            auto genome_no = this->extractGenomeNumber(genome_name);
+            if (genome_no == -1)
+                throw std::invalid_argument("Invalid genome number");
+            auto genome_count = std::get<2>(frequencies[i])[0];
+            if (genome_count > 0) {
+                //std::cout << "Updating: " <<genome_name << ", at offset: " << bitvector_offset << ", and genome number: " << genome_no <<std::endl;
+
+                bs.flip(bitvector_offset*genome_number + genome_no);
+            }
+
+        }
+
+        KmerType type;
+        if (number_of_occuring_genomes == unique_threshold) {
+            //std::cout << "Working" << std::endl;
+            type = KmerType::UNIQUE;
+        }
+        else if (number_of_occuring_genomes == core_threshold) {
+            //std::cout << "Not unique" << std::endl;
+            type = KmerType::CORE;
+        }
+        else  if (number_of_occuring_genomes > 0) {
+            type = KmerType::ACCESSORY;
+        } else {
+            type = KmerType::NOT_PRESENT;
+        }
+
+
+        return type;
+    };
+
     void set_kmer_map(std::map<std::string, std::vector<int>>& kmer_map) {
         std::string input_kmer;
         std::ifstream ifs("/Users/patrick_flege/git/patrick-pan-tools/covid/bin/out-kmers.txt");
@@ -642,6 +676,7 @@ public:
     std::vector<std::vector<int>> get_all_shared_matrix();
     std::vector<std::vector<int>> get_distinct_total_matrix();
     std::vector<std::vector<int>> get_distinct_shared_matrix();
+    std::vector<unsigned long long> get_core_ids();
 
   private:
     GraphWrapper& graph_ptr;
@@ -653,6 +688,8 @@ public:
 
     std::vector<std::vector<int>> distinct_shared;
     std::vector<std::vector<int>> distinct_total;
+
+    std::vector<unsigned long long> core_ids;
 
     std::vector<std::vector<int>> phenotypes;
 

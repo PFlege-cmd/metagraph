@@ -718,6 +718,8 @@ set(PANTOOLS_INTERFACE_SRC "${PROJECT_SOURCE_DIR}/src/cli/graph_glue.cpp"
         src/external/PangenomeStructureClassifier.h
         src/external/KmerUtils.h
         src/external/CombinationUtils.h
+        src/external/KmerIDCollector.h
+        tests/external/testKmerIDCollector.cpp
 )
 
 add_library(libmetagraph-cli SHARED ${PANTOOLS_INTERFACE_SRC})

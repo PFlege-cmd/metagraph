@@ -588,23 +588,11 @@ TEST(IntegrationTest, realTest) {
         std::vector<std::vector<int>> distinct_total = kmerClassifier.get_distinct_total_matrix();
         std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
         std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
+        auto&& c_ids{kmerClassifier.get_core_ids()};
+
+        ASSERT_GT(c_ids.size(), 20000);
 
         auto res = kmerClassifier.flatten(distinct_shared);
-
-
-        // KmerMatrix *kmerMatrix = new KmerMatrix(core_total_array,
-        //     accessory_total_array,
-        //     unique_total_array,
-        //     core_distinct_array,
-        //     accessory_distinct_array,
-        //     unique_distinct_array,
-        //     kmerClassifier.flatten(distinct_shared),
-        //     kmerClassifier.flatten(distinct_total),
-        //     kmerClassifier.flatten(all_shared),
-        //     kmerClassifier.flatten(
-        //                 all_total), nullptr, nullptr, nullptr
-        //     ); // Ahh... this new keyword creates a pointer, therefore it did not work
-        // return kmerMatrix;
         std::cout << *(res) << std::endl;
 }
 
@@ -650,4 +638,45 @@ TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {
     }
 
     std::vector<int> expected_freq_non_core{3, 4, 0, 5};
+}
+
+TEST(testPangenomeStructureKmer, testInitializeKmersWithBitvector) {
+    std::vector<kmer_frequencies> frequencies = createMockKmerFreqs();
+    int genome_number{4};
+    AnnotatedDBG* graph = nullptr;
+    MockGraphWrapper wrapper{*graph};
+
+    int core_threshold{4};
+    int unique_threshold{1};
+    KmerClassifier kmer_classifier(wrapper, core_threshold, unique_threshold, genome_number);
+    boost::dynamic_bitset<> bit_freqs(2*genome_number);
+
+    node_index idx1{2};
+    node_index idx2{3};
+
+    const std::vector<unsigned long long> all_node_ids{idx1, idx2};
+
+    std::vector<node_index> idx1_vec{std::vector<node_index>({idx1})};
+    std::vector<node_index> idx2_vec{std::vector<node_index>({idx2})};
+
+    kmerCollector collector;
+    collector.core_loops = std::vector<std::vector<int>>(5, std::vector<int>(genome_number - 1, 0));
+    collector.accessory_loops = std::vector<std::vector<int>>(5, std::vector<int>(genome_number - 1, 0));
+    collector.unique_loops = std::vector<std::vector<int>>(5, std::vector<int>(genome_number - 1, 0));
+    collector.freqs = boost::dynamic_bitset<>(2*genome_number);
+
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx1_vec)).WillOnce(testing::Return(frequencies[0]));
+    EXPECT_CALL(wrapper, get_kmer_frequencies(idx2_vec)).WillOnce(testing::Return(frequencies[1]));
+
+    kmer_classifier.initialize_kmer_frequencies_bitvector(collector, all_node_ids);
+
+    ASSERT_EQ(collector.freqs[0], 1);
+    ASSERT_EQ(collector.freqs[1], 1);
+    ASSERT_EQ(collector.freqs[2], 0);
+    ASSERT_EQ(collector.freqs[3], 1);
+
+    ASSERT_EQ(collector.freqs[4], 1);
+    ASSERT_EQ(collector.freqs[5], 1);
+    ASSERT_EQ(collector.freqs[6], 1);
+    ASSERT_EQ(collector.freqs[7], 1);
 }

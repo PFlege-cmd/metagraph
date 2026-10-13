@@ -14,7 +14,7 @@ class PangenomeStructureClassifier {
     typedef PangenomeStructureAdapter::PangenomeStructureCollector StructureCollector;
 
         PangenomeStructureClassifier(GraphWrapper &graph_wrapper, int number_of_genomes, int loops)
-    : m_graph_wrapper_(graph_wrapper),
+    :
     m_number_of_genomes(number_of_genomes),
     m_loops(loops) {
             std::cout << "PangenomeStructureClassifier constructed" << std::endl;
@@ -61,7 +61,6 @@ void integrate_frequencies_for_combination(
 PangenomeStructureAdapter::PangenomeStructureCollector& loop_for_increasing_pangenome_size(StructureCollector& collector, std::vector<std::vector<int>>& combinations) const;
 
     private:
-        GraphWrapper &m_graph_wrapper_;
         int m_number_of_genomes{0};
         int m_loops{0};
 };
