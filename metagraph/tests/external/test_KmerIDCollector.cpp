@@ -42,7 +42,7 @@ TEST(testKmerIDCollector, testMergeToSource) {
 }
 
 TEST(testKmerIDCollector, testInitialize) {
-    auto coll{KmerIDCollector::initialize_kmer_collector<4>()};
+    auto coll{KmerIDCollector::initialize_kmer_collector(4)};
     ASSERT_EQ(coll->accessory_ids.size(), 2);
     ASSERT_EQ(coll->unique_ids.size(), 4);
 }

@@ -434,8 +434,7 @@ TEST(TestKmerClassification, testFillCountMatrix) {
     std::cout << *intmap[0] << std::endl;
     auto intmap3 = intmap2;
     KmerClassifier kmer_classifier(wrapper, 4, 1, 4);
-    std::map<std::string, std::vector<int>> kmer_map;
-    kmer_classifier.set_kmer_map(kmer_map);
+
     std::cout << "INTMAP" << std::endl;
     std::cout << intmap2[2] << std::endl;
 
@@ -536,21 +535,18 @@ TEST(TestKmerClassification, testGetFirstNonDummyNodeIndex) {
 }
 
 TEST(IntegrationTest, realTest) {
-    std::string data_path = std::string("../../../patrick-pan-tools/covid_DB");
+    std::string data_path = std::string("../../../patrick-pan-tools/chloroplast_DB");
         graph_glue glue = graph_glue(0, NULL);
 
         //static std::shared_ptr<AnnotatedDBG> graph_coord = glue.load_coord_dbg(data_path);
 
         static std::shared_ptr<AnnotatedDBG> graph = glue.load_dbg(data_path);
-        int genome_number = 3;
+        int genome_number = 4;
         auto wrapper = DeBruijnGraphWrapper(*graph);
         auto kmerClassifier = KmerClassifier(wrapper, genome_number, 1);
-        //int num_genomes = kmerClassifier.get_num_genomes();
         kmerClassifier.set_num_genomes(genome_number);
-        //kmerClassifier.set_kmer_map(kmer_map);
-        //auto node_n = graph->get_graph().num_nodes()/2;
+
         std::vector<node_index_kmer> vi{100, 101,102, 103, 104};
-        //std::iota(vi.begin(), vi.end(), 1);
         auto fkmers = kmerClassifier.get_kmer_frequencies(vi);
         //kmerClassifier.create_kmer_classification_matrix(); //TODO: Overload this.
 
@@ -588,9 +584,9 @@ TEST(IntegrationTest, realTest) {
         std::vector<std::vector<int>> distinct_total = kmerClassifier.get_distinct_total_matrix();
         std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
         std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
-        auto&& c_ids{kmerClassifier.get_core_ids()};
+        auto&& c_ids{kmerClassifier.get_id_collector()};
 
-        ASSERT_GT(c_ids.size(), 20000);
+        ASSERT_GT(c_ids.core_ids.size(), 10000);
 
         auto res = kmerClassifier.flatten(distinct_shared);
         std::cout << *(res) << std::endl;
