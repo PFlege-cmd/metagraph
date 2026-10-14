@@ -31,30 +31,32 @@ struct KmerIDCollector {
      * @param other (Local) KmerIDCollector from which ids are drawn.
      * @return Updated (this) collector.
      */
-    KmerIDCollector* merge( KmerIDCollector& other) {
+    KmerIDCollector& merge(const KmerIDCollector& other) {
         core_ids.insert(core_ids.end(), std::make_move_iterator(other.core_ids.begin()), std::make_move_iterator(other.core_ids.end()));
 
         size_t accessory_size{other.accessory_ids.size()};
         size_t unique_size{other.unique_ids.size()};
 
         for (size_t i = 0; i < accessory_size; ++i) {
-            //accessory_ids[i].insert(accessory_ids[i].end(), std::make_move_iterator(other.accessory_ids[i].begin()), std::make_move_iterator(other.accessory_ids[i].end()));
             std::move(other.accessory_ids[i].begin(), other.accessory_ids[i].end(), std::back_inserter(accessory_ids[i]));
         }
 
         for (size_t i = 0; i < unique_size; ++i) {
-            unique_ids[i].insert(unique_ids[i].end(), std::make_move_iterator(other.unique_ids[i].begin()), std::make_move_iterator(other.unique_ids[i].end()));
+            std::move(other.unique_ids[i].begin(), other.unique_ids[i].end(), std::back_inserter(unique_ids[i]));
         }
-        return this;
+        return *this;
     }
 
-    template <int GENOMES>
-    static KmerIDCollector* initialize_kmer_collector() {
+    static KmerIDCollector* initialize_kmer_collector(int genomes) {
         std::vector<unsigned long long> core;
-        std::vector<std::vector<unsigned long long>> acc (GENOMES - 2, std::vector<unsigned long long>{});
-        std::vector<std::vector<unsigned long long>> uniq (GENOMES, std::vector<unsigned long long>{});
+        std::vector<std::vector<unsigned long long>> acc (genomes - 2);
+        std::vector<std::vector<unsigned long long>> uniq (genomes);
 
-        return new KmerIDCollector{ .core_ids = std::move(core), .accessory_ids = std::move(acc), .unique_ids = std::move(uniq) };
+        auto temp = new KmerIDCollector{ .core_ids = std::vector<unsigned long long>{},
+            .accessory_ids = std::vector<std::vector<unsigned long long>> (genomes-2),
+            .unique_ids = std::vector<std::vector<unsigned long long>> (genomes) };
+
+        return temp;
     }
 };
 #endif // METAGRAPH_KMERIDCOLLECTOR_H

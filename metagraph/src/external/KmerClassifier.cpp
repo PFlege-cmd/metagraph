@@ -49,8 +49,8 @@ std::vector<std::vector<int>> KmerClassifier::get_distinct_shared_matrix() {
     return this->distinct_shared;
 }
 
-std::vector<unsigned long long> KmerClassifier::get_core_ids() {
-    return this->core_ids;
+KmerIDCollector KmerClassifier::get_id_collector() {
+    return this->id_collector;
 }
 
 void KmerClassifier::set_num_genomes(int gen_number) {
@@ -97,7 +97,6 @@ void KmerClassifier::fill_triangular_matrices(const genomes_and_frequencies& gen
         }
 
         this->all_shared_matrix[outer_index][inner_index] += lowest;
-        //this->all_total_matrix[outer_index][inner_index] += highest;
     });
 }
 

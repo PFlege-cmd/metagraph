@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "KmerIDCollector.h"
 #include "PangenomeStructureAdapter.h"
 #include "PhenotypeClass.h"
 #include "cli/GraphWrapper.hpp"
@@ -218,8 +219,10 @@ public:
             //std::cout << "Not unique" << std::endl;
             type = KmerType::CORE;
         }
-        else {
+        else if (number_of_occuring_genomes > this->unique_threshold && number_of_occuring_genomes < this->core_threshold) {
             type = KmerType::ACCESSORY;
+        } else {
+            type = KmerType::NOT_PRESENT;
         }
 
         return std::tuple<KmerType, genomes_and_frequencies>(type, genome_frequencies);
@@ -376,6 +379,38 @@ public:
     }
 
     /**
+     * @brief Collects Kmer-IDs for different classifications
+     * @param local_id_collector Collector-object, holds vectors of IDs
+     * @param current_node_id ID of currently iterated upon node
+     * @param counts_per_genomes
+     * @param classified_kmers
+     * @return
+     */
+    KmerIDCollector& collect_node_ids(KmerIDCollector& local_id_collector,
+                              node_index_kmer current_node_id,
+                              std::vector<int> counts_per_genomes,
+                              std::tuple<KmerType, genomes_and_frequencies> classified_kmers) {
+        KmerType type = std::get<0>(classified_kmers);
+        if (type == KmerType::CORE) {
+            local_id_collector.core_ids.push_back(current_node_id);
+        }
+        if (type == KmerType::ACCESSORY) {
+            auto gen_and_freqs { std::get<1>(classified_kmers) };
+            size_t idx { gen_and_freqs.size() };
+            local_id_collector.accessory_ids[idx - 2].push_back(current_node_id);
+        }
+        if (type == KmerType::UNIQUE) {
+            auto gen_idx = static_cast<size_t>(std::get<1>(classified_kmers)[0].first);
+            //auto non_null = [](auto& val) { return val > 0; };
+
+            // auto idx_iter { std::find_if(counts_per_genomes.begin(),
+            //                              counts_per_genomes.end(), non_null) };
+            //auto unique_genome_idx { std::distance(counts_per_genomes.begin(), idx_iter) };
+            local_id_collector.unique_ids[gen_idx].push_back(current_node_id);
+        }
+        return local_id_collector;
+    }
+    /**
     Creates kmer-matrices, both including total counts and distinct counts (adds only one instead of frequency).
     Stores those in instance variables:
     total_kmer_matrix, distinct_kmer_matrix
@@ -400,8 +435,8 @@ public:
                 = std::vector<std::vector<int>>(this->genome_number,
                                                 std::vector<int>(this->genome_number, 0));
 
-        this->core_ids
-        = std::vector<unsigned long long>{};
+        this->id_collector
+        = *KmerIDCollector::initialize_kmer_collector(this->genome_number);
 
         auto number_of_kmers = this->get_node_number();
         std::cout << "Node number:" << number_of_kmers << std::endl;
@@ -429,27 +464,25 @@ public:
         auto local_all_shared_matrix = std::vector<std::vector<int>>(this->genome_number,std::vector<int>(this->genome_number, 0));
         auto local_all_total_matrix = std::vector<std::vector<int>>(this->genome_number,std::vector<int>(this->genome_number, 0));
 
-        auto local_core_ids = std::vector<unsigned long long>{};
+        auto local_id_collector = *KmerIDCollector::initialize_kmer_collector(this->genome_number);;
 
 
         #pragma omp for schedule(static, 3)
         for (size_t i = 1; i < limit; i++) {
+            using node_index = mtg::graph::SequenceGraph::node_index;
 
             node_index_kmer current{i};
-            using node_index = mtg::graph::SequenceGraph::node_index;
             std::vector<node_index> cv{current};
 
             auto counts_per_genomes  = this->count_kmer_per_genome(current);
-
             auto classified_kmers = this->classify_kmers(counts_per_genomes);
-            KmerType type = std::get<0>(classified_kmers);
-            if (type == KmerType::CORE) {
-                local_core_ids.push_back(current);
-            }
-            if (type == KmerType::ACCESSORY) {}
-            if (type == KmerType::UNIQUE) {}
+
+            local_id_collector = collect_node_ids(local_id_collector, current,
+                                             counts_per_genomes, classified_kmers);
 
             genomes_and_frequencies genome_frequencies = std::get<1>(classified_kmers);
+            KmerType type = std::get<0>(classified_kmers);
+
             // TODO: FIll distinct counts as well.
             fill_kmer_matrix_parallel(type, genome_frequencies,
                 local_total_kmer_matrix,
@@ -475,7 +508,7 @@ public:
                     this->all_total_matrix[r][c] += local_all_total_matrix[r][c];
                 }
             }
-            core_ids.insert(core_ids.end(), local_core_ids.begin(), local_core_ids.end());
+            id_collector.merge(local_id_collector);
         }
     }
 
@@ -650,21 +683,21 @@ public:
         return type;
     };
 
-    void set_kmer_map(std::map<std::string, std::vector<int>>& kmer_map) {
-        std::string input_kmer;
-        std::ifstream ifs("/Users/patrick_flege/git/patrick-pan-tools/covid/bin/out-kmers.txt");
-
-        while (getline(ifs, input_kmer)) {
-            std::cout << input_kmer << std::endl;
-            std::string kmer_component = input_kmer.substr(0, 13);
-            std::string numba = input_kmer.substr(13, input_kmer.size() - 13);
-            auto vec = std::vector{std::stoi(numba)};
-            this->kmer_map.insert(std::pair<std::string, std::vector<int>>(kmer_component, vec));
-
-            std::cout << kmer_component << std::endl;
-            std::cout <<  this->kmer_map[kmer_component][0] << std::endl;
-        }
-    }
+    // void set_kmer_map(std::map<std::string, std::vector<int>>& kmer_map) {
+    //     std::string input_kmer;
+    //     std::ifstream ifs("/Users/patrick_flege/git/patrick-pan-tools/covid/bin/out-kmers.txt");
+    //
+    //     while (getline(ifs, input_kmer)) {
+    //         std::cout << input_kmer << std::endl;
+    //         std::string kmer_component = input_kmer.substr(0, 13);
+    //         std::string numba = input_kmer.substr(13, input_kmer.size() - 13);
+    //         auto vec = std::vector{std::stoi(numba)};
+    //         this->kmer_map.insert(std::pair<std::string, std::vector<int>>(kmer_component, vec));
+    //
+    //         std::cout << kmer_component << std::endl;
+    //         std::cout <<  this->kmer_map[kmer_component][0] << std::endl;
+    //     }
+    // }
 
     std::map<std::string, std::vector<int>>& get_kmer_map() {
         return this->kmer_map;
@@ -676,6 +709,7 @@ public:
     std::vector<std::vector<int>> get_all_shared_matrix();
     std::vector<std::vector<int>> get_distinct_total_matrix();
     std::vector<std::vector<int>> get_distinct_shared_matrix();
+    KmerIDCollector get_id_collector();
     std::vector<unsigned long long> get_core_ids();
 
   private:
@@ -689,7 +723,7 @@ public:
     std::vector<std::vector<int>> distinct_shared;
     std::vector<std::vector<int>> distinct_total;
 
-    std::vector<unsigned long long> core_ids;
+    KmerIDCollector id_collector;
 
     std::vector<std::vector<int>> phenotypes;
 

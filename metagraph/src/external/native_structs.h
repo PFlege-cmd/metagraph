@@ -81,6 +81,61 @@ namespace NativeStructures {
             unique = other.unique;
         }
     };
+    struct KmerIds {
+        int number_ids;
+        long long* ids;
+    };
 
+    struct KmerMatrix {
+        int* core_total;
+        int* accessory_total;
+        int* unique_total;
+
+        int* core_distinct;
+        int* accessory_distinct;
+        int* unique_distinct;
+
+        int* distinct_shared;
+        int* distinct_total;
+        int* all_shared;
+        int* all_total;
+
+        KmerIds* ids;
+
+        int* shared_phenotypes;
+        int* specific_phenotypes;
+        int* exclusive_phenotypes;
+        explicit KmerMatrix(int* core_total_ptr,
+                            int* accessory_total_ptr,
+                            int* unique_total_ptr,
+                            int* core_distinct_ptr,
+                            int* accessory_distinct_ptr,
+                            int* unique_distinct_ptr,
+                            int* distinct_shared_ptr,
+                            int* distinct_total_ptr,
+                            int* all_shared_ptr,
+                            int* all_total_ptr,
+                            KmerIds* ids,
+                            int* shared_phenotypes_ptr,
+                            int* specific_phenotypes_ptr,
+                            int* exclusive_phenotypes_ptr)
+            :
+    core_total(core_total_ptr),
+    accessory_total(accessory_total_ptr),
+    unique_total(unique_total_ptr),
+    core_distinct(core_distinct_ptr),
+    accessory_distinct(accessory_distinct_ptr),
+    unique_distinct(unique_distinct_ptr),
+    distinct_shared(distinct_shared_ptr),
+    distinct_total(distinct_total_ptr),
+    all_shared(all_shared_ptr),
+    all_total(all_total_ptr),
+    ids(ids),
+    shared_phenotypes(shared_phenotypes_ptr),
+    specific_phenotypes(specific_phenotypes_ptr),
+    exclusive_phenotypes(exclusive_phenotypes_ptr)
+        {
+        };
+    };
 }
 #endif //NATIVE_STRUCTS_H

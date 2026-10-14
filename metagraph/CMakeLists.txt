@@ -664,7 +664,8 @@ add_executable(unit_tests ${unit_tests_files}
         tests/external/mock_matrix_entry_factory.h
         tests/external/mock_matrix_entry_factory.cpp
         tests/external/test_KmerIDCollector.cpp
-        tests/cli/test_graph_wrapper.cpp)
+        tests/cli/test_graph_wrapper.cpp
+        tests/external/test_kmer_adapter.cpp)
 target_include_directories(unit_tests PRIVATE "${PROJECT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE TEST_DATA_DIR="${PROJECT_SOURCE_DIR}/tests/data")
 target_link_libraries(unit_tests gtest_main gtest gmock metagraph-core metagraph-cli)
