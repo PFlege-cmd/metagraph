@@ -14,8 +14,8 @@ TEST(test_kmer_adapter, fill_Kmer_Ids) {
     collector->accessory_ids[0] = std::vector<unsigned long long>{4, 5, 6};
     collector->accessory_ids[1] = std::vector<unsigned long long>{7, 8};
 
-    collector->unique_ids[0] = std::vector<unsigned long long>{9, 10};
-    collector->unique_ids[1] = std::vector<unsigned long long>{11, 12};
+    collector->unique_ids[0] = std::vector<unsigned long long>{9, 10, 1111, 2222, 3444, 5555, 7777, 888};
+    collector->unique_ids[1] = std::vector<unsigned long long>{11, 12, 999, 1010, 23232};
     collector->unique_ids[2] = std::vector<unsigned long long>{13, 14};
     collector->unique_ids[3] = std::vector<unsigned long long>{15};
 
@@ -28,4 +28,32 @@ TEST(test_kmer_adapter, fill_Kmer_Ids) {
     ASSERT_EQ(kmer_ids[4].number_ids, collector->unique_ids[1].size());
     ASSERT_EQ(kmer_ids[5].number_ids, collector->unique_ids[2].size());
     ASSERT_EQ(kmer_ids[6].number_ids, collector->unique_ids[3].size());
+
+    for (size_t core_id = 0; core_id < collector->core_ids.size(); core_id++) {
+        ASSERT_EQ(kmer_ids[0].ids[core_id], collector->core_ids[core_id]);
+    }
+
+    for (size_t accessory_id = 0; accessory_id < collector->accessory_ids[0].size(); accessory_id++) {
+        ASSERT_EQ(kmer_ids[1].ids[accessory_id], collector->accessory_ids[0][accessory_id]);
+    }
+
+    for (size_t accessory_id = 0; accessory_id < collector->accessory_ids[1].size(); accessory_id++) {
+        ASSERT_EQ(kmer_ids[2].ids[accessory_id], collector->accessory_ids[1][accessory_id]);
+    }
+
+    for (size_t unique_id = 0; unique_id < collector->unique_ids[0].size(); unique_id++) {
+        ASSERT_EQ(kmer_ids[3].ids[unique_id], collector->unique_ids[0][unique_id]);
+    }
+
+    for (size_t unique_id = 0; unique_id < collector->unique_ids[1].size(); unique_id++) {
+        ASSERT_EQ(kmer_ids[4].ids[unique_id], collector->unique_ids[1][unique_id]);
+    }
+
+    for (size_t unique_id = 0; unique_id < collector->unique_ids[2].size(); unique_id++) {
+        ASSERT_EQ(kmer_ids[5].ids[unique_id], collector->unique_ids[2][unique_id]);
+    }
+
+    for (size_t unique_id = 0; unique_id < collector->unique_ids[3].size(); unique_id++) {
+        ASSERT_EQ(kmer_ids[6].ids[unique_id], collector->unique_ids[3][unique_id]);
+    }
 }

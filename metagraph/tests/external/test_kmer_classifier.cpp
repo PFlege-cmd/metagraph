@@ -11,6 +11,8 @@
 #include "tests/external/kmer_classifier_auxiliary.h"
 
 #include "boost/dynamic_bitset.hpp"
+#include "external/KmerClassifierAdapter.h"
+
 #include "gtest/gtest.h"
 
 
@@ -553,43 +555,46 @@ TEST(IntegrationTest, realTest) {
         size_t initial_node_idx{kmerClassifier.get_first_real_node_idx()};
         std::cout << "Initial node index: " << initial_node_idx << std::endl;
         kmerClassifier.create_kmer_classification_matrix_parallel(initial_node_idx);
-        auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
-        auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
+        // auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
+        // auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
+        //
+        // for (size_t i = 0; i < total_kmer_matrix.size(); i++) {
+        //     for (size_t j = 0; j < total_kmer_matrix[i].size(); j++) {
+        //         std::cout << "Kmer entry at :" << i << j << "--" << total_kmer_matrix[i][j] << std::endl;
+        //     }
+        // }
+        //
+        // int* core_total_array = new int[total_kmer_matrix[0].size()];
+        // std::move(total_kmer_matrix[0].begin(), total_kmer_matrix[0].end(), core_total_array);
+        //
+        // int* accessory_total_array = new int[total_kmer_matrix[1].size()];
+        // std::move(total_kmer_matrix[1].begin(), total_kmer_matrix[1].end(), accessory_total_array);
+        //
+        // int* unique_total_array = new int[total_kmer_matrix[2].size()];
+        // std::move(total_kmer_matrix[2].begin(), total_kmer_matrix[2].end(), unique_total_array);
+        //
+        // int* core_distinct_array = new int[distinct_kmer_matrix[0].size()];
+        // std::move(distinct_kmer_matrix[0].begin(), distinct_kmer_matrix[0].end(), core_distinct_array);
+        //
+        // int* accessory_distinct_array = new int[distinct_kmer_matrix[1].size()];
+        // std::move(distinct_kmer_matrix[1].begin(), distinct_kmer_matrix[1].end(), accessory_distinct_array);
+        //
+        // int* unique_distinct_array = new int[distinct_kmer_matrix[2].size()];
+        // std::move(distinct_kmer_matrix[2].begin(), distinct_kmer_matrix[2].end(), unique_distinct_array);
+        //
+        // std::vector<std::vector<int>> distinct_shared = kmerClassifier.get_distinct_shared_matrix();
+        // std::vector<std::vector<int>> distinct_total = kmerClassifier.get_distinct_total_matrix();
+        // std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
+        // std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
+        // auto&& c_ids{kmerClassifier.get_id_collector()};
+        //
+        // ASSERT_GT(c_ids.core_ids.size(), 10000);
+        //
+        // auto res = kmerClassifier.flatten(distinct_shared);
+        // std::cout << *(res) << std::endl;
+        auto e {KmerClassifierAdapter::export_matrix(kmerClassifier)};
+        std::cout << e->ids[0].number_ids << std::endl;
 
-        for (size_t i = 0; i < total_kmer_matrix.size(); i++) {
-            for (size_t j = 0; j < total_kmer_matrix[i].size(); j++) {
-                std::cout << "Kmer entry at :" << i << j << "--" << total_kmer_matrix[i][j] << std::endl;
-            }
-        }
-
-        int* core_total_array = new int[total_kmer_matrix[0].size()];
-        std::move(total_kmer_matrix[0].begin(), total_kmer_matrix[0].end(), core_total_array);
-
-        int* accessory_total_array = new int[total_kmer_matrix[1].size()];
-        std::move(total_kmer_matrix[1].begin(), total_kmer_matrix[1].end(), accessory_total_array);
-
-        int* unique_total_array = new int[total_kmer_matrix[2].size()];
-        std::move(total_kmer_matrix[2].begin(), total_kmer_matrix[2].end(), unique_total_array);
-
-        int* core_distinct_array = new int[distinct_kmer_matrix[0].size()];
-        std::move(distinct_kmer_matrix[0].begin(), distinct_kmer_matrix[0].end(), core_distinct_array);
-
-        int* accessory_distinct_array = new int[distinct_kmer_matrix[1].size()];
-        std::move(distinct_kmer_matrix[1].begin(), distinct_kmer_matrix[1].end(), accessory_distinct_array);
-
-        int* unique_distinct_array = new int[distinct_kmer_matrix[2].size()];
-        std::move(distinct_kmer_matrix[2].begin(), distinct_kmer_matrix[2].end(), unique_distinct_array);
-
-        std::vector<std::vector<int>> distinct_shared = kmerClassifier.get_distinct_shared_matrix();
-        std::vector<std::vector<int>> distinct_total = kmerClassifier.get_distinct_total_matrix();
-        std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
-        std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
-        auto&& c_ids{kmerClassifier.get_id_collector()};
-
-        ASSERT_GT(c_ids.core_ids.size(), 10000);
-
-        auto res = kmerClassifier.flatten(distinct_shared);
-        std::cout << *(res) << std::endl;
 }
 
 TEST(testPangenomeStructureKmer, testInitializeCoreKmers) {

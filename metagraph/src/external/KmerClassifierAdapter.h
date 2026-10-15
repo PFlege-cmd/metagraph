@@ -80,7 +80,7 @@ class KmerClassifierAdapter {
 
         for (size_t accessory_arrays = 0; accessory_arrays < collector.accessory_ids.size(); accessory_arrays++) {
             current_position_kmer_ids++;
-            long long* accessory_ids = new long long[collector.accessory_ids.size()];
+            long long* accessory_ids = new long long[collector.accessory_ids[accessory_arrays].size()];
             kmerIds[current_position_kmer_ids] = NativeStructures::KmerIds{static_cast<int>(collector.accessory_ids[accessory_arrays].size()) , accessory_ids};
 
             for (size_t accessory_size = 0; accessory_size < collector.accessory_ids[accessory_arrays].size(); accessory_size++) {
@@ -90,9 +90,9 @@ class KmerClassifierAdapter {
 
         for (size_t unique_arrays = 0; unique_arrays < collector.unique_ids.size(); unique_arrays++) {
             current_position_kmer_ids++;
-            long long* unique_ids = new long long[collector.unique_ids.size()];
+            long long* unique_ids = new long long[collector.unique_ids[unique_arrays].size()];
             kmerIds[current_position_kmer_ids] = NativeStructures::KmerIds{static_cast<int>(collector.unique_ids[unique_arrays].size()), unique_ids};
-            for (size_t unique_size = 0; unique_size < collector.unique_ids.size(); unique_size++) {
+            for (size_t unique_size = 0; unique_size < collector.unique_ids[unique_arrays].size(); unique_size++) {
                 unique_ids[unique_size] = collector.unique_ids[unique_arrays][unique_size];
             }
         }
