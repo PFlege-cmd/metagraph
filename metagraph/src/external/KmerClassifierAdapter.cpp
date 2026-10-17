@@ -124,7 +124,7 @@ NativeStructures::KmerMatrix* classify_kmers_genome_phenotype(char * database_pa
             kmerClassifier.flatten(all_shared),
             kmerClassifier.flatten(
                         all_total), nullptr,
-                        shared_phenotype_array, specific_phenotype_array,exclusive_phenotype_array
+                        shared_phenotype_array, specific_phenotype_array,exclusive_phenotype_array, 0, 0
             ); // Ahh... this new keyword creates a pointer, therefore it did not work
         return kmerMatrix;
     }
@@ -146,57 +146,8 @@ NativeStructures::KmerMatrix* classify_kmers_genome(char * database_path, int ge
         std::cout << "Initial node index: " << initial_node_idx << std::endl;
         kmerClassifier.create_kmer_classification_matrix_parallel(initial_node_idx);
 
-        // auto total_kmer_matrix = kmerClassifier.get_total_kmer_matrix();
-        // auto distinct_kmer_matrix = kmerClassifier.get_distinct_kmer_matrix();
-        //
-        // for (size_t i = 0; i < total_kmer_matrix.size(); i++) {
-        //     for (size_t j = 0; j < total_kmer_matrix[i].size(); j++) {
-        //         std::cout << "Kmer entry at :" << i << j << "--" << total_kmer_matrix[i][j] << std::endl;
-        //     }
-        // }
-        // int* core_total_array = new int[total_kmer_matrix[0].size()];
-        // std::move(total_kmer_matrix[0].begin(), total_kmer_matrix[0].end(), core_total_array);
-        //
-        // int* accessory_total_array = new int[total_kmer_matrix[1].size()];
-        // std::move(total_kmer_matrix[1].begin(), total_kmer_matrix[1].end(), accessory_total_array);
-        //
-        // int* unique_total_array = new int[total_kmer_matrix[2].size()];
-        // std::move(total_kmer_matrix[2].begin(), total_kmer_matrix[2].end(), unique_total_array);
-        //
-        // int* core_distinct_array = new int[distinct_kmer_matrix[0].size()];
-        // std::move(distinct_kmer_matrix[0].begin(), distinct_kmer_matrix[0].end(), core_distinct_array);
-        //
-        // int* accessory_distinct_array = new int[distinct_kmer_matrix[1].size()];
-        // std::move(distinct_kmer_matrix[1].begin(), distinct_kmer_matrix[1].end(), accessory_distinct_array);
-        //
-        // int* unique_distinct_array = new int[distinct_kmer_matrix[2].size()];
-        // std::move(distinct_kmer_matrix[2].begin(), distinct_kmer_matrix[2].end(), unique_distinct_array);
-        //
-        // std::vector<std::vector<int>> distinct_shared = kmerClassifier.get_distinct_shared_matrix();
-        // std::vector<std::vector<int>> distinct_total = kmerClassifier.get_distinct_total_matrix();
-        // std::vector<std::vector<int>> all_shared = kmerClassifier.get_all_shared_matrix();
-        // std::vector<std::vector<int>> all_total = kmerClassifier.get_all_total_matrix();
-
         return KmerClassifierAdapter::export_matrix(kmerClassifier);
-        // NativeStructures::KmerMatrix *kmerMatrix = new NativeStructures::KmerMatrix(core_total_array,
-        //     accessory_total_array,
-        //     unique_total_array,
-        //     core_distinct_array,
-        //     accessory_distinct_array,
-        //     unique_distinct_array,
-        //     kmerClassifier.flatten(distinct_shared),
-        //     kmerClassifier.flatten(distinct_total),
-        //     kmerClassifier.flatten(all_shared),
-        //     kmerClassifier.flatten(
-        //                 all_total), nullptr, nullptr, nullptr, nullptr
-        //     ); // Ahh... this new keyword creates a pointer, therefore it did not work
-        //return kmerMatrix;
 }
-
-    // int* distinct_shared;
-    // int* distinct_total;
-    // int* all_shared;
-    // int* all_total;
 
     void free_matrix(NativeStructures::KmerMatrix* matrix) {
         delete matrix->core_total;

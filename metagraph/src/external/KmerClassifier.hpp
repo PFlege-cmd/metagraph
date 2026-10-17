@@ -512,9 +512,21 @@ public:
         }
     }
 
-        return total_kmer_matrix;
+        return total_kmer_matrix; //TODO: This return-type is redundant, since it is an instance anyways.
     }
 
+    /**
+     * Fills in the different-kmer-classification matrices used for classifying the kmer-profile.
+     * Optimized for parallel-processing.
+     * @param type Type of the kmer, can be CORE, ACCESSORY or UNIQUE
+     * @param genome_frequencies Simple vector listing, in order, the frequencies of kmers for each genome.
+     * @param total_kmer_matrix Matrix in dimensions [3][genomes], to sum for each kmer the <i>total</i> counts.
+     * @param distinct_kmer_matrix Matrix in dimensions [3][genomes], to sum for each kmer the <i>distinct (each time 1 or 0)</i> counts.
+     * @param distinct_shared Matrix in dimensions [genomes][genomes], summing lower shared presence (lower of each pair) kmers between pairs of genomes.
+     * @param distinct_total Matrix in dimensions [genomes][genomes], summing total shared presence (higher of each pair) kmers between pairs of genomes.
+     * @param all_shared_matrix Matrix in dimensions [genomes][genomes], summing lower total (lower of each pair) kmers between pairs of genomes.
+     * @param all_total_matrix Matrix in dimensions [genomes][genomes], summing higher total  (lower of each pair) kmers between pairs of genomes.
+     */
     void fill_kmer_matrix_parallel(KmerType type, genomes_and_frequencies genome_frequencies,
         std::vector<std::vector<int>>& total_kmer_matrix,
         std::vector<std::vector<int>>& distinct_kmer_matrix,
@@ -525,22 +537,29 @@ public:
         ) {
         switch (type) {
             case KmerType::CORE: {
+                ++distinct_node_count;
                 for_each(genome_frequencies.begin(), genome_frequencies.end(),
                          [&](auto gen_idx) {
+                             total_node_count += gen_idx.second;
                              total_kmer_matrix[0][gen_idx.first] += gen_idx.second;
                              distinct_kmer_matrix[0][gen_idx.first] += 1;
                          });
                 break;
             }
             case KmerType::ACCESSORY: {
+                ++distinct_node_count;
                 std::for_each(genome_frequencies.begin(), genome_frequencies.end(),
                               [&](auto gen_idx) {
+                                  total_node_count += gen_idx.second;
                                   total_kmer_matrix[1][gen_idx.first] += gen_idx.second;
                                   distinct_kmer_matrix[1][gen_idx.first] += 1;
                               });
                 break;
             }
             case KmerType::UNIQUE: {
+                ++distinct_node_count;
+                total_node_count += genome_frequencies[0].second;
+
                 total_kmer_matrix[2][genome_frequencies[0].first] += genome_frequencies[0].second;
                 distinct_kmer_matrix[2][genome_frequencies[0].first] += 1;
                 break;
@@ -711,6 +730,13 @@ public:
     std::vector<std::vector<int>> get_distinct_shared_matrix();
     KmerIDCollector get_id_collector();
     std::vector<unsigned long long> get_core_ids();
+    long get_total_number_kmers() const {
+        return static_cast<long>(this->total_node_count);
+    }
+
+    long get_distinct_number_kmers() const {
+        return static_cast<long>(this->distinct_node_count);
+    }
 
   private:
     GraphWrapper& graph_ptr;
@@ -730,5 +756,9 @@ public:
     int core_threshold;
     int unique_threshold;
     int genome_number;
+
+    std::atomic_long distinct_node_count{0};
+    std::atomic_long total_node_count{0};
+
     std::map<std::string, std::vector<int>> kmer_map;
 };

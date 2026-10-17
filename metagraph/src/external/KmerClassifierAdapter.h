@@ -64,7 +64,8 @@ class KmerClassifierAdapter {
             kmerClassifier.flatten(distinct_total),
             kmerClassifier.flatten(all_shared),
             kmerClassifier.flatten(
-                        all_total), kmerIds, nullptr, nullptr, nullptr
+                        all_total), kmerIds, nullptr, nullptr, nullptr,
+                        kmerClassifier.get_total_number_kmers(), kmerClassifier.get_distinct_number_kmers()
             );
         return kmerMatrix;
     };

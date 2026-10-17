@@ -105,6 +105,9 @@ namespace NativeStructures {
         int* shared_phenotypes;
         int* specific_phenotypes;
         int* exclusive_phenotypes;
+
+        long long total_number_kmers{0};
+        long long distinct_number_kmers{0};
         explicit KmerMatrix(int* core_total_ptr,
                             int* accessory_total_ptr,
                             int* unique_total_ptr,
@@ -118,7 +121,9 @@ namespace NativeStructures {
                             KmerIds* ids,
                             int* shared_phenotypes_ptr,
                             int* specific_phenotypes_ptr,
-                            int* exclusive_phenotypes_ptr)
+                            int* exclusive_phenotypes_ptr,
+                            long long total_number_kmers,
+                            long long distinct_number_kmers)
             :
     core_total(core_total_ptr),
     accessory_total(accessory_total_ptr),
@@ -133,7 +138,9 @@ namespace NativeStructures {
     ids(ids),
     shared_phenotypes(shared_phenotypes_ptr),
     specific_phenotypes(specific_phenotypes_ptr),
-    exclusive_phenotypes(exclusive_phenotypes_ptr)
+    exclusive_phenotypes(exclusive_phenotypes_ptr),
+    total_number_kmers(total_number_kmers),
+    distinct_number_kmers(distinct_number_kmers)
         {
         };
     };
