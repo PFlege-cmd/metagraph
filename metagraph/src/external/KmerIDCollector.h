@@ -34,14 +34,14 @@ struct KmerIDCollector {
     KmerIDCollector& merge(const KmerIDCollector& other) {
         core_ids.insert(core_ids.end(), std::make_move_iterator(other.core_ids.begin()), std::make_move_iterator(other.core_ids.end()));
 
-        size_t accessory_size{other.accessory_ids.size()};
-        size_t unique_size{other.unique_ids.size()};
+        std::size_t accessory_size{other.accessory_ids.size()};
+        std::size_t unique_size{other.unique_ids.size()};
 
-        for (size_t i = 0; i < accessory_size; ++i) {
+        for (std::size_t i = 0; i < accessory_size; ++i) {
             std::move(other.accessory_ids[i].begin(), other.accessory_ids[i].end(), std::back_inserter(accessory_ids[i]));
         }
 
-        for (size_t i = 0; i < unique_size; ++i) {
+        for (std::size_t i = 0; i < unique_size; ++i) {
             std::move(other.unique_ids[i].begin(), other.unique_ids[i].end(), std::back_inserter(unique_ids[i]));
         }
         return *this;
